@@ -1,0 +1,265 @@
+// ─────────────────────────────────────────────
+// LagosApps — Global Styles
+// Preprocessor: SCSS (sass)
+// ─────────────────────────────────────────────
+
+// ── Mantine base imports ──────────────────────
+@import "@mantine/core/styles.css";
+@import "@mantine/notifications/styles.css";
+
+// ─────────────────────────────────────────────
+// 1. SCSS VARIABLES
+// ─────────────────────────────────────────────
+
+// Fonts
+$font-montserrat: 'Montserrat', sans-serif;
+$font-poppins:    'Poppins', sans-serif;
+$font-syne:       'Syne', sans-serif;
+
+// ── Brand palette — Green ────────────────────
+// Primary (forest green → lime accent)
+$brand-primary:       #1A6B3C;   // deep forest green
+$brand-primary-light: #2E9E5B;   // medium green
+$brand-primary-pale:  #E8F5EE;   // very light mint tint
+
+// Secondary (gold → kept for accents only)
+$brand-accent:        #C9920A;   // gold CTA accent
+$brand-accent-light:  #F5C842;
+$brand-accent-pale:   #FEF7E6;
+
+// Tier colours — now green-toned
+// Bronze → olive/earth
+$tier-bronze:         #6B7C2A;   // olive green
+$tier-bronze-light:   #8FA033;
+$tier-bronze-pale:    #F2F5E4;
+
+// Silver → slate-green
+$tier-silver:         #3D6B5E;   // muted teal-green
+$tier-silver-light:   #56917F;
+$tier-silver-pale:    #E6F2EE;
+
+// Gold → vivid green (premium)
+$tier-gold:           #1A6B3C;   // matches brand primary
+$tier-gold-light:     #2E9E5B;
+$tier-gold-pale:      #E8F5EE;
+
+// ── Layout / neutrals ────────────────────────
+$color-bg:       #F5F8F5;   // warm green-tinted white
+$color-surface:  #FFFFFF;
+$color-surface2: #EDF3EE;   // light mint surface
+$color-border:   #D8E6DA;   // green-tinted border
+$color-ink:      #0F2118;   // deep green-black
+$color-muted:    #4F6B57;   // muted sage
+$color-subtle:   #9AB39E;   // light sage
+
+// WhatsApp
+$color-wa:  #25D366;
+
+// ─────────────────────────────────────────────
+// 2. CSS CUSTOM PROPERTIES (consumed by Mantine & inline styles)
+// ─────────────────────────────────────────────
+:root {
+  // Fonts
+  --font-montserrat: #{$font-montserrat};
+  --font-poppins:    #{$font-poppins};
+  --font-syne:       #{$font-syne};
+
+  // Brand palette
+  --color-brand-primary:       #{$brand-primary};
+  --color-brand-primary-light: #{$brand-primary-light};
+  --color-brand-primary-pale:  #{$brand-primary-pale};
+
+  // Legacy "gold" alias → now points to brand green
+  // (keeps all inline style references working without a full find-replace)
+  --color-gold:       #{$brand-primary};
+  --color-gold-light: #{$brand-primary-light};
+  --color-gold-pale:  #{$brand-primary-pale};
+
+  // Accent (kept for CTAs and highlights)
+  --color-accent:       #{$brand-accent};
+  --color-accent-light: #{$brand-accent-light};
+  --color-accent-pale:  #{$brand-accent-pale};
+
+  // Tier — Bronze
+  --color-bronze:       #{$tier-bronze};
+  --color-bronze-light: #{$tier-bronze-light};
+  --color-bronze-pale:  #{$tier-bronze-pale};
+
+  // Tier — Silver
+  --color-silver:       #{$tier-silver};
+  --color-silver-light: #{$tier-silver-light};
+  --color-silver-pale:  #{$tier-silver-pale};
+
+  // Layout
+  --color-bg:       #{$color-bg};
+  --color-surface:  #{$color-surface};
+  --color-surface2: #{$color-surface2};
+  --color-border:   #{$color-border};
+  --color-ink:      #{$color-ink};
+  --color-muted:    #{$color-muted};
+  --color-subtle:   #{$color-subtle};
+
+  // WhatsApp
+  --color-wa: #{$color-wa};
+}
+
+// ─────────────────────────────────────────────
+// 3. BASE / RESET
+// ─────────────────────────────────────────────
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: $color-bg;
+  color: $color-ink;
+  font-family: $font-poppins;
+}
+
+// ── Custom scrollbar ──────────────────────────
+::-webkit-scrollbar {
+  width: 6px;
+
+  &-track {
+    background: lighten($color-border, 5%);
+  }
+
+  &-thumb {
+    background: $color-border;
+    border-radius: 3px;
+
+    &:hover {
+      background: $color-muted;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────
+// 4. MANTINE COMPONENT OVERRIDES
+// ─────────────────────────────────────────────
+.mantine-Button-root {
+  font-family: $font-poppins;
+}
+
+.mantine-Title-root {
+  font-family: $font-montserrat;
+}
+
+// ─────────────────────────────────────────────
+// 5. UTILITY MIXINS
+// ─────────────────────────────────────────────
+
+/// Card shadow — light
+@mixin shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/// Card shadow — hover
+@mixin shadow-card-hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 12px 32px rgba(0, 0, 0, 0.06);
+}
+
+/// Floating shadow
+@mixin shadow-float {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.10);
+}
+
+/// Smooth transition shorthand
+@mixin transition($props: all, $dur: 0.2s, $ease: ease) {
+  transition: $props $dur $ease;
+}
+
+/// Brand gradient — primary green
+@mixin gradient-brand($deg: 135deg) {
+  background: linear-gradient($deg, $brand-primary, $brand-primary-light);
+}
+
+/// Tier gradient — accepts tier name
+@mixin gradient-tier($tier) {
+  @if $tier == 'bronze' {
+    background: linear-gradient(90deg, #{$tier-bronze}, #{$tier-bronze-light});
+  } @else if $tier == 'silver' {
+    background: linear-gradient(90deg, #{$tier-silver}, #{$tier-silver-light});
+  } @else if $tier == 'gold' {
+    background: linear-gradient(90deg, #{$tier-gold}, #{$tier-gold-light});
+  }
+}
+
+// ─────────────────────────────────────────────
+// 6. GLOBAL UTILITY CLASSES
+// ─────────────────────────────────────────────
+
+.card-base {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 1rem;
+  @include shadow-card;
+  @include transition;
+
+  &:hover {
+    @include shadow-card-hover;
+    transform: translateY(-2px);
+  }
+}
+
+.badge-tier {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &--bronze {
+    background: $tier-bronze-pale;
+    color: $tier-bronze;
+  }
+
+  &--silver {
+    background: $tier-silver-pale;
+    color: $tier-silver;
+  }
+
+  &--gold {
+    background: $tier-gold-pale;
+    color: $tier-gold;
+  }
+}
+
+.wa-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: $color-wa;
+  color: white;
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-decoration: none;
+  @include transition;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+}
+
+// ─────────────────────────────────────────────
+// 7. BREAKPOINT HELPERS  (mirrors Mantine defaults)
+// ─────────────────────────────────────────────
+$bp-xs: 36em;   //  576px
+$bp-sm: 48em;   //  768px
+$bp-md: 62em;   //  992px
+$bp-lg: 75em;   // 1200px
+$bp-xl: 88em;   // 1408px
+
+@mixin respond-above($bp) {
+  @media (min-width: $bp) { @content; }
+}
+
+@mixin respond-below($bp) {
+  @media (max-width: calc(#{$bp} - 0.0625em)) { @content; }
+}
