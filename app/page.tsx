@@ -509,7 +509,7 @@ export default function HomePage() {
                     },
                     indicator: { background: "var(--color-ink)" },
                     label: { color: "var(--color-muted)" },
-                    labelActive: { color: "white" },
+                    // labelActive: { color: "white" },
                   }}
                 />
               </Box>

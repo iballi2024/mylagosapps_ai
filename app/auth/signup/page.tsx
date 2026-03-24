@@ -103,7 +103,7 @@ export default function SignupPage() {
           />
 
           <Button type="submit" fullWidth size="md" radius="xl" loading={loading}
-            loader={<Loader size="xs" color="white" />}
+            // loader={<Loader size="xs" color="white" />}
             style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 700, marginTop: 4 }}>
             {loading ? 'Creating account...' : 'Create account →'}
           </Button>

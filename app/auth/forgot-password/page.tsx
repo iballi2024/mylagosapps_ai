@@ -67,7 +67,7 @@ export default function ForgotPasswordPage() {
             styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }}
           />
           <Button type="submit" fullWidth size="md" radius="xl" loading={loading}
-            loader={<Loader size="xs" color="white" />}
+            // loader={<Loader size="xs" color="white" />}
             style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 700 }}>
             {loading ? 'Sending...' : 'Send reset link'}
           </Button>
