@@ -189,7 +189,8 @@ export default function Header() {
                 </Indicator>
 
                 <UnstyledButton
-                  onClick={() => setShowDashboard(true)}
+                  component="a"
+                  href="/dashboard"
                   aria-label="Open dashboard"
                   title={user.name}
                 >
@@ -212,12 +213,11 @@ export default function Header() {
               h={50}
               bg={'transparent'}
               bd={'none'}
-              href="/subscribe/account">
+              href="/auth/login">
                 <ActionIcon
                   variant="default"
                   radius="xl"
                   size={40}
-                  onClick={() => setShowAuth(true)}
                   aria-label="Sign in"
                   visibleFrom="md"
                 >
@@ -226,7 +226,7 @@ export default function Header() {
               </Button>
                 <Button
                   component="a"
-                  href="/subscribe/account"
+                  href="/auth/login"
                   variant="subtle"
                   c="primary"
                   fw={600}
@@ -235,7 +235,7 @@ export default function Header() {
                 </Button>
                 <Button
                   component="a"
-                  href="/subscribe/account"
+                  href="/auth/signup"
                   className="bg-primary-gradient"
                   fw={700}
                 >
@@ -412,10 +412,9 @@ export default function Header() {
                     borderRadius: "var(--mantine-radius-xl)",
                     background: "var(--mantine-color-gray-0)",
                   }}
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    setShowDashboard(true);
-                  }}
+                  component="a"
+                  href="/dashboard"
+                  onClick={() => setDrawerOpen(false)}
                 >
                   <Group>
                     <Avatar
@@ -445,7 +444,7 @@ export default function Header() {
                 <Group grow gap="sm">
                   <Button
                     component="a"
-                    href="/subscribe/account"
+                    href="/auth/login"
                     size="lg"
                     fw={700}
                     variant="outline"
@@ -456,7 +455,7 @@ export default function Header() {
                   </Button>
                   <Button
                     component="a"
-                    href="/subscribe/account"
+                    href="/auth/signup"
                     size="lg"
                     fw={700}
                     className="bg-primary-gradient"

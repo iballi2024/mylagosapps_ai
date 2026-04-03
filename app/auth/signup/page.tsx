@@ -1,15 +1,18 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Box, Title, Text, TextInput, PasswordInput, Button, Divider,
-  Checkbox, Anchor, Stack, Grid, Progress, Loader
+  Checkbox, Anchor, Stack, Grid, Progress
 } from '@mantine/core'
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', company: '' })
+  const params = useSearchParams()
+  const next = params.get('next') ?? '/dashboard'
+
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' })
   const [loading, setLoading] = useState(false)
   const [strength, setStrength] = useState(0)
 
@@ -26,8 +29,12 @@ export default function SignupPage() {
     e.preventDefault()
     setLoading(true)
     await new Promise(r => setTimeout(r, 800))
-    router.push('/dashboard')
+    router.push(next)
   }
+
+  const loginHref = params.get('next')
+    ? `/auth/login?next=${encodeURIComponent(params.get('next')!)}`
+    : '/auth/login'
 
   const strengthColors = ['', 'red', 'orange', 'yellow', 'green']
   const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong']
@@ -40,7 +47,7 @@ export default function SignupPage() {
         </Title>
         <Text fz="sm" c="var(--color-muted)">
           Already have one?{' '}
-          <Anchor component={Link} href="/auth/login" fw={600} c="var(--color-gold)">Sign in</Anchor>
+          <Anchor component={Link} href={loginHref} fw={600} c="var(--color-gold)">Sign in</Anchor>
         </Text>
       </Stack>
 
@@ -69,12 +76,12 @@ export default function SignupPage() {
             </Grid.Col>
           </Grid>
 
-          <TextInput label="Work Email" type="email" placeholder="chidi@company.ng" size="md" radius="xl"
+          <TextInput label="Email" type="email" placeholder="chidi@example.ng" size="md" radius="xl"
             value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
             styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
 
-          <TextInput label="Company Name" placeholder="Okonkwo Ventures (optional)" size="md" radius="xl"
-            value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))}
+          <TextInput label="Phone Number" type="tel" placeholder="+234 801 234 5678" size="md" radius="xl"
+            value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
             styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
 
           <Box>
@@ -103,13 +110,20 @@ export default function SignupPage() {
           />
 
           <Button type="submit" fullWidth size="md" radius="xl" loading={loading}
-            // loader={<Loader size="xs" color="white" />}
             style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 700, marginTop: 4 }}>
             {loading ? 'Creating account...' : 'Create account →'}
           </Button>
         </Stack>
       </form>
     </Box>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<Box w="100%" maw={440} />}>
+      <SignupForm />
+    </Suspense>
   )
 }
 

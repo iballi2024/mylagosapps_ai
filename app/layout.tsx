@@ -5,7 +5,7 @@ import "./index.css";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { PlatformProvider } from "@/context/PlatformContext";
-import { montserrat, poppins } from "@/public/fonts";
+import { manrope, montserrat, poppins } from "@/public/fonts";
 import { theme } from "@/theming";
 
 export default function RootLayout({
@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${montserrat.variable} ${poppins.variable}`}>
       <head>
         <ColorSchemeScript />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />

@@ -2,7 +2,7 @@
 import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Box, Stack, Title, Text, Card, Group, Button, Badge, Divider, List, ThemeIcon, SegmentedControl } from '@mantine/core'
-import Navbar from '@/components/Navbar'
+import Header2 from '@/app/home/components/Header2'
 
 type Tier = 'bronze' | 'silver' | 'gold'
 type Billing = 'annual' | 'quarterly'
@@ -138,7 +138,7 @@ function PlanPageInner() {
 
         <Button fullWidth radius="xl" size="lg" fw={700}
           style={{ background: 'linear-gradient(135deg, #2E9E5B, #3DA96E)', color: 'white' }}
-          onClick={() => router.push(`/subscribe/account?tier=${tier}&billing=${billing}`)}>
+          onClick={() => router.push(`/auth?tier=${tier}&billing=${billing}`)}>
           Continue with {plan.name} →
         </Button>
         <Text ta="center" size="xs" c="dimmed" mt="sm">
@@ -152,7 +152,7 @@ function PlanPageInner() {
 export default function PlanPage() {
   return (
     <>
-      <Navbar />
+      <Header2 />
       <Suspense fallback={<Box pt={64} style={{ minHeight: '100vh', background: '#F5F8F5' }} />}>
         <PlanPageInner />
       </Suspense>

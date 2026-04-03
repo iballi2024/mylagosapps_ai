@@ -2,9 +2,10 @@
 import Link from 'next/link'
 import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor } from '@mantine/core'
 import { usePlatform, SUBSIDIARIES } from '@/context/PlatformContext'
+import { MOCK_PLAN, TIER_META } from './plan'
 
 export default function DashboardPage() {
-  const { walletBalance, loyaltyPoints, transactions, formatPrice } = usePlatform()
+  const { loyaltyPoints, transactions, formatPrice } = usePlatform()
   const thisMonth = transactions
     .filter(t => t.type === 'debit' && (t.date.startsWith('Today') || t.date.startsWith('Yesterday')))
     .reduce((s, t) => s + t.amount, 0)
@@ -20,7 +21,7 @@ export default function DashboardPage() {
             Chidi Okonkwo
           </Title>
         </Box>
-        <Button component={Link} href="/" radius="xl" size="sm"
+        <Button component={Link} href="/dashboard/apps" radius="xl" size="sm"
           style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 600 }}>
           + New order
         </Button>
@@ -28,17 +29,41 @@ export default function DashboardPage() {
 
       {/* Stat cards */}
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="xl">
-        {/* Wallet */}
-        <Card radius="xl" p="lg" style={{ background: 'linear-gradient(135deg,#1A1A2E,#2C2C4A)', border: 'none' }}>
-          <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="rgba(255,255,255,0.5)" fw={600} mb={4}>Wallet Balance</Text>
-          <Text ff="var(--font-montserrat)" fw={800} fz={28} c="white" mb="md">{formatPrice(walletBalance)}</Text>
-          <Group gap="xs">
-            <Button component={Link} href="/wallet" size="xs" radius="xl"
-              style={{ background: 'var(--color-gold)', color: 'white', fontWeight: 700 }}>Top up</Button>
-            <Button component={Link} href="/wallet" size="xs" radius="xl" variant="outline"
-              styles={{ root: { borderColor: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.7)' } }}>History</Button>
-          </Group>
-        </Card>
+        {/* Subscription Plan Status */}
+        {MOCK_PLAN ? (
+          <Card radius="xl" p="lg" style={{ background: 'linear-gradient(135deg, #2E9E5B, #1A6B3C)', border: 'none' }}>
+            <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="rgba(255,255,255,0.6)" fw={600} mb={4}>Current Plan</Text>
+            <Group gap="xs" align="center" mb={4}>
+              <Text ff="var(--font-montserrat)" fw={800} fz={26} c="white">
+                {TIER_META[MOCK_PLAN.tier].icon} {TIER_META[MOCK_PLAN.tier].label}
+              </Text>
+              <Badge size="xs" radius="xl" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none' }}>Active</Badge>
+            </Group>
+            <Text fz={11} c="rgba(255,255,255,0.6)" mb="md">
+              {MOCK_PLAN.billing === 'annual' ? 'Annual' : 'Quarterly'} · Renews {MOCK_PLAN.renewsAt}
+            </Text>
+            <Group gap="xs">
+              <Button component={Link} href="/dashboard/billing" size="xs" radius="xl"
+                style={{ background: 'rgba(255,255,255,0.15)', color: 'white', fontWeight: 600, border: '1px solid rgba(255,255,255,0.25)' }}>
+                Manage plan
+              </Button>
+              <Button component={Link} href="/subscribe/plan" size="xs" radius="xl"
+                style={{ background: 'rgba(255,255,255,0.15)', color: 'white', fontWeight: 600, border: '1px solid rgba(255,255,255,0.25)' }}>
+                Upgrade
+              </Button>
+            </Group>
+          </Card>
+        ) : (
+          <Card radius="xl" p="lg" withBorder style={{ borderColor: '#D8E6DA', borderStyle: 'dashed' }}>
+            <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>Current Plan</Text>
+            <Text ff="var(--font-montserrat)" fw={800} fz={20} c="var(--color-ink)" mb={4}>No active plan</Text>
+            <Text fz={11} c="var(--color-muted)" mb="md">Subscribe to unlock all LagosApps services.</Text>
+            <Button component={Link} href="/subscribe/plan" size="xs" radius="xl"
+              style={{ background: 'linear-gradient(135deg, #2E9E5B, #3DA96E)', color: 'white', fontWeight: 600 }}>
+              View plans →
+            </Button>
+          </Card>
+        )}
 
         <Card radius="xl" p="lg" withBorder style={{ borderColor: 'var(--color-border)' }}>
           <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>This Month</Text>
@@ -60,7 +85,7 @@ export default function DashboardPage() {
         <Card radius="xl" withBorder style={{ borderColor: 'var(--color-border)', gridColumn: 'span 2' }} p={0}>
           <Group justify="space-between" px="lg" py="md" style={{ borderBottom: '1px solid var(--color-border)' }}>
             <Text ff="var(--font-montserrat)" fw={700} fz={15} c="var(--color-ink)">Recent Transactions</Text>
-            <Anchor component={Link} href="/wallet" fz="xs" c="var(--color-gold)" fw={600}>View all →</Anchor>
+            <Anchor component={Link} href="/dashboard/billing" fz="xs" c="var(--color-gold)" fw={600}>View all →</Anchor>
           </Group>
           <Stack gap={0}>
             {transactions.map(txn => {

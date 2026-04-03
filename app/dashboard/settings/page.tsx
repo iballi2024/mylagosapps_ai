@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Box, Title, Text, TextInput, Card, Stack, Group, Button, Switch, Anchor, SimpleGrid } from '@mantine/core'
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState({ firstName: 'Chidi', lastName: 'Okonkwo', email: 'chidi@okonkwoventures.ng', company: 'Okonkwo Ventures', phone: '+234 801 234 5678' })
+  const [profile, setProfile] = useState({ firstName: 'Chidi', lastName: 'Okonkwo', email: 'chidi@example.ng', phone: '+234 801 234 5678' })
   const [notifications, setNotifications] = useState({ billing: true, team: true, apps: false, marketing: false })
   const [saved, setSaved] = useState(false)
 
@@ -30,10 +30,9 @@ export default function SettingsPage() {
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md" mb="md">
           <TextInput label="First Name" size="md" radius="xl" styles={inputStyles} value={profile.firstName} onChange={e => setProfile(p => ({ ...p, firstName: e.target.value }))} />
           <TextInput label="Last Name" size="md" radius="xl" styles={inputStyles} value={profile.lastName} onChange={e => setProfile(p => ({ ...p, lastName: e.target.value }))} />
-          <TextInput label="Email Address" type="email" size="md" radius="xl" styles={inputStyles} value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} />
+          <TextInput label="Email" type="email" size="md" radius="xl" styles={inputStyles} value={profile.email} onChange={e => setProfile(p => ({ ...p, email: e.target.value }))} />
           <TextInput label="Phone Number" type="tel" size="md" radius="xl" styles={inputStyles} value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
         </SimpleGrid>
-        <TextInput label="Company Name" size="md" radius="xl" styles={inputStyles} value={profile.company} onChange={e => setProfile(p => ({ ...p, company: e.target.value }))} />
       </Section>
 
       {/* Notifications */}
