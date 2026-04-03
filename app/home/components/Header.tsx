@@ -148,7 +148,7 @@ export default function Header() {
             {/* CTA button (desktop) */}
             <a
               href="#membership"
-              className="hidden md:inline-flex bg-primary-gradient text-on-primary px-5 py-2.5 rounded-md text-sm font-bold shadow-lg shadow-primary/10 hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
+              className="hidden md:inline-flex bg-primary-gradient text-on-primary px-5 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/10 hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
             >
               Join LagosApps
             </a>
@@ -197,17 +197,20 @@ export default function Header() {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setShowAuth(true)}
-                className="hidden md:flex size-10 rounded-full border-2 border-primary/10 p-0.5 cursor-pointer hover:border-primary transition-colors items-center justify-center"
-                aria-label="Sign in"
-              >
-                <div className="w-full h-full rounded-full bg-primary-container flex items-center justify-center">
-                  <span className="material-symbols-outlined text-on-primary-container text-[20px]">
-                    person
-                  </span>
-                </div>
-              </button>
+              <div className="hidden md:flex items-center gap-2">
+                <a
+                  href="/subscribe/account"
+                  className="text-sm font-semibold text-primary hover:underline px-3 py-2 transition-colors"
+                >
+                  Log In
+                </a>
+                <a
+                  href="/subscribe/account"
+                  className="bg-primary-gradient text-on-primary px-5 py-2.5 rounded-full text-sm font-bold hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
+                >
+                  Sign Up
+                </a>
+              </div>
             )}
 
             {/* Mobile hamburger */}
@@ -357,18 +360,22 @@ export default function Header() {
                   </span>
                 </button>
               ) : (
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    setShowAuth(true);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 bg-primary-gradient text-on-primary px-5 py-4 rounded-md text-base font-bold cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    person
-                  </span>
-                  Sign In / Create Account
-                </button>
+                <div className="flex gap-3">
+                  <a
+                    href="/subscribe/account"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex-1 flex items-center justify-center border-2 border-primary text-primary px-5 py-4 rounded-full text-base font-bold transition-colors hover:bg-primary-fixed/30"
+                  >
+                    Log In
+                  </a>
+                  <a
+                    href="/subscribe/account"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex-1 flex items-center justify-center bg-primary-gradient text-on-primary px-5 py-4 rounded-full text-base font-bold"
+                  >
+                    Sign Up
+                  </a>
+                </div>
               )}
             </div>
           </nav>

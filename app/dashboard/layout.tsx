@@ -16,12 +16,12 @@ const NAV = [
 ]
 
 const SERVICES = [
-  { href: '/services/food',       icon: '🍽️', label: 'LagosEats' },
-  { href: '/services/rides',      icon: '🚗', label: 'LagosRides' },
-  { href: '/services/groceries',  icon: '🛒', label: 'LagosMarket' },
-  { href: '/services/home',       icon: '🔧', label: 'LagosHome' },
-  { href: '/services/logistics',  icon: '📦', label: 'LagosSend' },
-  { href: '/services/healthcare', icon: '🏥', label: 'LagosHealth' },
+  { href: '/services/food',       icon: '🍽️', label: 'Food, Groceries and Household' },
+  { href: '/services/rides',      icon: '🚗', label: 'Cars, Vans and Rides' },
+  { href: '/services/groceries',  icon: '🛒', label: 'Food, Groceries and Household' },
+
+  { href: '/services/healthcare', icon: '🏥', label: 'Health and Wellness' },
+  { href: '/services/events',     icon: '🎉', label: 'Events and Studios' },
 ]
 
 function SidebarContent({ onNav }: { onNav?: () => void }) {

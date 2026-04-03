@@ -3,6 +3,7 @@ import { createTheme } from "@mantine/core";
 
 export const theme = createTheme({
   primaryColor: "brand",
+  primaryShade: 4,
   fontFamily: "var(--font-poppins), sans-serif",
   headings: {
     fontFamily: "var(--font-montserrat), sans-serif",

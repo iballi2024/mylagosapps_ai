@@ -5,20 +5,21 @@ import Navbar from '@/components/Navbar'
 import { Box, Title, Text, Card, Button, Group, Stack, Badge, Anchor } from '@mantine/core'
 import { usePlatform } from '@/context/PlatformContext'
 
-export default function ServicePage() {
+export default function EventsPage() {
   const { getSubsidiary, walletBalance, formatPrice } = usePlatform()
-  const sub = getSubsidiary('logistics')!
+  const sub = getSubsidiary('events')!
   const [selectedService, setSelectedService] = useState(sub.services[0].id)
   const [step, setStep] = useState<'browse' | 'confirm'>('browse')
 
   const active = sub.services.find(s => s.id === selectedService)!
-  const serviceFee = 800
-  const total = active.startingPrice + serviceFee
+  const bookingFee = 2500
+  const total = active.startingPrice + bookingFee
 
   return (
     <>
       <Navbar />
       <Box pt={64} style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
+        {/* Hero */}
         <Box px="md" pt="lg" pb="lg" style={{ background: `linear-gradient(135deg,${sub.color},${sub.colorLight})` }}>
           <Box maw={900} mx="auto">
             <Anchor component={Link} href="/" fz="xs" c="rgba(255,255,255,0.6)" mb="sm" display="block">← All services</Anchor>
@@ -33,7 +34,7 @@ export default function ServicePage() {
             </Group>
             <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g,'')}`} target="_blank"
               size="sm" radius="xl" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>
-              💬 Order on WhatsApp
+              💬 Enquire on WhatsApp
             </Button>
           </Box>
         </Box>
@@ -41,6 +42,7 @@ export default function ServicePage() {
         <Box maw={900} mx="auto" p="md" py="xl">
           {step === 'browse' && (
             <Group align="flex-start" gap="lg" wrap="wrap">
+              {/* Services */}
               <Box style={{ flex: 2, minWidth: 280 }}>
                 <Title order={2} ff="var(--font-montserrat)" fw={700} fz={17} c="var(--color-ink)" mb="md">Choose a service</Title>
                 <Stack gap="sm">
@@ -67,11 +69,12 @@ export default function ServicePage() {
                 </Stack>
               </Box>
 
+              {/* Summary */}
               <Card radius="xl" withBorder p="lg" style={{ borderColor: 'var(--color-border)', flex: 1, minWidth: 240, position: 'sticky', top: 80 }}>
-                <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)" mb="md">Order summary</Text>
+                <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)" mb="md">Booking summary</Text>
                 <Stack gap="xs" mb="md">
                   <Group justify="space-between"><Text fz="sm" c="var(--color-muted)">{active.name}</Text><Text fz="sm" fw={500}>{formatPrice(active.startingPrice)}</Text></Group>
-                  <Group justify="space-between"><Text fz="sm" c="var(--color-muted)">Service fee</Text><Text fz="sm" fw={500}>{formatPrice(serviceFee)}</Text></Group>
+                  <Group justify="space-between"><Text fz="sm" c="var(--color-muted)">Booking fee</Text><Text fz="sm" fw={500}>{formatPrice(bookingFee)}</Text></Group>
                   <Box style={{ height: 1, background: 'var(--color-border)' }} />
                   <Group justify="space-between"><Text ff="var(--font-montserrat)" fw={700}>Total</Text><Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{formatPrice(total)}</Text></Group>
                 </Stack>
@@ -82,7 +85,7 @@ export default function ServicePage() {
                 </Button>
                 <Button fullWidth radius="xl" size="sm" component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g,'')}`} target="_blank"
                   variant="outline" style={{ borderColor: '#25D366', color: '#25D366' }}>
-                  💬 Order via WhatsApp
+                  💬 Enquire via WhatsApp
                 </Button>
               </Card>
             </Group>
@@ -92,10 +95,19 @@ export default function ServicePage() {
             <Box maw={480} mx="auto" style={{ textAlign: 'center' }} py="xl">
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>✅</Box>
               <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Booking confirmed!</Title>
-              <Text fz="sm" c="var(--color-muted)" mb="xl" lh={1.7}>Your {active.name} has been booked. A WhatsApp confirmation is on its way.</Text>
+              <Text fz="sm" c="var(--color-muted)" mb="xl" lh={1.7}>Your {active.name} booking is confirmed. A WhatsApp confirmation is on its way.</Text>
+              <Card radius="xl" withBorder p="lg" mb="xl" style={{ textAlign: 'left', borderColor: 'var(--color-border)' }}>
+                <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb="md">Booking details</Text>
+                <Stack gap="xs">
+                  {[['Service', active.name], ['Payment', 'Wallet ✓']].map(([k, v]) => (
+                    <Group key={k} justify="space-between"><Text fz="sm" c="var(--color-muted)">{k}</Text><Text fz="sm" fw={500}>{v}</Text></Group>
+                  ))}
+                  <Group justify="space-between"><Text fz="sm" c="var(--color-muted)">Total charged</Text><Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{formatPrice(total)}</Text></Group>
+                </Stack>
+              </Card>
               <Group grow>
                 <Button component={Link} href="/" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
-                <Button component={Link} href="/dashboard" radius="xl" size="md" style={{ background: sub.color, color: 'white', fontWeight: 700 }}>My orders →</Button>
+                <Button component={Link} href="/dashboard" radius="xl" size="md" style={{ background: sub.color, color: 'white', fontWeight: 700 }}>My bookings →</Button>
               </Group>
             </Box>
           )}

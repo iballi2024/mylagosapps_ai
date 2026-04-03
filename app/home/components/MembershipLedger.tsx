@@ -137,12 +137,11 @@ export default function MembershipLedger() {
                     </li>
                   ))}
                 </ul>
-                <Button
-                  variant="secondary"
-                  className="w-full !bg-white !text-primary !border-white hover:!brightness-95"
-                >
-                  Subscribe Now
-                </Button>
+                <a href={`/subscribe/plan?tier=${tier.name.toLowerCase()}&billing=${isAnnual ? 'annual' : 'quarterly'}`} className="w-full">
+                  <Button variant="secondary" className="w-full !bg-white !text-primary !border-white hover:!brightness-95">
+                    Subscribe Now
+                  </Button>
+                </a>
               </div>
             ) : (
               <div
@@ -166,9 +165,11 @@ export default function MembershipLedger() {
                     </li>
                   ))}
                 </ul>
-                <Button variant="secondary" className="w-full">
-                  Subscribe Now
-                </Button>
+                <a href={`/subscribe/plan?tier=${tier.name.toLowerCase()}&billing=${isAnnual ? 'annual' : 'quarterly'}`} className="w-full">
+                  <Button variant="secondary" className="w-full">
+                    Subscribe Now
+                  </Button>
+                </a>
               </div>
             );
           })}

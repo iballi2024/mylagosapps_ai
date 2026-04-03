@@ -49,7 +49,7 @@ export default function Button({
       className={`
         inline-flex items-center justify-center gap-2
         h-[52px] md:h-[48px] ${minWidth}
-        px-6 rounded-md
+        px-6 rounded-full
         text-base font-semibold
         transition-all duration-150
         focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2

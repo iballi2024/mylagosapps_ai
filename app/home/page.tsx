@@ -7,18 +7,23 @@ import VerifiedInsights from "./components/VerifiedInsights";
 import ContactSection from "./components/ContactSection";
 import Footer from "./components/Footer";
 import WhatsAppFAB from "./components/ui/WhatsAppFAB";
-import Header from "./components/Header";
-import Navbar from "@/components/Navbar";
-import Header2 from "./components/Header2";
+// ── Header variants — uncomment one to test ──────────────────────────────
+import Header  from "./components/Header";   // Tailwind-only (original)
+import Header2 from "./components/Header2";  // Mantine + Tailwind (active)
+import Navbar  from "@/components/Navbar";   // Alternate navbar
 
 export default function Home() {
   return (
     <>
-    {/* <Navbar /> */}
+      {/* ── Swap headers here for testing ─────────────────────────────────── */}
+      {/* <Navbar /> */}
+      {/* <Header /> */}
+      <Header2 />
+      {/* ─────────────────────────────────────────────────────────────────── */}
+
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
-      <Header2 />
       <main id="main-content">
         <Hero />
         <ServiceCategories />

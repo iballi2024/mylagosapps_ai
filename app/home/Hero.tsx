@@ -22,7 +22,7 @@ export default function Hero() {
           <div className="flex flex-wrap gap-3 md:gap-4">
             <a
               href="#membership"
-              className="bg-primary-gradient text-on-primary px-6 md:px-8 py-3 md:py-4 rounded-md text-base font-bold flex items-center gap-2 group hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
+              className="bg-primary-gradient text-on-primary px-6 md:px-8 py-3 md:py-4 rounded-full text-base font-bold flex items-center gap-2 group hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
             >
               <span>Join LagosApps</span>
               <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">
@@ -31,7 +31,7 @@ export default function Hero() {
             </a>
             <a
               href="#services"
-              className="px-6 md:px-8 py-3 md:py-4 rounded-md text-base font-bold border border-outline-variant/30 hover:bg-surface-container active:scale-[0.98] transition-all duration-150"
+              className="px-6 md:px-8 py-3 md:py-4 rounded-full text-base font-bold border border-outline-variant/30 hover:bg-surface-container active:scale-[0.98] transition-all duration-150"
             >
               Browse Services
             </a>
