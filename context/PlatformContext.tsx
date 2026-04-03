@@ -154,7 +154,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [walletBalance] = useState(37800)
   const [loyaltyPoints] = useState(2450)
 
-  const formatPrice = (n: number) => `₦${n.toLocaleString()}`
+  const formatPrice = (n: number) => `₦${n?.toLocaleString()}`
   const getSubsidiary = (slug: string) => SUBSIDIARIES.find(s => s.slug === slug)
 
   return (

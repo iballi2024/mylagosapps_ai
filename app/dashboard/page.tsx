@@ -73,7 +73,7 @@ export default function DashboardPage() {
 
         <Card radius="xl" p="lg" withBorder style={{ borderColor: 'var(--color-border)' }}>
           <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>Loyalty Points</Text>
-          <Text ff="var(--font-montserrat)" fw={800} fz={24} c="var(--color-ink)">⭐ {loyaltyPoints.toLocaleString()}</Text>
+          <Text ff="var(--font-montserrat)" fw={800} fz={24} c="var(--color-ink)">⭐ {loyaltyPoints?.toLocaleString()}</Text>
           <Text fz={11} c="var(--color-muted)" mt={4}>≈ {formatPrice(loyaltyPoints * 2)} in rewards</Text>
         </Card>
       </SimpleGrid>

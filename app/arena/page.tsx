@@ -279,7 +279,7 @@ export default function HomePage() {
                       c="white"
                       fw={700}
                     >
-                      {loyaltyPoints.toLocaleString()} pts
+                      {loyaltyPoints?.toLocaleString()} pts
                     </Title>
                   </Box>
                 </Group>
@@ -631,7 +631,7 @@ export default function HomePage() {
                             >
                               ₦
                             </Text>
-                            {displayPrice.toLocaleString()}
+                            {displayPrice?.toLocaleString()}
                           </Title>
                           <Text size="xs" c="dimmed" mb={2}>
                             / month
@@ -642,7 +642,7 @@ export default function HomePage() {
                             <Text size="xs" c="dimmed">
                               Billed{" "}
                               <Text span fw={600} c="var(--color-ink)">
-                                ₦{billedAmount.toLocaleString()}
+                                ₦{billedAmount?.toLocaleString()}
                               </Text>
                               /year
                             </Text>
@@ -654,7 +654,7 @@ export default function HomePage() {
                                 color: plan.color,
                               }}
                             >
-                              Save ₦{annualSaving.toLocaleString()}
+                              Save ₦{annualSaving?.toLocaleString()}
                             </Badge>
                           </Group>
                         ) : (
@@ -666,7 +666,7 @@ export default function HomePage() {
                               style={{ color: plan.color }}
                               onClick={() => setBilling("annual")}
                             >
-                              save ₦{annualSaving.toLocaleString()} annually
+                              save ₦{annualSaving?.toLocaleString()} annually
                             </Anchor>
                           </Text>
                         )}
@@ -854,8 +854,8 @@ export default function HomePage() {
                       >
                         Subscribe —{" "}
                         {billing === "annual"
-                          ? `₦${plan.annualPrice.toLocaleString()}/yr`
-                          : `₦${plan.monthlyPrice.toLocaleString()}/mo`}{" "}
+                          ? `₦${plan.annualPrice?.toLocaleString()}/yr`
+                          : `₦${plan.monthlyPrice?.toLocaleString()}/mo`}{" "}
                         →
                       </Button>
                     </Stack>

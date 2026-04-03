@@ -30,7 +30,7 @@ export default function WalletPage() {
               {[
                 { label: 'Total Spent',     value: formatPrice(debits) },
                 { label: 'Total Topped Up', value: formatPrice(credits) },
-                { label: 'Loyalty Points',  value: `⭐ ${loyaltyPoints.toLocaleString()}` },
+                { label: 'Loyalty Points',  value: `⭐ ${loyaltyPoints?.toLocaleString()}` },
               ].map(s => (
                 <Box key={s.label}>
                   <Text fz={10} tt="uppercase" style={{ letterSpacing: 1 }} c="rgba(255,255,255,0.4)" mb={2}>{s.label}</Text>

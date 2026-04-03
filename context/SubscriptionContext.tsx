@@ -69,7 +69,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(PLANS[2])
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const getPrice = (plan: Plan) => billingCycle === 'annual' ? plan.annualPrice : plan.price
-  const formatPrice = (amount: number) => `₦${amount.toLocaleString()}`
+  const formatPrice = (amount: number) => `₦${amount?.toLocaleString()}`
   return (
     <SubscriptionContext.Provider value={{ selectedPlan, billingCycle, setSelectedPlan, setBillingCycle, getPrice, formatPrice }}>
       {children}

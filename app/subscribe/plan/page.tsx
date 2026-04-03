@@ -99,7 +99,7 @@ function PlanPageInner() {
                         <Text fw={700} style={{ color: p.color }}>{p.name}</Text>
                         {t === 'silver' && <Badge size="xs" color="teal" radius="xl">Most Popular</Badge>}
                       </Group>
-                      <Text size="sm" c="dimmed">₦{px.toLocaleString()} / {period}</Text>
+                      <Text size="sm" c="dimmed">₦{px?.toLocaleString()} / {period}</Text>
                     </Box>
                   </Group>
                   <Box style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${selected ? p.color : '#D8E6DA'}`, background: selected ? p.color : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -121,18 +121,18 @@ function PlanPageInner() {
         <Card withBorder radius="xl" p="md" mb="lg" style={{ background: '#EDF3EE' }}>
           <Group justify="space-between">
             <Text size="sm" c="dimmed">{plan.name} — {billing === 'annual' ? 'Annual' : 'Quarterly'}</Text>
-            <Text fw={700}>₦{price.toLocaleString()}</Text>
+            <Text fw={700}>₦{price?.toLocaleString()}</Text>
           </Group>
           {billing === 'annual' && (
             <Group justify="space-between" mt="xs">
               <Text size="xs" c="dimmed">Annual saving vs quarterly</Text>
-              <Text size="xs" c="#1A6B3C" fw={700}>–₦{plan.savings.toLocaleString()}</Text>
+              <Text size="xs" c="#1A6B3C" fw={700}>–₦{plan.savings?.toLocaleString()}</Text>
             </Group>
           )}
           <Divider my="sm" color="#D8E6DA" />
           <Group justify="space-between">
             <Text fw={700} style={{ fontFamily: 'var(--font-montserrat)' }}>Total today</Text>
-            <Text fw={800} style={{ fontFamily: 'var(--font-montserrat)', color: '#1A6B3C', fontSize: 20 }}>₦{price.toLocaleString()}</Text>
+            <Text fw={800} style={{ fontFamily: 'var(--font-montserrat)', color: '#1A6B3C', fontSize: 20 }}>₦{price?.toLocaleString()}</Text>
           </Group>
         </Card>
 
