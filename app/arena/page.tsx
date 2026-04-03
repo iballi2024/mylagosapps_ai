@@ -33,9 +33,8 @@ import { useRouter } from "next/navigation";
 const QUICK_LINKS = [
   { label: "Order food", icon: "🍽️", href: "/services/food" },
   { label: "Book a ride", icon: "🚗", href: "/services/rides" },
-  { label: "Send a parcel", icon: "📦", href: "/services/logistics" },
   { label: "Buy groceries", icon: "🛒", href: "/services/groceries" },
-  { label: "Home cleaning", icon: "🧽", href: "/services/home" },
+  { label: "Book a venue",  icon: "🏛️", href: "/services/events" },
   { label: "Get medicine", icon: "💊", href: "/services/healthcare" },
 ];
 

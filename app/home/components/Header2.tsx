@@ -22,11 +22,12 @@ import {
   IconBell,
   IconMenu2,
   IconX,
-  IconUser,
   IconBrandWhatsapp,
+  IconUser,
 } from "@tabler/icons-react";
-import Logo from "./Logo";
+// import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
+import Logo from "@/components/Logo";
 
 const serviceCategories = [
   { name: "Solar, Renewables and More", icon: "solar_power", href: "#" },
@@ -92,14 +93,14 @@ export default function Header() {
           <Anchor href="/" underline="never">
             <Group gap="sm">
               <Logo />
-              <Text
+              {/* <Text
                 fw={800}
                 size="xl"
                 c="primary"
-                style={{ letterSpacing: "-0.5px" }}
+                style={{ letterSpacing: "-0.5px", fontFamily: "Syne, sans-serif" }}
               >
                 LagosApps
-              </Text>
+              </Text> */}
             </Group>
           </Anchor>
 
@@ -162,7 +163,7 @@ export default function Header() {
           </Group>
 
           {/* Right actions */}
-          <Group gap="md">
+          <Group gap="sm">
             {/* Join CTA */}
             <Button
               component="a"
@@ -173,7 +174,6 @@ export default function Header() {
             >
               Join LagosApps
             </Button>
-
             {/* Authenticated: bell + avatar */}
             {isAuthenticated && user ? (
               <Group gap="sm" visibleFrom="md">
@@ -205,7 +205,8 @@ export default function Header() {
                 </UnstyledButton>
               </Group>
             ) : (
-              <Button component="a"
+              <Group gap="sm" visibleFrom="md">
+                <Button component="a"
               display={'flex'}
               p={2}
               h={50}
@@ -223,6 +224,25 @@ export default function Header() {
                   <IconUser size={20} />
                 </ActionIcon>
               </Button>
+                <Button
+                  component="a"
+                  href="/subscribe/account"
+                  variant="subtle"
+                  c="primary"
+                  fw={600}
+                >
+                  Log In
+                </Button>
+                <Button
+                  component="a"
+                  href="/subscribe/account"
+                  className="bg-primary-gradient"
+                  fw={700}
+                >
+                  Sign Up
+                </Button>
+                
+              </Group>
             )}
 
             {/* Mobile hamburger */}
@@ -267,7 +287,7 @@ export default function Header() {
                 fw={800}
                 size="xl"
                 c="primary"
-                style={{ letterSpacing: "-0.5px" }}
+                style={{ letterSpacing: "-0.5px", fontFamily: "Syne, sans-serif" }}
               >
                 LagosApps
               </Text>
@@ -422,19 +442,29 @@ export default function Header() {
                   </Group>
                 </UnstyledButton>
               ) : (
-                <Button
-                  fullWidth
-                  size="lg"
-                  fw={700}
-                  leftSection={<IconUser size={20} />}
-                  className="bg-primary-gradient"
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    setShowAuth(true);
-                  }}
-                >
-                  Sign In / Create Account
-                </Button>
+                <Group grow gap="sm">
+                  <Button
+                    component="a"
+                    href="/subscribe/account"
+                    size="lg"
+                    fw={700}
+                    variant="outline"
+                    color="primary"
+                    onClick={() => setDrawerOpen(false)}
+                  >
+                    Log In
+                  </Button>
+                  <Button
+                    component="a"
+                    href="/subscribe/account"
+                    size="lg"
+                    fw={700}
+                    className="bg-primary-gradient"
+                    onClick={() => setDrawerOpen(false)}
+                  >
+                    Sign Up
+                  </Button>
+                </Group>
               )}
             </Box>
           </Stack>

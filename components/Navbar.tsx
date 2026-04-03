@@ -10,9 +10,9 @@ const SERVICE_LINKS = [
   { label: 'Food',       href: '/services/food',       icon: '🍽️' },
   { label: 'Rides',      href: '/services/rides',       icon: '🚗' },
   { label: 'Groceries',  href: '/services/groceries',   icon: '🛒' },
-  { label: 'Home',       href: '/services/home',        icon: '🔧' },
-  { label: 'Logistics',  href: '/services/logistics',   icon: '📦' },
+
   { label: 'Healthcare', href: '/services/healthcare',  icon: '🏥' },
+  { label: 'Events',     href: '/services/events',      icon: '🎉' },
 ]
 
 export default function Navbar() {
