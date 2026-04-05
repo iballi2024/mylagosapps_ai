@@ -1,11 +1,11 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink } from '@mantine/core'
+import { usePathname, useRouter } from 'next/navigation'
+import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink, Loader } from '@mantine/core'
 
 import Logo from '@/components/Logo'
-
+import { useAuthContext } from '@/context/AuthContext'
 import { MOCK_PLAN, TIER_META } from './plan'
 
 const NAV = [
@@ -99,7 +99,24 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [opened, setOpened] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
+  const { isAuthenticated, loading } = useAuthContext()
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('lagos_token')
   const NAV_BOTTOM = NAV.slice(0, 4)
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated && !hasToken) {
+      router.replace(`/auth/login?next=${encodeURIComponent(pathname)}`)
+    }
+  }, [loading, isAuthenticated, hasToken, pathname, router])
+
+  if (loading || (!isAuthenticated && !hasToken)) {
+    return (
+      <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
+        <Loader size="lg" color="#1A6B3C" />
+      </Box>
+    )
+  }
 
   return (
     <Box style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex' }}>

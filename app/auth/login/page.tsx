@@ -2,21 +2,31 @@
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Box, Stack, Title, Text, TextInput, PasswordInput, Button, Anchor, Divider, Checkbox, Group } from '@mantine/core'
+import { Box, Stack, Title, Text, TextInput, PasswordInput, Button, Anchor, Divider, Checkbox, Group, Alert } from '@mantine/core'
+import { useAuthContext } from '@/context/AuthContext'
 
 function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const next = params.get('next') ?? '/dashboard'
+  const { login } = useAuthContext()
 
   const [form, setForm] = useState({ identifier: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    router.push(next)
+    try {
+      await login(form.identifier, form.password)
+      router.push(next)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sign in failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const signupHref = params.get('next')
@@ -40,6 +50,12 @@ function LoginForm() {
       </Stack>
 
       <Divider label="or sign in with email or phone" labelPosition="center" mb="md" />
+
+      {error && (
+        <Alert color="red" radius="md" mb="md" withCloseButton onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Stack gap="md">

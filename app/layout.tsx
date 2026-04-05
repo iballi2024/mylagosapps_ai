@@ -5,6 +5,7 @@ import "./index.css";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { PlatformProvider } from "@/context/PlatformContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { manrope, montserrat, poppins } from "@/public/fonts";
 import { theme } from "@/theming";
 
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body>
         <MantineProvider theme={theme} defaultColorScheme="light">
           <Notifications />
-          <PlatformProvider>{children}</PlatformProvider>
+          <AuthProvider>
+            <PlatformProvider>{children}</PlatformProvider>
+          </AuthProvider>
         </MantineProvider>
       </body>
     </html>
