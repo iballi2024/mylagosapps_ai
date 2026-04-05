@@ -1,20 +1,37 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Box, Stack, Title, Text, TextInput, PasswordInput, Button, Anchor, Divider, Checkbox, Group } from '@mantine/core'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Box, Stack, Title, Text, TextInput, PasswordInput, Button, Anchor, Divider, Checkbox, Group, Alert } from '@mantine/core'
+import { useAuthContext } from '@/context/AuthContext'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
-  const [form, setForm] = useState({ email: '', password: '' })
+  const params = useSearchParams()
+  const next = params.get('next') ?? '/dashboard'
+  const { login } = useAuthContext()
+
+  const [form, setForm] = useState({ identifier: '', password: '' })
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    router.push('/dashboard')
+    try {
+      await login(form.identifier, form.password)
+      router.push(next)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sign in failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const signupHref = params.get('next')
+    ? `/auth/signup?next=${encodeURIComponent(params.get('next')!)}`
+    : '/auth/signup'
 
   return (
     <Box w="100%" maw={420}>
@@ -22,7 +39,7 @@ export default function LoginPage() {
         <Title order={2} ff="var(--font-montserrat)" fw={800}>Welcome back</Title>
         <Text size="sm" c="dimmed">
           Don&apos;t have an account?{' '}
-          <Anchor component={Link} href="/auth/signup" fw={600} c="var(--color-gold)">Sign up free</Anchor>
+          <Anchor component={Link} href={signupHref} fw={600} c="var(--color-gold)">Sign up free</Anchor>
         </Text>
       </Stack>
 
@@ -30,17 +47,24 @@ export default function LoginPage() {
         <Button variant="default" radius="xl" size="md" leftSection={<GoogleIcon />} fullWidth>
           Continue with Google
         </Button>
-        <Button variant="default" radius="xl" size="md" leftSection="📱" fullWidth>
-          Continue with phone number
-        </Button>
       </Stack>
 
-      <Divider label="or sign in with email" labelPosition="center" mb="md" />
+      <Divider label="or sign in with email or phone" labelPosition="center" mb="md" />
+
+      {error && (
+        <Alert color="red" radius="md" mb="md" withCloseButton onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
-          <TextInput label="Email address" type="email" placeholder="you@company.ng"
-            value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+          <TextInput
+            label="Email or WhatsApp number"
+            type="text"
+            placeholder="you@example.ng or +234 801 234 5678"
+            value={form.identifier}
+            onChange={e => setForm(p => ({ ...p, identifier: e.target.value }))}
             radius="md" required />
           <Box>
             <Group justify="space-between" mb={6}>
@@ -65,6 +89,14 @@ export default function LoginPage() {
         <Anchor size="xs" c="dimmed" fw={500}>Privacy Policy</Anchor>
       </Text>
     </Box>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<Box w="100%" maw={420} />}>
+      <LoginForm />
+    </Suspense>
   )
 }
 

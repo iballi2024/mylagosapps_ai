@@ -109,7 +109,7 @@ function PaymentPageInner() {
               <Text>{plan.icon}</Text>
               <Text fw={600} style={{ color: plan.color }}>{plan.name} Membership</Text>
             </Group>
-            <Text fw={700}>₦{price.toLocaleString()}</Text>
+            <Text fw={700}>₦{price?.toLocaleString()}</Text>
           </Group>
           <Group justify="space-between">
             <Text size="xs" c="dimmed">{billing === 'annual' ? 'Billed annually' : 'Billed quarterly'}</Text>
@@ -118,7 +118,7 @@ function PaymentPageInner() {
           <Divider my="sm" color="#D8E6DA" />
           <Group justify="space-between">
             <Text fw={700} style={{ fontFamily: 'var(--font-montserrat)' }}>Total</Text>
-            <Text fw={800} style={{ color: '#1A6B3C', fontSize: 20, fontFamily: 'var(--font-montserrat)' }}>₦{price.toLocaleString()}</Text>
+            <Text fw={800} style={{ color: '#1A6B3C', fontSize: 20, fontFamily: 'var(--font-montserrat)' }}>₦{price?.toLocaleString()}</Text>
           </Group>
         </Card>
 
@@ -192,7 +192,7 @@ function PaymentPageInner() {
 
                 <Button type="submit" fullWidth radius="xl" size="lg" fw={700} loading={loading}
                   style={{ background: 'linear-gradient(135deg, #2E9E5B, #3DA96E)', color: 'white' }}>
-                  🔒 Pay ₦{price.toLocaleString()}
+                  🔒 Pay ₦{price?.toLocaleString()}
                 </Button>
                 <Text ta="center" size="xs" c="dimmed">
                   Your card is charged immediately. Membership activates on payment.
@@ -211,7 +211,7 @@ function PaymentPageInner() {
                     { label: 'Bank', value: 'GTBank (Guaranty Trust Bank)' },
                     { label: 'Account name', value: 'LagosApps Technologies Ltd' },
                     { label: 'Account number', value: '0123456789', copy: true },
-                    { label: 'Amount', value: `₦${price.toLocaleString()}` },
+                    { label: 'Amount', value: `₦${price?.toLocaleString()}` },
                     { label: 'Reference', value: `LAGOS-${tier.toUpperCase()}-${Date.now().toString().slice(-6)}`, copy: true },
                   ].map(row => (
                     <Group key={row.label} justify="space-between">

@@ -95,7 +95,7 @@ export default function BillingPage() {
                 <Text fz="sm" fw={500} c="var(--color-ink)">{inv.id}</Text>
                 <Text fz={10} c="var(--color-muted)">{inv.plan} · {inv.date}</Text>
               </Box>
-              <Text ff="var(--font-montserrat)" fw={700} fz="sm" c="var(--color-ink)">₦{inv.amount.toLocaleString()}</Text>
+              <Text ff="var(--font-montserrat)" fw={700} fz="sm" c="var(--color-ink)">₦{inv.amount?.toLocaleString()}</Text>
               <Badge size="xs" radius="xl" color="green" variant="light">{inv.status}</Badge>
               <Anchor fz="xs" c="var(--color-muted)" fw={500}>PDF</Anchor>
             </Group>

@@ -1,17 +1,31 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Box, Title, Text, TextInput, PasswordInput, Button, Divider,
-  Checkbox, Anchor, Stack, Grid, Progress, Loader
+  Checkbox, Anchor, Stack, Grid, Progress, Alert
 } from '@mantine/core'
+import { useAuthContext } from '@/context/AuthContext'
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter()
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', company: '' })
+  const params = useSearchParams()
+  const { signup } = useAuthContext()
+
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' })
+  const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [strength, setStrength] = useState(0)
+
+  const isValid =
+    form.firstName.trim().length > 0 &&
+    form.lastName.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) &&
+    form.phone.trim().length > 0 &&
+    form.password.length >= 8 &&
+    agreed
 
   const checkStrength = (pw: string) => {
     let s = 0
@@ -24,10 +38,27 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    router.push('/dashboard')
+    try {
+      await signup({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      })
+      router.push(`/auth/verify-email?email=${encodeURIComponent(form.email)}`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const loginHref = params.get('next')
+    ? `/auth/login?next=${encodeURIComponent(params.get('next')!)}`
+    : '/auth/login'
 
   const strengthColors = ['', 'red', 'orange', 'yellow', 'green']
   const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong']
@@ -40,7 +71,7 @@ export default function SignupPage() {
         </Title>
         <Text fz="sm" c="var(--color-muted)">
           Already have one?{' '}
-          <Anchor component={Link} href="/auth/login" fw={600} c="var(--color-gold)">Sign in</Anchor>
+          <Anchor component={Link} href={loginHref} fw={600} c="var(--color-gold)">Sign in</Anchor>
         </Text>
       </Stack>
 
@@ -54,27 +85,33 @@ export default function SignupPage() {
 
       <Divider label="or register with email" labelPosition="center" my="md" c="var(--color-subtle)" />
 
+      {error && (
+        <Alert color="red" radius="md" mb="md" withCloseButton onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       <form onSubmit={handleSubmit}>
         <Stack gap="sm">
           <Grid gutter="sm">
-            <Grid.Col span={6}>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
               <TextInput label="First Name" placeholder="Chidi" size="md" radius="xl"
                 value={form.firstName} onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))}
                 styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
             </Grid.Col>
-            <Grid.Col span={6}>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
               <TextInput label="Last Name" placeholder="Okonkwo" size="md" radius="xl"
                 value={form.lastName} onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))}
                 styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
             </Grid.Col>
           </Grid>
 
-          <TextInput label="Work Email" type="email" placeholder="chidi@company.ng" size="md" radius="xl"
+          <TextInput label="Email" type="email" placeholder="chidi@example.ng" size="md" radius="xl"
             value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
             styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
 
-          <TextInput label="Company Name" placeholder="Okonkwo Ventures (optional)" size="md" radius="xl"
-            value={form.company} onChange={e => setForm(p => ({ ...p, company: e.target.value }))}
+          <TextInput label="Phone Number" type="tel" placeholder="+234 801 234 5678" size="md" radius="xl"
+            value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
             styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
 
           <Box>
@@ -91,6 +128,8 @@ export default function SignupPage() {
           </Box>
 
           <Checkbox
+            checked={agreed}
+            onChange={e => setAgreed(e.currentTarget.checked)}
             label={
               <Text fz="xs" c="var(--color-muted)">
                 I agree to the{' '}
@@ -102,14 +141,21 @@ export default function SignupPage() {
             color="var(--color-gold)"
           />
 
-          <Button type="submit" fullWidth size="md" radius="xl" loading={loading}
-            // loader={<Loader size="xs" color="white" />}
-            style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 700, marginTop: 4 }}>
+          <Button type="submit" fullWidth size="md" radius="xl" loading={loading} disabled={!isValid}
+            style={{ background: isValid ? 'var(--color-ink)' : undefined, color: 'white', fontWeight: 700, marginTop: 4 }}>
             {loading ? 'Creating account...' : 'Create account →'}
           </Button>
         </Stack>
       </form>
     </Box>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<Box w="100%" maw={440} />}>
+      <SignupForm />
+    </Suspense>
   )
 }
 

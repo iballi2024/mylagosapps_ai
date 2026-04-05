@@ -1,4 +1,11 @@
-import { Montserrat, Poppins, Syne } from "next/font/google";
+import { Manrope, Montserrat, Poppins, Syne } from "next/font/google";
+
+export const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-manrope",
+});
 
 export const syne = Syne({
   subsets: ["latin"],

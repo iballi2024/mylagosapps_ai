@@ -74,24 +74,6 @@ export const SUBSIDIARIES: Subsidiary[] = [
     ],
   },
   {
-    id: 'lagos-market',
-    name: 'Food, Groceries and Household',
-    slug: 'groceries',
-    tagline: 'Fresh produce, groceries and household essentials',
-    category: 'Groceries & Market',
-    icon: '🛒',
-    color: '#1A6B3C',
-    colorLight: '#2E9E5B',
-    colorPale: '#E8F5EE',
-    whatsapp: '+2348001000003',
-    available: true,
-    services: [
-      { id: 'produce', name: 'Fresh Produce', description: 'Vegetables, fruits, and market staples sourced daily', startingPrice: 500, unit: 'per order', icon: '🥦', popular: true },
-      { id: 'bulk', name: 'Bulk Grains & Beans', description: 'Rice, beans, yam flour — measured and delivered', startingPrice: 4500, unit: 'per 5kg bag', icon: '🌾' },
-      { id: 'household', name: 'Household Essentials', description: 'Cleaning supplies, toiletries, paper goods', startingPrice: 1000, unit: 'per order', icon: '🧹' },
-    ],
-  },
-  {
     id: 'lagos-health',
     name: 'Health and Wellness',
     slug: 'healthcare',
@@ -128,6 +110,25 @@ export const SUBSIDIARIES: Subsidiary[] = [
       { id: 'event-tickets', name: 'Event Tickets', description: 'Buy tickets to LagosApps concerts, shows, and community events', startingPrice: 5000, unit: 'per ticket', icon: '🎟️' },
     ],
   },
+  {
+    id: 'lagos-solar',
+    name: 'Solar, Renewables and More',
+    slug: 'solar',
+    tagline: 'Solar audits, panel installation, inverters, and clean energy solutions',
+    category: 'Energy & Renewables',
+    icon: '☀️',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    whatsapp: '+2348001000008',
+    available: true,
+    services: [
+      { id: 'audit', name: 'Free Solar Audit', description: 'On-site energy assessment — our expert visits your property and recommends the right system', startingPrice: 0, unit: 'free', icon: '🔍', popular: true },
+      { id: 'installation', name: 'Solar Panel Installation', description: 'Full rooftop or ground-mount panel installation with 5-year warranty', startingPrice: 450000, unit: 'per system', icon: '🔆' },
+      { id: 'inverter', name: 'Inverter & Battery Setup', description: 'Hybrid inverters and lithium battery storage for 24/7 power', startingPrice: 280000, unit: 'per unit', icon: '🔋' },
+      { id: 'maintenance', name: 'Maintenance & Repair', description: 'Scheduled servicing, fault diagnosis, and panel cleaning', startingPrice: 15000, unit: 'per visit', icon: '🔧' },
+    ],
+  },
 ]
 
 export const MOCK_WALLET_TRANSACTIONS: WalletTransaction[] = [
@@ -153,7 +154,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [walletBalance] = useState(37800)
   const [loyaltyPoints] = useState(2450)
 
-  const formatPrice = (n: number) => `₦${n.toLocaleString()}`
+  const formatPrice = (n: number) => `₦${n?.toLocaleString()}`
   const getSubsidiary = (slug: string) => SUBSIDIARIES.find(s => s.slug === slug)
 
   return (

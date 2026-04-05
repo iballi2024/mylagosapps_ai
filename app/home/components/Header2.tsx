@@ -46,7 +46,7 @@ const demoLinks = [
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { user, isAuthenticated, setShowAuth, setShowDashboard } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
@@ -54,14 +54,9 @@ export default function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const userInitials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
-    : "";
+  const userInitials = user
+    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
+    : '';
 
   return (
     <>
@@ -175,13 +170,14 @@ export default function Header() {
               Join LagosApps
             </Button>
             {/* Authenticated: bell + avatar */}
-            {isAuthenticated && user ? (
+            {!loading && isAuthenticated && user ? (
               <Group gap="sm" visibleFrom="md">
                 <Indicator label="3" size={16} color="red" offset={4}>
                   <ActionIcon
+                    component="a"
+                    href="/dashboard"
                     variant="subtle"
                     size="lg"
-                    onClick={() => setShowDashboard(true)}
                     aria-label="Notifications"
                   >
                     <IconBell size={22} />
@@ -189,13 +185,14 @@ export default function Header() {
                 </Indicator>
 
                 <UnstyledButton
-                  onClick={() => setShowDashboard(true)}
+                  component="a"
+                  href="/dashboard"
                   aria-label="Open dashboard"
-                  title={user.name}
+                  title={`${user.first_name} ${user.last_name}`}
                 >
                   <Avatar
                     src={user.avatar || undefined}
-                    alt={user.name}
+                    alt={`${user.first_name} ${user.last_name}`}
                     size={40}
                     radius="xl"
                     color="primary"
@@ -204,20 +201,20 @@ export default function Header() {
                   </Avatar>
                 </UnstyledButton>
               </Group>
-            ) : (
+            ) : !loading ? (
               <Group gap="sm" visibleFrom="md">
+
                 <Button component="a"
               display={'flex'}
               p={2}
               h={50}
               bg={'transparent'}
               bd={'none'}
-              href="/subscribe/account">
+              href="/auth/login">
                 <ActionIcon
                   variant="default"
                   radius="xl"
                   size={40}
-                  onClick={() => setShowAuth(true)}
                   aria-label="Sign in"
                   visibleFrom="md"
                 >
@@ -226,7 +223,7 @@ export default function Header() {
               </Button>
                 <Button
                   component="a"
-                  href="/subscribe/account"
+                  href="/auth/login"
                   variant="subtle"
                   c="primary"
                   fw={600}
@@ -235,7 +232,7 @@ export default function Header() {
                 </Button>
                 <Button
                   component="a"
-                  href="/subscribe/account"
+                  href="/auth/signup"
                   className="bg-primary-gradient"
                   fw={700}
                 >
@@ -243,7 +240,7 @@ export default function Header() {
                 </Button>
                 
               </Group>
-            )}
+            ) : null}
 
             {/* Mobile hamburger */}
             <ActionIcon
@@ -412,15 +409,14 @@ export default function Header() {
                     borderRadius: "var(--mantine-radius-xl)",
                     background: "var(--mantine-color-gray-0)",
                   }}
-                  onClick={() => {
-                    setDrawerOpen(false);
-                    setShowDashboard(true);
-                  }}
+                  component="a"
+                  href="/dashboard"
+                  onClick={() => setDrawerOpen(false)}
                 >
                   <Group>
                     <Avatar
                       src={user.avatar || undefined}
-                      alt={user.name}
+                      alt={`${user.first_name} ${user.last_name}`}
                       size={40}
                       radius="xl"
                       color="primary"
@@ -429,7 +425,7 @@ export default function Header() {
                     </Avatar>
                     <Box flex={1}>
                       <Text fw={700} size="sm" c="primary">
-                        {user.name}
+                        {user.first_name} {user.last_name}
                       </Text>
                       <Text size="xs" c="dimmed">
                         View Dashboard
@@ -445,7 +441,7 @@ export default function Header() {
                 <Group grow gap="sm">
                   <Button
                     component="a"
-                    href="/subscribe/account"
+                    href="/auth/login"
                     size="lg"
                     fw={700}
                     variant="outline"
@@ -456,7 +452,7 @@ export default function Header() {
                   </Button>
                   <Button
                     component="a"
-                    href="/subscribe/account"
+                    href="/auth/signup"
                     size="lg"
                     fw={700}
                     className="bg-primary-gradient"

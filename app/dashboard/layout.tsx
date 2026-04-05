@@ -1,14 +1,15 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink } from '@mantine/core'
-import { usePlatform } from '@/context/PlatformContext'
+import { usePathname, useRouter } from 'next/navigation'
+import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink, Loader } from '@mantine/core'
+
 import Logo from '@/components/Logo'
+import { useAuthContext } from '@/context/AuthContext'
+import { MOCK_PLAN, TIER_META } from './plan'
 
 const NAV = [
   { href: '/dashboard',          icon: '⊞', label: 'Overview' },
-  { href: '/wallet',             icon: '💳', label: 'Wallet' },
   { href: '/dashboard/apps',     icon: '🧩', label: 'Services' },
   { href: '/dashboard/billing',  icon: '🧾', label: 'Billing' },
   { href: '/dashboard/team',     icon: '👥', label: 'Team' },
@@ -18,16 +19,13 @@ const NAV = [
 const SERVICES = [
   { href: '/services/food',       icon: '🍽️', label: 'Food, Groceries and Household' },
   { href: '/services/rides',      icon: '🚗', label: 'Cars, Vans and Rides' },
-  { href: '/services/groceries',  icon: '🛒', label: 'Food, Groceries and Household' },
-
   { href: '/services/healthcare', icon: '🏥', label: 'Health and Wellness' },
   { href: '/services/events',     icon: '🎉', label: 'Events and Studios' },
+  { href: '/services/solar',      icon: '☀️', label: 'Solar, Renewables and More' },
 ]
 
 function SidebarContent({ onNav }: { onNav?: () => void }) {
   const pathname = usePathname()
-  const { walletBalance, formatPrice } = usePlatform()
-
   return (
     <Stack h="100%" gap={0}>
       {/* Logo */}
@@ -37,13 +35,28 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
         </Box>
       </Group>
 
-      {/* Wallet chip */}
-      <Box mx="xs" mt="xs" px="sm" py="xs"
-        style={{ borderRadius: 12, background: 'linear-gradient(135deg, #1A1A2E, #2C2C4A)', flexShrink: 0, textDecoration: 'none', display: 'block' }}
-        component={Link} href="/wallet" onClick={onNav}>
-        <Text size="xs" c="white" opacity={0.5} tt="uppercase" fw={600} style={{ letterSpacing: 1 }}>Wallet</Text>
-        <Text ff="var(--font-montserrat)" fw={700} c="white" fz={15}>{formatPrice(walletBalance)}</Text>
-      </Box>
+      {/* Plan status chip */}
+      {MOCK_PLAN ? (
+        <Box mx="xs" mt="xs" px="sm" py="xs"
+          style={{ borderRadius: 12, background: 'linear-gradient(135deg, #2E9E5B, #1A6B3C)', flexShrink: 0, textDecoration: 'none', display: 'block' }}
+          component={Link} href="/dashboard/billing" onClick={onNav}>
+          <Text size="xs" c="rgba(255,255,255,0.6)" tt="uppercase" fw={600} style={{ letterSpacing: 1 }}>Current Plan</Text>
+          <Text ff="var(--font-montserrat)" fw={700} c="white" fz={15} mb={2}>
+            {TIER_META[MOCK_PLAN.tier].icon} {TIER_META[MOCK_PLAN.tier].label}
+          </Text>
+          <Text fz={10} c="rgba(255,255,255,0.55)">
+            {MOCK_PLAN.billing === 'annual' ? 'Annual' : 'Quarterly'} · Renews {MOCK_PLAN.renewsAt}
+          </Text>
+        </Box>
+      ) : (
+        <Box mx="xs" mt="xs" px="sm" py="xs"
+          style={{ borderRadius: 12, background: '#EDF3EE', border: '1px dashed #D8E6DA', flexShrink: 0, textDecoration: 'none', display: 'block' }}
+          component={Link} href="/subscribe/plan" onClick={onNav}>
+          <Text size="xs" c="var(--color-muted)" tt="uppercase" fw={600} style={{ letterSpacing: 1 }}>No active plan</Text>
+          <Text ff="var(--font-montserrat)" fw={700} c="#1A6B3C" fz={13} mb={2}>Subscribe now →</Text>
+          <Text fz={10} c="var(--color-muted)">Unlock all LagosApps services</Text>
+        </Box>
+      )}
 
       <ScrollArea flex={1} px="xs" py="xs">
         <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="xs" mb={4} style={{ letterSpacing: 1.5 }}>Account</Text>
@@ -85,14 +98,30 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [opened, setOpened] = useState(false)
-  const { walletBalance, formatPrice } = usePlatform()
   const pathname = usePathname()
+  const router = useRouter()
+  const { isAuthenticated, loading } = useAuthContext()
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('lagos_token')
   const NAV_BOTTOM = NAV.slice(0, 4)
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated && !hasToken) {
+      router.replace(`/auth/login?next=${encodeURIComponent(pathname)}`)
+    }
+  }, [loading, isAuthenticated, hasToken, pathname, router])
+
+  if (loading || (!isAuthenticated && !hasToken)) {
+    return (
+      <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
+        <Loader size="lg" color="#1A6B3C" />
+      </Box>
+    )
+  }
 
   return (
     <Box style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex' }}>
       {/* Desktop sidebar */}
-      <Box w={220} style={{ flexShrink: 0, background: 'white', borderRight: '1px solid var(--color-border)', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 }}
+      <Box w={260} style={{ flexShrink: 0, background: 'white', borderRight: '1px solid var(--color-border)', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 }}
         visibleFrom="lg">
         <SidebarContent />
       </Box>
@@ -105,7 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Content area */}
       <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}
-        ml={{ base: 0, lg: 220 }}>
+        ml={{ base: 0, lg: 260 }}>
 
         {/* Mobile top bar */}
         <Box hiddenFrom="lg"
@@ -114,10 +143,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Box component={Link} href="/" style={{ textDecoration: 'none' }}>
             <Logo size="1.15rem" />
           </Box>
-          <Box component={Link} href="/wallet"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 10, border: '1px solid var(--color-border)', background: 'var(--color-surface2)', color: 'var(--color-ink)', textDecoration: 'none' }}>
-            💳 {formatPrice(walletBalance)}
-          </Box>
+          {MOCK_PLAN ? (
+            <Box component={Link} href="/dashboard/billing"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 10, background: 'linear-gradient(135deg, #2E9E5B, #1A6B3C)', color: 'white', textDecoration: 'none' }}>
+              {TIER_META[MOCK_PLAN.tier].icon} {TIER_META[MOCK_PLAN.tier].label}
+            </Box>
+          ) : (
+            <Box component={Link} href="/subscribe/plan"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 10, background: '#EDF3EE', border: '1px solid #D8E6DA', color: '#1A6B3C', textDecoration: 'none' }}>
+              Subscribe
+            </Box>
+          )}
         </Box>
 
         <Box style={{ flex: 1, paddingBottom: 80 }} pb={{ lg: 0 }}>

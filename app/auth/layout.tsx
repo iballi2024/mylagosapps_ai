@@ -1,8 +1,25 @@
+'use client'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Box, Text, Stack, Group } from '@mantine/core'
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import Logo from '@/components/Logo'
+import { useAuthContext } from '@/context/AuthContext'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
+  const router = useRouter()
+  const { isAuthenticated, loading } = useAuthContext()
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      router.replace('/dashboard')
+    }
+  }, [loading, isAuthenticated, router])
+
+  // Don't render auth UI while checking session
+  if (loading) return null
+
   return (
     <Box style={{ minHeight: '100vh', display: 'flex' }}>
       {/* Decorative panel — md+ only */}
@@ -12,8 +29,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <Box style={{ position: 'absolute', top: 0, right: 0, width: 256, height: 256, borderRadius: '50%', background: 'radial-gradient(circle, #C9920A, transparent)', opacity: 0.1, transform: 'translate(30%, -30%)' }} />
 
         <Stack justify="space-between" h="100%" p={{ base: 'xl', lg: 48 }} style={{ position: 'relative', zIndex: 1 }}>
-          {/* Logo — light variant on dark background */}
-          <Logo size="1.5rem" light />
+          <Link href="/home" style={{ textDecoration: 'none' }}>
+            <Logo size="1.5rem" light />
+          </Link>
 
           <Box>
             <Text fz={32} mb="md">🚀</Text>
@@ -57,7 +75,9 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         {/* Mobile-only top bar */}
         <Box hiddenFrom="md" px="lg" h={56}
           style={{ borderBottom: '1px solid var(--color-border)', background: 'white', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-          <Logo size="1.15rem" />
+          <Link href="/home" style={{ textDecoration: 'none' }}>
+            <Logo size="1.15rem" />
+          </Link>
         </Box>
         <Box style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
           {children}
