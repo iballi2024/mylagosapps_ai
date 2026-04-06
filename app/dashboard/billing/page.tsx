@@ -128,9 +128,11 @@ export default function BillingPage() {
                   <Box key={u.label}>
                     <Group justify="space-between" mb={6}>
                       <Text fz="xs" c="var(--color-muted)" fw={500}>{u.label}</Text>
-                      <Text fz="xs" c="var(--color-ink)" fw={600}>{u.used} / {u.total}</Text>
+                      <Text fz="xs" c="var(--color-ink)" fw={600}>
+                        {u.pct > 0 ? `${u.used} / ${u.total}` : u.used}
+                      </Text>
                     </Group>
-                    <Progress value={u.pct} color={u.color} size="sm" radius="xl" />
+                    {u.pct > 0 && <Progress value={u.pct} color={u.color} size="sm" radius="xl" />}
                   </Box>
                 ))}
               </SimpleGrid>

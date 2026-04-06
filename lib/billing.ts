@@ -51,9 +51,9 @@ const MOCK_BILLING: BillingData = {
     icon: '🥇',
   },
   usage: [
-    { label: 'Apps',         used: 8,     total: 'Unlimited', pct: 5,  color: '#C9920A' },
-    { label: 'Storage',      used: '42GB', total: '200GB',    pct: 21, color: '#A0521A' },
-    { label: 'Team members', used: 5,     total: 'Unlimited', pct: 5,  color: '#4A5568' },
+    { label: 'Active Services',    used: 3,  total: 5,    pct: 60, color: '#C9920A' },
+    { label: 'Orders This Month',  used: 18, total: 100,  pct: 18, color: '#A0521A' },
+    { label: 'Wallet Balance (₦)', used: '12,400', total: 'Unlimited', pct: 0, color: '#2E9E5B' },
   ],
   paymentMethods: [
     { id: 'pm_1', brand: 'VISA', last4: '4242', expiry: '09/28', isDefault: true },
