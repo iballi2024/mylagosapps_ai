@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { AuthUser, apiLogin, apiSignup, apiLogout } from '@/lib/auth'
+import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetMe } from '@/lib/auth'
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -23,18 +23,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Restore session from localStorage on mount — no network call needed
+  // Restore session from localStorage, then verify token is still valid
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY)
+    if (!token) { setLoading(false); return }
+
     const stored = localStorage.getItem(USER_KEY)
-    if (token && stored) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch {
-        localStorage.removeItem(USER_KEY)
-      }
+    if (stored) {
+      try { setUser(JSON.parse(stored)) } catch { localStorage.removeItem(USER_KEY) }
     }
     setLoading(false)
+
+    // Verify token in background — log out silently if expired/revoked
+    apiGetMe().catch(() => {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      setUser(null)
+    })
   }, [])
 
   const login = useCallback(async (identifier: string, password: string) => {
