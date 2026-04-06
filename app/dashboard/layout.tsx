@@ -11,6 +11,7 @@ import { MOCK_PLAN, TIER_META } from './plan'
 const NAV = [
   { href: '/dashboard',          icon: '⊞', label: 'Overview' },
   { href: '/dashboard/apps',     icon: '🧩', label: 'Services' },
+  { href: '/dashboard/orders',   icon: '📦', label: 'Orders' },
   { href: '/dashboard/billing',  icon: '🧾', label: 'Billing' },
   // { href: '/dashboard/team',     icon: '👥', label: 'Team' }, // hidden from nav — module retained
   { href: '/dashboard/settings', icon: '⚙️', label: 'Settings' },

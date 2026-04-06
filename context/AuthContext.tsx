@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetMe } from '@/lib/auth'
+import { ApiError } from '@/lib/api'
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -34,11 +35,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setLoading(false)
 
-    // Verify token in background — log out silently if expired/revoked
-    apiGetMe().catch(() => {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      setUser(null)
+    // Verify token — only clear session on 401 (expired/revoked), ignore network errors
+    apiGetMe().catch((err) => {
+      if (err instanceof ApiError && err.status === 401) {
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
+        setUser(null)
+      }
     })
   }, [])
 
