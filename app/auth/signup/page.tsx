@@ -4,17 +4,28 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Box, Title, Text, TextInput, PasswordInput, Button, Divider,
-  Checkbox, Anchor, Stack, Grid, Progress
+  Checkbox, Anchor, Stack, Grid, Progress, Alert
 } from '@mantine/core'
+import { useAuthContext } from '@/context/AuthContext'
 
 function SignupForm() {
   const router = useRouter()
   const params = useSearchParams()
-  const next = params.get('next') ?? '/dashboard'
+  const { signup } = useAuthContext()
 
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '', phone: '' })
+  const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [strength, setStrength] = useState(0)
+
+  const isValid =
+    form.firstName.trim().length > 0 &&
+    form.lastName.trim().length > 0 &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) &&
+    form.phone.trim().length > 0 &&
+    form.password.length >= 8 &&
+    agreed
 
   const checkStrength = (pw: string) => {
     let s = 0
@@ -27,9 +38,22 @@ function SignupForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    router.push(next)
+    try {
+      await signup({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+      })
+      router.push(`/auth/verify-email?email=${encodeURIComponent(form.email)}`)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Sign up failed. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const loginHref = params.get('next')
@@ -61,15 +85,21 @@ function SignupForm() {
 
       <Divider label="or register with email" labelPosition="center" my="md" c="var(--color-subtle)" />
 
+      {error && (
+        <Alert color="red" radius="md" mb="md" withCloseButton onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       <form onSubmit={handleSubmit}>
         <Stack gap="sm">
           <Grid gutter="sm">
-            <Grid.Col span={6}>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
               <TextInput label="First Name" placeholder="Chidi" size="md" radius="xl"
                 value={form.firstName} onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))}
                 styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
             </Grid.Col>
-            <Grid.Col span={6}>
+            <Grid.Col span={{ base: 12, sm: 6 }}>
               <TextInput label="Last Name" placeholder="Okonkwo" size="md" radius="xl"
                 value={form.lastName} onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))}
                 styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
@@ -98,6 +128,8 @@ function SignupForm() {
           </Box>
 
           <Checkbox
+            checked={agreed}
+            onChange={e => setAgreed(e.currentTarget.checked)}
             label={
               <Text fz="xs" c="var(--color-muted)">
                 I agree to the{' '}
@@ -109,8 +141,8 @@ function SignupForm() {
             color="var(--color-gold)"
           />
 
-          <Button type="submit" fullWidth size="md" radius="xl" loading={loading}
-            style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 700, marginTop: 4 }}>
+          <Button type="submit" fullWidth size="md" radius="xl" loading={loading} disabled={!isValid}
+            style={{ background: isValid ? 'var(--color-ink)' : undefined, color: 'white', fontWeight: 700, marginTop: 4 }}>
             {loading ? 'Creating account...' : 'Create account →'}
           </Button>
         </Stack>
