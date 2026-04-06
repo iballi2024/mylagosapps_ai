@@ -1,13 +1,23 @@
 import { apiFetch } from './api'
 
 export interface AuthUser {
-  id: string
-  first_name: string
-  last_name: string
-  name: string
+  id: number
+  firstName: string
+  lastName: string
+  middleName: string | null
   email: string
   phone: string
   avatar?: string
+}
+
+interface LoginApiResponse {
+  success: boolean
+  message: string
+  data: {
+    token: string
+    user: AuthUser
+  }
+  error: null
 }
 
 interface LoginResponse {
@@ -23,10 +33,11 @@ export interface SignupResponse {
 }
 
 export async function apiLogin(identifier: string, password: string): Promise<LoginResponse> {
-  return apiFetch<LoginResponse>('/auth/login', {
+  const res = await apiFetch<LoginApiResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ identifier, password }),
   })
+  return res.data
 }
 
 export async function apiSignup(data: {
@@ -68,6 +79,95 @@ export async function apiGetMe(): Promise<AuthUser> {
   return apiFetch<AuthUser>('/auth/me')
 }
 
+export interface ProfileData {
+  firstName: string
+  lastName: string
+  middleName: string | null
+  email: string
+  phone: string
+  avatar?: string
+}
+
+interface ProfileApiResponse {
+  success: boolean
+  message: string
+  data: { user: ProfileData }
+  error: null | string
+}
+
+export async function apiGetProfile(): Promise<ProfileData> {
+  const res = await apiFetch<ProfileApiResponse>('/app/profile')
+  return res.data.user
+}
+
+export async function apiUpdateNotifications(prefs: {
+  billing?: boolean
+  apps?: boolean
+  marketing?: boolean
+}): Promise<void> {
+  await apiFetch<{ success: boolean; message: string }>('/app/profile/notifications', {
+    method: 'PUT',
+    body: JSON.stringify(prefs),
+  })
+}
+
+export async function apiDeleteAccount(): Promise<void> {
+  await apiFetch<{ success: boolean; message: string }>('/app/profile', {
+    method: 'DELETE',
+  })
+}
+
+export async function apiChangePassword(payload: {
+  currentPassword: string
+  newPassword: string
+  confirmNewPassword: string
+}): Promise<void> {
+  await apiFetch<{ success: boolean; message: string }>('/app/profile/change-password', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function apiUpdateProfile(payload: {
+  firstName: string
+  lastName: string
+  middleName: string
+  email: string
+  phone: string
+}): Promise<ProfileData> {
+  const res = await apiFetch<ProfileApiResponse>('/app/profile', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+  return res.data.user
+}
+
 export async function apiLogout(): Promise<void> {
   await apiFetch<void>('/auth/logout', { method: 'POST' }).catch(() => {})
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean
+  message: string
+  error: null | string
+}
+
+export async function apiForgotPassword(email: string): Promise<ForgotPasswordResponse> {
+  return apiFetch<ForgotPasswordResponse>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+  })
+}
+
+export interface ResetPasswordResponse {
+  success: boolean
+  message: string
+  error: null | string
+}
+
+export async function apiResetPassword(token: string, password: string): Promise<ResetPasswordResponse> {
+  return apiFetch<ResetPasswordResponse>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, password }),
+  })
 }
