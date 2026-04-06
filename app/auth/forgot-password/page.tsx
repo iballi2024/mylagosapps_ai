@@ -1,19 +1,27 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { Box, Title, Text, TextInput, Button, Anchor, Stack, Loader, ThemeIcon } from '@mantine/core'
+import { Box, Title, Text, TextInput, Button, Anchor, Stack, ThemeIcon, Alert } from '@mantine/core'
+import { apiForgotPassword } from '@/lib/auth'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError(null)
     setLoading(true)
-    await new Promise(r => setTimeout(r, 800))
-    setSent(true)
-    setLoading(false)
+    try {
+      await apiForgotPassword(email)
+      setSent(true)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (sent) {
@@ -58,6 +66,12 @@ export default function ForgotPasswordPage() {
         </Text>
       </Stack>
 
+      {error && (
+        <Alert color="red" radius="md" mb="md" withCloseButton onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
       <form onSubmit={handleSubmit}>
         <Stack gap="md">
           <TextInput
@@ -67,7 +81,6 @@ export default function ForgotPasswordPage() {
             styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }}
           />
           <Button type="submit" fullWidth size="md" radius="xl" loading={loading}
-            // loader={<Loader size="xs" color="white" />}
             style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 700 }}>
             {loading ? 'Sending...' : 'Send reset link'}
           </Button>

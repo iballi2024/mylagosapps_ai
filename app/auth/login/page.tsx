@@ -75,7 +75,7 @@ function LoginForm() {
               onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
               radius="md" required />
           </Box>
-          <Checkbox label="Keep me signed in for 30 days" size="sm" color="var(--color-ink)" />
+          {/* <Checkbox label="Keep me signed in for 30 days" size="sm" color="var(--color-ink)" /> */}
           <Button type="submit" loading={loading} radius="xl" size="md" fullWidth
             style={{ background: 'var(--color-ink)', color: 'white' }}>
             Sign in →
