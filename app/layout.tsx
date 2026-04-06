@@ -8,8 +8,8 @@ import { Notifications } from '@mantine/notifications'
 import { PlatformProvider } from '@/context/PlatformContext'
 import type { Metadata } from 'next'
 
-const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat', weight: ['400','600','700','800'] })
-const poppins    = Poppins   ({ subsets: ['latin'], variable: '--font-poppins',    weight: ['300','400','500','600'] })
+const montserrat = Montserrat({ subsets: ['latin'], variable: '--font-montserrat', weight: ['400','600','700','800'], display: 'swap', preload: false })
+const poppins    = Poppins   ({ subsets: ['latin'], variable: '--font-poppins',    weight: ['300','400','500','600'], display: 'swap', preload: false })
 
 export const metadata: Metadata = {
   title: 'LagosApps — One Account. Every Service.',
