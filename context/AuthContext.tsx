@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetMe } from '@/lib/auth'
+import { AuthUser, apiLogin, apiSignup, apiLogout } from '@/lib/auth'
 
 interface AuthContextValue {
   user: AuthUser | null
@@ -17,24 +17,30 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 const TOKEN_KEY = 'lagos_token'
+const USER_KEY = 'lagos_user'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Restore session on mount
+  // Restore session from localStorage on mount — no network call needed
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY)
-    if (!token) { setLoading(false); return }
-    apiGetMe()
-      .then(setUser)
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
-      .finally(() => setLoading(false))
+    const stored = localStorage.getItem(USER_KEY)
+    if (token && stored) {
+      try {
+        setUser(JSON.parse(stored))
+      } catch {
+        localStorage.removeItem(USER_KEY)
+      }
+    }
+    setLoading(false)
   }, [])
 
   const login = useCallback(async (identifier: string, password: string) => {
     const { token, user } = await apiLogin(identifier, password)
     localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
     setUser(user)
   }, [])
 
@@ -46,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await apiLogout()
     localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(USER_KEY)
     setUser(null)
   }, [])
 

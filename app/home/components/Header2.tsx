@@ -55,7 +55,7 @@ export default function Header() {
   }, []);
 
   const userInitials = user
-    ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
+    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '';
 
   return (
@@ -188,11 +188,11 @@ export default function Header() {
                   component="a"
                   href="/dashboard"
                   aria-label="Open dashboard"
-                  title={`${user.first_name} ${user.last_name}`}
+                  title={`${user.firstName} ${user.lastName}`}
                 >
                   <Avatar
                     src={user.avatar || undefined}
-                    alt={`${user.first_name} ${user.last_name}`}
+                    alt={`${user.firstName} ${user.lastName}`}
                     size={40}
                     radius="xl"
                     color="primary"
@@ -416,7 +416,7 @@ export default function Header() {
                   <Group>
                     <Avatar
                       src={user.avatar || undefined}
-                      alt={`${user.first_name} ${user.last_name}`}
+                      alt={`${user.firstName} ${user.lastName}`}
                       size={40}
                       radius="xl"
                       color="primary"
@@ -425,7 +425,7 @@ export default function Header() {
                     </Avatar>
                     <Box flex={1}>
                       <Text fw={700} size="sm" c="primary">
-                        {user.first_name} {user.last_name}
+                        {user.firstName} {user.lastName}
                       </Text>
                       <Text size="xs" c="dimmed">
                         View Dashboard
