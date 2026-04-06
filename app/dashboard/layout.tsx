@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink, Loader } from '@mantine/core'
+import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink, Skeleton } from '@mantine/core'
 
 import Logo from '@/components/Logo'
 import { useAuthContext } from '@/context/AuthContext'
@@ -12,7 +12,7 @@ const NAV = [
   { href: '/dashboard',          icon: '⊞', label: 'Overview' },
   { href: '/dashboard/apps',     icon: '🧩', label: 'Services' },
   { href: '/dashboard/billing',  icon: '🧾', label: 'Billing' },
-  { href: '/dashboard/team',     icon: '👥', label: 'Team' },
+  // { href: '/dashboard/team',     icon: '👥', label: 'Team' }, // hidden from nav — module retained
   { href: '/dashboard/settings', icon: '⚙️', label: 'Settings' },
 ]
 
@@ -24,7 +24,7 @@ const SERVICES = [
   { href: '/services/solar',      icon: '☀️', label: 'Solar, Renewables and More' },
 ]
 
-function SidebarContent({ onNav }: { onNav?: () => void }) {
+function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: () => void }) {
   const pathname = usePathname()
   return (
     <Stack h="100%" gap={0}>
@@ -88,7 +88,7 @@ function SidebarContent({ onNav }: { onNav?: () => void }) {
           </Box>
           <Box style={{ flex: 1, minWidth: 0 }}>
             <Text size="xs" fw={600} c="var(--color-ink)" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Chidi Okonkwo</Text>
-            <Text component={Link} href="/auth/login" size="xs" c="dimmed" style={{ textDecoration: 'none' }}>Sign out</Text>
+            <Text component="button" size="xs" c="dimmed" style={{ textDecoration: 'none', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} onClick={onLogout}>Sign out</Text>
           </Box>
         </Group>
       </Box>
@@ -100,7 +100,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [opened, setOpened] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const { isAuthenticated, loading } = useAuthContext()
+  const { isAuthenticated, loading, logout } = useAuthContext()
+
+  const handleLogout = async () => {
+    await logout()
+    router.replace('/auth/login')
+  }
   const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('lagos_token')
   const NAV_BOTTOM = NAV.slice(0, 4)
 
@@ -112,8 +117,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || (!isAuthenticated && !hasToken)) {
     return (
-      <Box style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-bg)' }}>
-        <Loader size="lg" color="#1A6B3C" />
+      <Box style={{ minHeight: '100vh', background: 'var(--color-bg)', display: 'flex' }}>
+        {/* Sidebar skeleton */}
+        <Box w={260} style={{ flexShrink: 0, background: 'white', borderRight: '1px solid var(--color-border)', padding: '24px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}
+          visibleFrom="lg">
+          <Skeleton height={32} width={120} radius="md" mb={8} />
+          <Skeleton height={52} radius="xl" />
+          <Box mt={8}>
+            {[...Array(5)].map((_, i) => (
+              <Skeleton key={i} height={38} radius="xl" mb={6} />
+            ))}
+          </Box>
+          <Box mt="auto">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} height={38} radius="xl" mb={6} />
+            ))}
+          </Box>
+          <Group gap="sm" mt="auto" pt={16} style={{ borderTop: '1px solid var(--color-border)' }}>
+            <Skeleton height={34} width={34} radius="xl" />
+            <Box style={{ flex: 1 }}>
+              <Skeleton height={12} width="60%" radius="sm" mb={6} />
+              <Skeleton height={10} width="40%" radius="sm" />
+            </Box>
+          </Group>
+        </Box>
+
+        {/* Content skeleton */}
+        <Box style={{ flex: 1, padding: '32px 24px' }}>
+          <Skeleton height={28} width={200} radius="md" mb={8} />
+          <Skeleton height={14} width={300} radius="sm" mb={32} />
+          <Box style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 16, marginBottom: 32 }}>
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} height={100} radius="xl" />
+            ))}
+          </Box>
+          <Skeleton height={200} radius="xl" mb={16} />
+          <Skeleton height={120} radius="xl" />
+        </Box>
       </Box>
     )
   }
@@ -123,13 +163,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Desktop sidebar */}
       <Box w={260} style={{ flexShrink: 0, background: 'white', borderRight: '1px solid var(--color-border)', position: 'fixed', top: 0, left: 0, height: '100vh', zIndex: 100 }}
         visibleFrom="lg">
-        <SidebarContent />
+        <SidebarContent onLogout={handleLogout} />
       </Box>
 
       {/* Mobile drawer */}
       <Drawer opened={opened} onClose={() => setOpened(false)} size={240} padding={0}
         styles={{ body: { padding: 0, height: '100%' }, header: { display: 'none' } }}>
-        <SidebarContent onNav={() => setOpened(false)} />
+        <SidebarContent onNav={() => setOpened(false)} onLogout={handleLogout} />
       </Drawer>
 
       {/* Content area */}
