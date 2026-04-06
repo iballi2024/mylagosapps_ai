@@ -1,14 +1,7 @@
 'use client'
-import { Syne } from 'next/font/google'
+import { syne } from '@/public/fonts'
 import { Text } from '@mantine/core'
 import type { CSSProperties } from 'react'
-
-const syne = Syne({
-  subsets: ['latin'],
-  weight: ['700', '800'],
-  display: 'swap',
-  variable: '--font-syne',
-})
 
 interface LogoProps {
   /** Font size – any valid CSS value. Defaults to '1.25rem'. */

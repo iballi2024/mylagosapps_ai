@@ -39,14 +39,14 @@ export interface WalletTransaction {
 export const SUBSIDIARIES: Subsidiary[] = [
   {
     id: 'lagos-eats',
-    name: 'LagosEats',
+    name: 'Food, Groceries and Household',
     slug: 'food',
     tagline: 'Restaurant meals & home-cooked food delivered fast',
     category: 'Food Delivery',
     icon: '🍽️',
-    color: '#C0392B',
-    colorLight: '#E74C3C',
-    colorPale: '#FDF2F0',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
     whatsapp: '+2348001000001',
     available: true,
     services: [
@@ -57,14 +57,14 @@ export const SUBSIDIARIES: Subsidiary[] = [
   },
   {
     id: 'lagos-rides',
-    name: 'LagosRides',
+    name: 'Cars, Vans and Rides',
     slug: 'rides',
     tagline: 'Reliable rides across Lagos — cars, tricycles, dispatch',
     category: 'Transportation',
     icon: '🚗',
-    color: '#1A5276',
-    colorLight: '#2980B9',
-    colorPale: '#EBF5FB',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
     whatsapp: '+2348001000002',
     available: true,
     services: [
@@ -74,69 +74,15 @@ export const SUBSIDIARIES: Subsidiary[] = [
     ],
   },
   {
-    id: 'lagos-market',
-    name: 'LagosMarket',
-    slug: 'groceries',
-    tagline: 'Fresh produce, groceries and household essentials',
-    category: 'Groceries & Market',
-    icon: '🛒',
-    color: '#1E8449',
-    colorLight: '#27AE60',
-    colorPale: '#EAFAF1',
-    whatsapp: '+2348001000003',
-    available: true,
-    services: [
-      { id: 'produce', name: 'Fresh Produce', description: 'Vegetables, fruits, and market staples sourced daily', startingPrice: 500, unit: 'per order', icon: '🥦', popular: true },
-      { id: 'bulk', name: 'Bulk Grains & Beans', description: 'Rice, beans, yam flour — measured and delivered', startingPrice: 4500, unit: 'per 5kg bag', icon: '🌾' },
-      { id: 'household', name: 'Household Essentials', description: 'Cleaning supplies, toiletries, paper goods', startingPrice: 1000, unit: 'per order', icon: '🧹' },
-    ],
-  },
-  {
-    id: 'lagos-home',
-    name: 'LagosHome',
-    slug: 'home',
-    tagline: 'Trusted tradespeople and home service professionals',
-    category: 'Home Services',
-    icon: '🔧',
-    color: '#6C3483',
-    colorLight: '#8E44AD',
-    colorPale: '#F5EEF8',
-    whatsapp: '+2348001000004',
-    available: true,
-    services: [
-      { id: 'cleaning', name: 'Home Cleaning', description: 'Thorough deep-clean by verified cleaning teams', startingPrice: 8000, unit: 'per session', icon: '🧽', popular: true },
-      { id: 'plumbing', name: 'Plumbing & Electrical', description: 'Licensed plumbers and electricians on demand', startingPrice: 5000, unit: 'callout fee', icon: '⚡' },
-      { id: 'ac', name: 'AC Service & Repair', description: 'Servicing, gas recharge, and fault diagnosis', startingPrice: 6500, unit: 'per unit', icon: '❄️' },
-    ],
-  },
-  {
-    id: 'lagos-send',
-    name: 'LagosSend',
-    slug: 'logistics',
-    tagline: 'Same-day and scheduled parcel delivery across Nigeria',
-    category: 'Logistics',
-    icon: '📦',
-    color: '#B7770D',
-    colorLight: '#D4AC0D',
-    colorPale: '#FEFBE8',
-    whatsapp: '+2348001000005',
-    available: true,
-    services: [
-      { id: 'intracity', name: 'Intra-City Delivery', description: 'Door-to-door same-day delivery within Lagos', startingPrice: 1500, unit: 'per parcel', icon: '🏙️', popular: true },
-      { id: 'interstate', name: 'Interstate Delivery', description: 'Next-day delivery to Abuja, PHC, and 30+ cities', startingPrice: 4500, unit: 'per parcel', icon: '🛣️' },
-      { id: 'bulk-logistics', name: 'Bulk Cargo', description: 'Palletised and oversized cargo nationwide', startingPrice: 35000, unit: 'per consignment', icon: '🚛' },
-    ],
-  },
-  {
     id: 'lagos-health',
-    name: 'LagosHealth',
+    name: 'Health and Wellness',
     slug: 'healthcare',
     tagline: 'Pharmacy delivery, lab tests, and doctor consultations',
     category: 'Healthcare',
     icon: '🏥',
-    color: '#117A65',
-    colorLight: '#148F77',
-    colorPale: '#E8F8F5',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
     whatsapp: '+2348001000006',
     available: true,
     services: [
@@ -145,15 +91,52 @@ export const SUBSIDIARIES: Subsidiary[] = [
       { id: 'doctor', name: 'Doctor Consultation', description: 'Video call with a licensed Nigerian physician', startingPrice: 5000, unit: 'per consultation', icon: '👨‍⚕️' },
     ],
   },
+  {
+    id: 'mainland-events',
+    name: 'Events and Studios',
+    slug: 'events',
+    tagline: 'Book event spaces, TV & audio studios, and event tickets',
+    category: 'Events & Studios',
+    icon: '🎉',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    whatsapp: '+2348001000007',
+    available: true,
+    services: [
+      { id: 'event-venue', name: 'Event Venue Hire', description: 'Halls, gardens, and rooftops for private and corporate events', startingPrice: 150000, unit: 'per day', icon: '🏛️', popular: true },
+      { id: 'tv-studio', name: 'TV Studio Rental', description: 'Fully equipped broadcast studio with lighting and crew', startingPrice: 80000, unit: 'per half-day', icon: '📺' },
+      { id: 'audio-studio', name: 'Audio Studio', description: 'Professional recording studio for music and podcasts', startingPrice: 25000, unit: 'per hour', icon: '🎙️' },
+      { id: 'event-tickets', name: 'Event Tickets', description: 'Buy tickets to LagosApps concerts, shows, and community events', startingPrice: 5000, unit: 'per ticket', icon: '🎟️' },
+    ],
+  },
+  {
+    id: 'lagos-solar',
+    name: 'Solar, Renewables and More',
+    slug: 'solar',
+    tagline: 'Solar audits, panel installation, inverters, and clean energy solutions',
+    category: 'Energy & Renewables',
+    icon: '☀️',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    whatsapp: '+2348001000008',
+    available: true,
+    services: [
+      { id: 'audit', name: 'Free Solar Audit', description: 'On-site energy assessment — our expert visits your property and recommends the right system', startingPrice: 0, unit: 'free', icon: '🔍', popular: true },
+      { id: 'installation', name: 'Solar Panel Installation', description: 'Full rooftop or ground-mount panel installation with 5-year warranty', startingPrice: 450000, unit: 'per system', icon: '🔆' },
+      { id: 'inverter', name: 'Inverter & Battery Setup', description: 'Hybrid inverters and lithium battery storage for 24/7 power', startingPrice: 280000, unit: 'per unit', icon: '🔋' },
+      { id: 'maintenance', name: 'Maintenance & Repair', description: 'Scheduled servicing, fault diagnosis, and panel cleaning', startingPrice: 15000, unit: 'per visit', icon: '🔧' },
+    ],
+  },
 ]
 
 export const MOCK_WALLET_TRANSACTIONS: WalletTransaction[] = [
-  { id: 'txn-1', type: 'debit', amount: 4200, description: 'LagosEats — Buka Spot order', subsidiary: 'LagosEats', date: 'Today, 12:43 PM', status: 'completed' },
-  { id: 'txn-2', type: 'debit', amount: 3500, description: 'LagosRides — VI to Lekki', subsidiary: 'LagosRides', date: 'Today, 09:15 AM', status: 'completed' },
+  { id: 'txn-1', type: 'debit', amount: 4200, description: 'Food, Groceries and Household — Buka Spot order', subsidiary: 'Food, Groceries and Household', date: 'Today, 12:43 PM', status: 'completed' },
+  { id: 'txn-2', type: 'debit', amount: 3500, description: 'Cars, Vans and Rides — VI to Lekki', subsidiary: 'Cars, Vans and Rides', date: 'Today, 09:15 AM', status: 'completed' },
   { id: 'txn-3', type: 'credit', amount: 50000, description: 'Wallet top-up via bank transfer', subsidiary: 'Platform', date: 'Yesterday', status: 'completed' },
-  { id: 'txn-4', type: 'debit', amount: 8500, description: 'LagosMarket — weekly groceries', subsidiary: 'LagosMarket', date: 'Yesterday', status: 'completed' },
-  { id: 'txn-5', type: 'debit', amount: 1500, description: 'LagosSend — document to Surulere', subsidiary: 'LagosSend', date: 'Mon, 17 Mar', status: 'completed' },
-  { id: 'txn-6', type: 'debit', amount: 8000, description: 'LagosHome — cleaning session', subsidiary: 'LagosHome', date: 'Sat, 15 Mar', status: 'completed' },
+  { id: 'txn-4', type: 'debit', amount: 8500, description: 'Food, Groceries and Household — weekly groceries', subsidiary: 'Food, Groceries and Household', date: 'Yesterday', status: 'completed' },
+  { id: 'txn-5', type: 'debit', amount: 5000, description: 'Events and Studios — concert ticket', subsidiary: 'Events and Studios', date: 'Sat, 15 Mar', status: 'completed' },
 ]
 
 interface PlatformState {
@@ -171,7 +154,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const [walletBalance] = useState(37800)
   const [loyaltyPoints] = useState(2450)
 
-  const formatPrice = (n: number) => `₦${n.toLocaleString()}`
+  const formatPrice = (n: number) => `₦${n?.toLocaleString()}`
   const getSubsidiary = (slug: string) => SUBSIDIARIES.find(s => s.slug === slug)
 
   return (
