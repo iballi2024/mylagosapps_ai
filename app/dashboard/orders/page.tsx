@@ -61,7 +61,6 @@ export default function OrdersPage() {
 
             return (
               <Card key={order.id} radius="xl" withBorder p="md"
-                style={{ borderColor: 'var(--color-border)' }}
                 component={Link} href={`/dashboard/orders/${order.id}`}
                 style={{ borderColor: 'var(--color-border)', textDecoration: 'none', display: 'block', cursor: 'pointer' }}>
                 <Group justify="space-between" mb="xs" wrap="nowrap">

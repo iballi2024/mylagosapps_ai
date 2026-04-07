@@ -176,22 +176,17 @@ export default function Header() {
                   onClick={() => setShowDashboard(true)}
                   className="size-10 rounded-full cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all overflow-hidden"
                   aria-label="Open dashboard"
-                  title={user.name}
+                  title={`${user.firstName} ${user.lastName}`}
                 >
                   {user.avatar ? (
                     <img
                       src={user.avatar}
-                      alt={user.name}
+                      alt={`${user.firstName} ${user.lastName}`}
                       className="size-full object-cover"
                     />
                   ) : (
                     <div className="size-full bg-primary flex items-center justify-center text-on-primary font-bold text-sm">
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
+                      {`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()}
                     </div>
                   )}
                 </button>
@@ -334,22 +329,17 @@ export default function Header() {
                   {user.avatar ? (
                     <img
                       src={user.avatar}
-                      alt={user.name}
+                      alt={`${user.firstName} ${user.lastName}`}
                       className="size-10 rounded-full object-cover"
                     />
                   ) : (
                     <div className="size-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-bold text-sm">
-                      {user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
+                      {`${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()}
                     </div>
                   )}
                   <div className="flex-1 text-left">
                     <p className="font-bold text-sm text-primary">
-                      {user.name}
+                      {user.firstName} {user.lastName}
                     </p>
                     <p className="text-xs text-on-surface-variant">
                       View Dashboard

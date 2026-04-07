@@ -155,7 +155,7 @@ export default function SettingsPage() {
                 value={profile.middleName ?? ''} onChange={e => setProfile(p => ({ ...p, middleName: e.target.value }))} />
               <TextInput label="Phone Number" type="tel" size="md" radius="xl" styles={inputStyles} required
                 value={profile.phone} onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))} />
-              <TextInput label="Email" type="email" size="md" radius="xl" styles={inputStyles} readOnly
+              <TextInput label="Email" type="email" size="md" radius="xl" readOnly
                 value={profile.email}
                 styles={{ ...inputStyles, input: { background: 'var(--mantine-color-gray-0)', cursor: 'not-allowed' } }} />
             </SimpleGrid>
