@@ -13,7 +13,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      router.replace('/dashboard')
+      const next = new URLSearchParams(window.location.search).get('next') ?? '/dashboard'
+      router.replace(next)
     }
   }, [loading, isAuthenticated, router])
 

@@ -15,13 +15,18 @@ function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const getNext = () =>
+    params.get('next') ??
+    new URLSearchParams(window.location.search).get('next') ??
+    '/dashboard'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
     try {
       await login(form.identifier, form.password)
-      router.push(next)
+      router.push(getNext())
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Sign in failed. Please try again.')
     } finally {
@@ -29,8 +34,8 @@ function LoginForm() {
     }
   }
 
-  const signupHref = params.get('next')
-    ? `/auth/signup?next=${encodeURIComponent(params.get('next')!)}`
+  const signupHref = getNext() !== '/dashboard'
+    ? `/auth/signup?next=${encodeURIComponent(getNext())}`
     : '/auth/signup'
 
   return (

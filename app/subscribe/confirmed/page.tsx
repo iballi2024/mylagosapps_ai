@@ -51,7 +51,7 @@ const FIRST_ACTIONS = [
 ]
 
 function StepBar({ step }: { step: number }) {
-  const steps = ['Plan', 'Account', 'Payment', 'Done']
+  const steps = ['Plan', 'Payment', 'Done']
   return (
     <Group gap={0} mb="xl" w="100%">
       {steps.map((label, i) => {
@@ -77,15 +77,15 @@ function StepBar({ step }: { step: number }) {
 
 function ConfirmedPageInner() {
   const params = useSearchParams()
-  const tier = (params.get('tier') as Tier) ?? 'silver'
-  const plan = PLANS[tier]
+  const tier = (params.get('slug') as Tier) ?? 'silver'
+  const plan = PLANS[tier] ?? PLANS['silver']
   const [visible, setVisible] = useState(false)
   useEffect(() => { const t = setTimeout(() => setVisible(true), 100); return () => clearTimeout(t) }, [])
 
   return (
     <Box pt={64} style={{ minHeight: '100vh', background: '#F5F8F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }} px="md" py={48}>
       <Box w="100%" maw={500}>
-        <StepBar step={4} />
+        <StepBar step={3} />
 
         <Stack align="center" gap="md">
           {/* Hero icon */}

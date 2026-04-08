@@ -1,58 +1,53 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "./ui/Button";
+import { apiGetPlans, type SubscriptionPlan } from "@/lib/billing";
 
-interface Tier {
-  name: string;
-  annualPrice: string;
-  quarterlyPrice: string;
-  features: string[];
-  highlighted?: boolean;
-  badge?: string;
+function PlanCardSkeleton() {
+  return (
+    <div className="bg-surface-container-lowest rounded-xl p-6 md:p-8 flex flex-col border border-outline-variant/10 animate-pulse">
+      <div className="h-5 w-24 bg-outline-variant/30 rounded mb-2" />
+      <div className="h-3 w-full bg-outline-variant/20 rounded mb-1" />
+      <div className="h-3 w-3/4 bg-outline-variant/20 rounded mb-5" />
+      <div className="h-9 w-36 bg-outline-variant/30 rounded mb-8" />
+      <ul className="space-y-4 mb-10 grow">
+        {Array.from({ length: 5 }).map((_, j) => (
+          <li key={j} className="flex items-center gap-3">
+            <div className="size-5 rounded-full bg-outline-variant/30 shrink-0" />
+            <div className="h-3 rounded bg-outline-variant/20" style={{ width: `${60 + (j % 3) * 15}%` }} />
+          </li>
+        ))}
+      </ul>
+      <div className="h-10 w-full bg-outline-variant/30 rounded-lg" />
+    </div>
+  )
 }
 
-const tiers: Tier[] = [
-  {
-    name: "Bronze",
-    annualPrice: "₦100,000",
-    quarterlyPrice: "₦30,000",
-    features: [
-      "Free basic health check (registration required)",
-      "Free tickets to LagosApps Concerts and Events",
-      "Free Solar Audit",
-    ],
-  },
-  {
-    name: "Silver",
-    annualPrice: "₦250,000",
-    quarterlyPrice: "₦75,000",
-    highlighted: true,
-    badge: "Most Popular",
-    features: [
-      "1 free Car rental or 1 free Van/Bus rental",
-      "Free Grocery Delivery once a month",
-      "Free basic health check (registration required)",
-      "Free tickets to LagosApps Concerts and Events",
-      "Free Solar Audit",
-    ],
-  },
-  {
-    name: "Gold",
-    annualPrice: "₦500,000",
-    quarterlyPrice: "₦200,000",
-    features: [
-      "Free 2-day stay at Mainland Wellness Centre OR at-home medical tests and checks (max 4 people)",
-      "Free Grocery Delivery twice a month",
-      "1 free Car rental or 1 free Van/Bus rental",
-      "Free basic health check (registration required)",
-      "Free tickets to LagosApps Concerts and Events",
-      "Free Solar Audit",
-    ],
-  },
-];
+const TIER_META: Record<string, { highlighted?: boolean; badge?: string }> = {
+  gold: { highlighted: true, badge: "Best Value" },
+};
 
 export default function MembershipLedger() {
   const [isAnnual, setIsAnnual] = useState(true);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGetPlans()
+      .then(data => {
+        const sorted = [...data].sort((a, b) => a.sortOrder - b.sortOrder);
+        // Move highlighted plan (gold) to center position
+        const highlightedIdx = sorted.findIndex(p => TIER_META[p.slug]?.highlighted);
+        if (highlightedIdx > 0 && highlightedIdx !== 1) {
+          const [highlighted] = sorted.splice(highlightedIdx, 1);
+          sorted.splice(1, 0, highlighted);
+        }
+        setPlans(sorted);
+      })
+      .catch(e => setError(e?.message ?? "Failed to load plans."))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <section id="membership" className="pt-20 md:pt-28 pb-16 md:pb-24 bg-surface-container-low">
@@ -62,7 +57,7 @@ export default function MembershipLedger() {
             One Membership. Every Service.
           </h2>
           <p className="text-on-surface-variant max-w-2xl mx-auto">
-            LagosApps membership unlocks free services you'd normally pay for
+            LagosApps membership unlocks free services you&apos;d normally pay for
             — health checks, car rentals, grocery deliveries, event tickets,
             and solar audits. Pick the tier that fits your life.
           </p>
@@ -74,7 +69,7 @@ export default function MembershipLedger() {
               tabIndex={0}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsAnnual(false); } }}
             >
-              Quarterly
+              Monthly
             </span>
             <button
               type="button"
@@ -83,7 +78,7 @@ export default function MembershipLedger() {
               className="w-12 h-6 bg-primary-container rounded-full relative p-1 cursor-pointer focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2"
               role="switch"
               aria-checked={isAnnual ? "true" : "false"}
-              aria-label="Toggle between annual and quarterly billing"
+              aria-label="Toggle between annual and monthly billing"
             >
               <div
                 className={`size-4 bg-white rounded-full absolute transition-all duration-200 ${
@@ -103,77 +98,114 @@ export default function MembershipLedger() {
             </span>
           </div>
         </div>
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-          {tiers.map((tier) => {
-            const price = isAnnual ? tier.annualPrice : tier.quarterlyPrice;
-            const period = isAnnual ? "/year" : "/quarter";
 
-            return tier.highlighted ? (
-              <div
-                key={tier.name}
-                className="bg-primary text-on-primary rounded-xl p-6 md:p-8 flex flex-col h-full shadow-2xl shadow-primary/20 md:scale-105 relative z-10"
-              >
-                {tier.badge && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-fixed text-primary px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
-                    {tier.badge}
+        {error && (
+          <p className="text-center text-sm text-error mb-8">{error}</p>
+        )}
+
+        {loading ? (
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            {/* Left card skeleton (bronze) */}
+            <PlanCardSkeleton />
+
+            {/* Middle highlighted card skeleton (gold) */}
+            <div className="bg-primary rounded-xl p-6 md:p-8 flex flex-col md:scale-105 relative z-10 animate-pulse">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 h-6 w-24 bg-primary-fixed/40 rounded" />
+              <div className="h-5 w-24 bg-primary-fixed/40 rounded mb-2" />
+              <div className="h-3 w-full bg-primary-fixed/20 rounded mb-1" />
+              <div className="h-3 w-3/4 bg-primary-fixed/20 rounded mb-5" />
+              <div className="h-9 w-36 bg-primary-fixed/40 rounded mb-8" />
+              <ul className="space-y-4 mb-10 grow">
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <li key={j} className="flex items-center gap-3">
+                    <div className="size-5 rounded-full bg-primary-fixed/40 shrink-0" />
+                    <div className="h-3 rounded bg-primary-fixed/20" style={{ width: `${60 + (j % 3) * 15}%` }} />
+                  </li>
+                ))}
+              </ul>
+              <div className="h-10 w-full bg-primary-fixed/40 rounded-lg" />
+            </div>
+
+            {/* Right card skeleton (gold) */}
+            <PlanCardSkeleton />
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
+            {plans.map((plan) => {
+              const meta = TIER_META[plan.slug] ?? {};
+              const price = isAnnual
+                ? `₦${plan.priceYearly.toLocaleString()}`
+                : `₦${Math.round(plan.priceMonthly).toLocaleString()}`;
+              const period = isAnnual ? "/year" : "/month";
+              const billing = isAnnual ? "annual" : "monthly";
+
+              return meta.highlighted ? (
+                <div
+                  key={plan.id}
+                  className="bg-primary text-on-primary rounded-xl p-6 md:p-8 flex flex-col h-full shadow-2xl shadow-primary/20 md:scale-105 relative z-10"
+                >
+                  {meta.badge && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-fixed text-primary px-4 py-1 rounded text-[10px] font-bold uppercase tracking-widest">
+                      {meta.badge}
+                    </div>
+                  )}
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-1 text-primary-fixed">{plan.name}</h3>
+                    <p className="text-xs opacity-70 mb-2">{plan.description}</p>
+                    <p className="text-3xl font-extrabold">
+                      {price}
+                      <span className="text-sm font-normal opacity-70">{period}</span>
+                    </p>
                   </div>
-                )}
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-2 text-primary-fixed">
-                    {tier.name}
-                  </h3>
-                  <p className="text-3xl font-extrabold">
-                    {price}
-                    <span className="text-sm font-normal opacity-70">{period}</span>
-                  </p>
+                  <ul className="space-y-4 mb-10 grow">
+                    {plan.benefits.map((benefit) => (
+                      <li key={benefit.id} className="flex items-start gap-3 text-sm">
+                        <span className="material-symbols-outlined text-primary-fixed text-[20px] shrink-0">
+                          check_circle
+                        </span>
+                        <span>{benefit.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a href={`/subscribe/plan?slug=${plan.slug}&billing=${billing}`} className="w-full">
+                    <Button variant="secondary" className="w-full bg-white! text-primary! border-white! hover:brightness-95!">
+                      Subscribe Now
+                    </Button>
+                  </a>
                 </div>
-                <ul className="space-y-4 mb-10 flex-grow">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-sm">
-                      <span className="material-symbols-outlined text-primary-fixed text-[20px] flex-shrink-0">
-                        check_circle
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <a href={`/subscribe/plan?tier=${tier.name.toLowerCase()}&billing=${isAnnual ? 'annual' : 'quarterly'}`} className="w-full">
-                  <Button variant="secondary" className="w-full !bg-white !text-primary !border-white hover:!brightness-95">
-                    Subscribe Now
-                  </Button>
-                </a>
-              </div>
-            ) : (
-              <div
-                key={tier.name}
-                className="bg-surface-container-lowest rounded-xl p-6 md:p-8 flex flex-col h-full border border-outline-variant/10"
-              >
-                <div className="mb-8">
-                  <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
-                  <p className="text-3xl font-extrabold text-primary">
-                    {price}
-                    <span className="text-sm font-normal text-on-surface-variant">{period}</span>
-                  </p>
+              ) : (
+                <div
+                  key={plan.id}
+                  className="bg-surface-container-lowest rounded-xl p-6 md:p-8 flex flex-col h-full border border-outline-variant/10"
+                >
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-1">{plan.name}</h3>
+                    <p className="text-xs text-on-surface-variant mb-2">{plan.description}</p>
+                    <p className="text-3xl font-extrabold text-primary">
+                      {price}
+                      <span className="text-sm font-normal text-on-surface-variant">{period}</span>
+                    </p>
+                  </div>
+                  <ul className="space-y-4 mb-10 grow">
+                    {plan.benefits.map((benefit) => (
+                      <li key={benefit.id} className="flex items-start gap-3 text-sm">
+                        <span className="material-symbols-outlined text-primary text-[20px] shrink-0">
+                          check_circle
+                        </span>
+                        <span>{benefit.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a href={`/subscribe/plan?slug=${plan.slug}&billing=${billing}`} className="w-full">
+                    <Button variant="secondary" className="w-full">
+                      Subscribe Now
+                    </Button>
+                  </a>
                 </div>
-                <ul className="space-y-4 mb-10 flex-grow">
-                  {tier.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3 text-sm">
-                      <span className="material-symbols-outlined text-primary text-[20px] flex-shrink-0">
-                        check_circle
-                      </span>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <a href={`/subscribe/plan?tier=${tier.name.toLowerCase()}&billing=${isAnnual ? 'annual' : 'quarterly'}`} className="w-full">
-                  <Button variant="secondary" className="w-full">
-                    Subscribe Now
-                  </Button>
-                </a>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
