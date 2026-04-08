@@ -2,19 +2,20 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
+import { useNotifications } from "@/context/NotificationsContext";
 
 const serviceCategories = [
-  { name: "Solar, Renewables and More", icon: "solar_power", href: "#" },
-  { name: "Cars, Vans and Rides", icon: "directions_car", href: "#" },
-  { name: "Food, Groceries and Household", icon: "restaurant", href: "#" },
-  { name: "Health and Wellness", icon: "health_and_safety", href: "#" },
-  { name: "Events and Studios", icon: "celebration", href: "#" },
-  { name: "A Better You", icon: "school", href: "#" },
+  { name: "Food, Groceries and Household", icon: "restaurant",       href: "/services/food"       },
+  { name: "Cars, Vans and Rides",          icon: "directions_car",   href: "/services/rides"      },
+  { name: "Health and Wellness",           icon: "health_and_safety", href: "/services/healthcare" },
+  { name: "Events and Studios",            icon: "celebration",      href: "/services/events"     },
+  { name: "Solar, Renewables and More",    icon: "solar_power",      href: "/services/solar"      },
 ];
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const { user, isAuthenticated, setShowAuth, setShowDashboard } = useAuth();
+  const { unreadCount } = useNotifications();
   const [activeDropdown, setActiveDropdown] = useState<"services" | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
@@ -141,33 +142,40 @@ export default function Header() {
                 </div>
               )}
             </div>
+
+            {/* About */}
+            <a href="/about" className="text-sm font-semibold hover:text-primary transition-colors">
+              About
+            </a>
           </nav>
 
           {/* Right side */}
           <div className="flex items-center gap-4">
-            {/* CTA button (desktop) */}
-            <a
-              href="#membership"
-              className="hidden md:inline-flex bg-primary-gradient text-on-primary px-5 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/10 hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
-            >
-              Join LagosApps
-            </a>
+            {/* CTA button (desktop) — hidden when already signed in */}
+            {!isAuthenticated && (
+              <a
+                href="#membership"
+                className="hidden md:inline-flex bg-primary-gradient text-on-primary px-5 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-primary/10 hover:brightness-[0.92] active:scale-[0.98] transition-all duration-150"
+              >
+                Join LagosApps
+              </a>
+            )}
 
             {/* Notification bell + Avatar (desktop) */}
             {isAuthenticated && user ? (
               <div className="hidden md:flex items-center gap-3">
                 {/* Bell */}
                 <button
-                  onClick={() => setShowDashboard(true)}
+                  onClick={() => window.location.href = '/dashboard/notifications'}
                   className="relative cursor-pointer hover:opacity-80 transition-opacity"
                   aria-label="Notifications"
                 >
                   <span className="material-symbols-outlined text-primary text-[24px]">
                     notifications
                   </span>
-                  {user && (
+                  {user && unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 size-4 bg-error text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                      3
+                      {unreadCount}
                     </span>
                   )}
                 </button>
@@ -300,6 +308,18 @@ export default function Header() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* About */}
+            <div className="border-b border-outline-variant/10">
+              <a
+                href="/about"
+                className="flex items-center justify-between py-4 text-lg font-bold text-primary"
+                onClick={() => setMobileOpen(false)}
+              >
+                About
+                <span className="material-symbols-outlined text-[20px] text-outline">chevron_right</span>
+              </a>
             </div>
 
             {/* WhatsApp CTA */}

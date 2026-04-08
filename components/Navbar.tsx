@@ -3,8 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Box, Group, Text, Anchor, Button, SimpleGrid, Burger } from '@mantine/core'
-import { usePlatform } from '@/context/PlatformContext'
 import Logo from '@/components/Logo'
+import { useNotifications } from '@/context/NotificationsContext'
 
 const SERVICE_LINKS = [
   { label: 'Food',       href: '/services/food',       icon: '🍽️' },
@@ -17,9 +17,9 @@ const SERVICE_LINKS = [
 
 export default function Navbar() {
   const pathname = usePathname()
-  const { walletBalance, formatPrice } = usePlatform()
   const [opened, setOpened] = useState(false)
 
+  const { unreadCount } = useNotifications()
   const isAuth      = pathname.startsWith('/auth')
   const isDashboard = pathname.startsWith('/dashboard')
 
@@ -60,14 +60,15 @@ export default function Navbar() {
           <Group gap="xs">
             {!isAuth && !isDashboard && (
               <>
-                <Box component={Link} href="/wallet" visibleFrom="sm"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
-                    borderRadius: 12, border: '1px solid var(--color-border)',
-                    background: 'var(--color-surface2)', textDecoration: 'none',
-                    fontSize: 13, fontWeight: 600, color: 'var(--color-ink)',
-                  }}>
-                  <span>💳</span>{formatPrice(walletBalance)}
+                {/* Notifications bell */}
+                <Box component={Link} href="/dashboard/notifications"
+                  style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'var(--color-surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, textDecoration: 'none' }}>
+                  🔔
+                  {unreadCount > 0 && (
+                    <Box style={{ position: 'absolute', top: 2, right: 2, minWidth: 16, height: 16, borderRadius: 8, background: '#E03131', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white', padding: '0 3px' }}>
+                      {unreadCount}
+                    </Box>
+                  )}
                 </Box>
                 <Box component={Link} href="/dashboard"
                   style={{
@@ -91,9 +92,21 @@ export default function Navbar() {
               </>
             )}
             {isDashboard && (
-              <Box style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--color-gold-pale)', border: '2px solid rgba(201,146,10,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--color-gold)' }}>
-                CO
-              </Box>
+              <>
+                {/* Notifications bell */}
+                <Box component={Link} href="/dashboard/notifications"
+                  style={{ position: 'relative', width: 34, height: 34, borderRadius: '50%', background: 'var(--color-surface2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, textDecoration: 'none' }}>
+                  🔔
+                  {unreadCount > 0 && (
+                    <Box style={{ position: 'absolute', top: 2, right: 2, minWidth: 16, height: 16, borderRadius: 8, background: '#E03131', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 700, color: 'white', padding: '0 3px' }}>
+                      {unreadCount}
+                    </Box>
+                  )}
+                </Box>
+                <Box style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--color-gold-pale)', border: '2px solid rgba(201,146,10,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--color-gold)' }}>
+                  CO
+                </Box>
+              </>
             )}
           </Group>
         </Box>
@@ -115,6 +128,13 @@ export default function Navbar() {
                 </Box>
               ))}
             </SimpleGrid>
+            <Box pt="xs" style={{ borderTop: '1px solid var(--color-border)' }}>
+              <Box component={Link} href="/about" onClick={() => setOpened(false)}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 4px', textDecoration: 'none', color: 'var(--color-muted)', fontSize: 13, fontWeight: 500 }}>
+                About LagosApps
+                <Text fz="xs" c="var(--color-muted)">→</Text>
+              </Box>
+            </Box>
           </Box>
         )}
       </Box>

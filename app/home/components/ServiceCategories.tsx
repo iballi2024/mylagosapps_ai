@@ -1,70 +1,57 @@
 "use client";
-import { useServicePortal } from "../hooks/useServicePortal";
-import type { ServicePortalId } from "../hooks/useServicePortal";
-import { useAuth } from "../hooks/useAuth";
 
-const categories: {
-  name: string;
-  icon: string;
-  image: string;
-  cta: string;
-  description: string;
-  portalId: ServicePortalId;
-}[] = [
+const categories = [
   {
-    name: "Solar, Renewables and More",
-    icon: "solar_power",
-    image: "https://plus.unsplash.com/premium_photo-1678766819822-d936a3d6a3ea?w=800&q=80",
-    cta: "Get a Free Solar Audit",
-    description: "Power your home or business with solar. Book an audit, buy a package, or finance an installation.",
-    portalId: "solar",
+    name: "Food, Groceries and Household",
+    icon: "restaurant",
+    image: "https://images.unsplash.com/photo-1759344114577-b6c32e4d68c8?w=800&q=80",
+    cta: "Order now",
+    description: "Meals, fresh groceries, staples, and household supplies delivered straight to your door.",
+    href: "/services/food",
   },
   {
     name: "Cars, Vans and Rides",
     icon: "directions_car",
     image: "https://images.unsplash.com/photo-1649502913092-fb7f0e8fc632?w=800&q=80",
-    cta: "Book a Ride Now",
-    description: "Rent a car, hire a van, book a ride, or purchase an EV. Moving Lagos, your way.",
-    portalId: "transport",
-  },
-  {
-    name: "Food, Groceries and Household",
-    icon: "restaurant",
-    image: "https://images.unsplash.com/photo-1759344114577-b6c32e4d68c8?w=800&q=80",
-    cta: "Order Groceries",
-    description: "Meals, fresh groceries, staples, and household supplies delivered straight to your door.",
-    portalId: "groceries",
+    cta: "Book a ride",
+    description: "Rent a car, hire a van, book a ride, or get a fixed-price airport transfer. Moving Lagos, your way.",
+    href: "/services/rides",
   },
   {
     name: "Health and Wellness",
     icon: "health_and_safety",
     image: "https://plus.unsplash.com/premium_photo-1682130171029-49261a5ba80a?w=800&q=80",
-    cta: "See a Doctor",
-    description: "Health checks, teleconsults, home visits, wellness retreats, and medical supplies on demand.",
-    portalId: "health",
+    cta: "Book now",
+    description: "Pharmacy delivery, home lab tests, and video consultations with licensed Nigerian physicians.",
+    href: "/services/healthcare",
   },
   {
     name: "Events and Studios",
     icon: "celebration",
     image: "https://plus.unsplash.com/premium_photo-1732464750678-973ff68fbf9d?w=800&q=80",
-    cta: "Book a Venue",
+    cta: "Book a venue",
     description: "Hire event spaces, TV studios, or audio studios. Find and book tickets to upcoming events.",
-    portalId: "events",
+    href: "/services/events",
+  },
+  {
+    name: "Solar, Renewables and More",
+    icon: "solar_power",
+    image: "https://plus.unsplash.com/premium_photo-1678766819822-d936a3d6a3ea?w=800&q=80",
+    cta: "Get a free audit",
+    description: "Power your home or business with solar. Book an audit, buy a package, or finance an installation.",
+    href: "/services/solar",
   },
   {
     name: "A Better You",
     icon: "school",
     image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
-    cta: "Get Involved",
+    cta: "Get involved",
     description: "Community programmes, youth education, donations, and social impact through TEPLEARN and Mainland Foundation.",
-    portalId: "community",
+    href: "/about",
   },
 ];
 
 export default function ServiceCategories() {
-  const { openPortal } = useServicePortal();
-  const { isAuthenticated, setShowAuth, setShowDashboard } = useAuth();
-
   return (
     <section id="services" className="py-12 md:py-20 px-4 md:px-6 lg:px-10">
       <div className="max-w-7xl mx-auto">
@@ -74,24 +61,17 @@ export default function ServiceCategories() {
               What do you need today?
             </h2>
             <p className="text-on-surface-variant max-w-md">
-              Six categories. Hundreds of services. Every one of them bookable
+              Five categories. Hundreds of services. Every one of them bookable
               and payable right here — no calls, no follow-ups.
             </p>
           </div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
           {categories.map((cat) => (
-            <button
+            <a
               key={cat.name}
-              onClick={() => {
-                if (isAuthenticated) {
-                  setShowDashboard(true);
-                  openPortal(cat.portalId);
-                } else {
-                  setShowAuth(true);
-                }
-              }}
-              className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-surface-container focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] cursor-pointer text-left"
+              href={cat.href}
+              className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-surface-container focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] cursor-pointer text-left no-underline"
               aria-label={`${cat.name} — ${cat.cta}`}
             >
               <img
@@ -124,7 +104,7 @@ export default function ServiceCategories() {
                 </span>
                 <h3 className="text-white font-bold text-base md:text-lg">{cat.name}</h3>
               </div>
-            </button>
+            </a>
           ))}
         </div>
       </div>

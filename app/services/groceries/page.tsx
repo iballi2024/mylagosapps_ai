@@ -21,7 +21,7 @@ export default function ServicePage() {
       <Box pt={64} style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
         <Box px="md" pt="lg" pb="lg" style={{ background: `linear-gradient(135deg,${sub?.color},${sub?.colorLight})` }}>
           <Box maw={900} mx="auto">
-            <Anchor component={Link} href="/" fz="xs" c="rgba(255,255,255,0.6)" mb="sm" display="block">← All services</Anchor>
+            <Anchor component="button" fz="xs" c="rgba(255,255,255,0.6)" mb="sm" display="block" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => window.history.back()}>← All services</Anchor>
             <Group gap="md" wrap="wrap" align="center" mb="md">
               <Box style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>
                 {sub?.icon}

@@ -9,12 +9,13 @@ import { useAuthContext } from '@/context/AuthContext'
 import { MOCK_PLAN, TIER_META } from './plan'
 
 const NAV = [
-  { href: '/dashboard',          icon: '⊞', label: 'Overview' },
-  { href: '/dashboard/apps',     icon: '🧩', label: 'Services' },
-  { href: '/dashboard/orders',   icon: '📦', label: 'Orders' },
-  { href: '/dashboard/billing',  icon: '🧾', label: 'Billing' },
-  // { href: '/dashboard/team',     icon: '👥', label: 'Team' }, // hidden from nav — module retained
-  { href: '/dashboard/settings', icon: '⚙️', label: 'Settings' },
+  { href: '/dashboard',                  icon: '⊞',  label: 'Overview' },
+  { href: '/dashboard/apps',             icon: '🧩', label: 'Services' },
+  { href: '/dashboard/orders',           icon: '📦', label: 'Orders' },
+  { href: '/dashboard/notifications',    icon: '🔔', label: 'Notifications' },
+  { href: '/dashboard/billing',          icon: '🧾', label: 'Billing' },
+  // { href: '/dashboard/team',           icon: '👥', label: 'Team' }, // hidden from nav — module retained
+  { href: '/dashboard/settings',         icon: '⚙️', label: 'Settings' },
 ]
 
 const SERVICES = [
@@ -27,6 +28,11 @@ const SERVICES = [
 
 function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: () => void }) {
   const pathname = usePathname()
+  const { user } = useAuthContext()
+  const initials = user
+    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
+    : '?'
+  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : ''
   return (
     <Stack h="100%" gap={0}>
       {/* Logo */}
@@ -85,10 +91,10 @@ function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: ()
       <Box style={{ borderTop: '1px solid var(--color-border)', flexShrink: 0 }} p="sm">
         <Group gap="sm">
           <Box w={34} h={34} style={{ borderRadius: '50%', background: 'var(--color-gold-pale)', border: '2px solid rgba(201,146,10,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: 'var(--color-gold)', flexShrink: 0 }}>
-            CO
+            {initials}
           </Box>
           <Box style={{ flex: 1, minWidth: 0 }}>
-            <Text size="xs" fw={600} c="var(--color-ink)" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Chidi Okonkwo</Text>
+            <Text size="xs" fw={600} c="var(--color-ink)" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fullName}</Text>
             <Text component="button" size="xs" c="dimmed" style={{ textDecoration: 'none', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }} onClick={onLogout}>Sign out</Text>
           </Box>
         </Group>

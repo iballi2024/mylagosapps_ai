@@ -31,6 +31,9 @@ export async function apiFetch<T>(
   if (!res.ok) {
     const message =
       json?.message ?? json?.error ?? `Request failed (${res.status})`
+    if (res.status === 401 && typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('auth:unauthorized'))
+    }
     throw new ApiError(res.status, message)
   }
 

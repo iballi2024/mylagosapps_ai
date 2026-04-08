@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetMe } from '@/lib/auth'
+import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetProfile } from '@/lib/auth'
 import { ApiError } from '@/lib/api'
 
 interface AuthContextValue {
@@ -33,16 +33,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (stored) {
       try { setUser(JSON.parse(stored)) } catch { localStorage.removeItem(USER_KEY) }
     }
-    setLoading(false)
 
-    // Verify token — only clear session on 401 (expired/revoked), ignore network errors
-    apiGetMe().catch((err) => {
-      if (err instanceof ApiError && err.status === 401) {
-        localStorage.removeItem(TOKEN_KEY)
-        localStorage.removeItem(USER_KEY)
-        setUser(null)
-      }
-    })
+    // Verify token via GET /app/profile — keep loading until confirmed
+    apiGetProfile()
+      .then(() => setLoading(false))
+      .catch((err: unknown) => {
+        if (err instanceof ApiError && err.status === 401) {
+          localStorage.removeItem(TOKEN_KEY)
+          localStorage.removeItem(USER_KEY)
+          setUser(null)
+        }
+        setLoading(false)
+      })
   }, [])
 
   const login = useCallback(async (identifier: string, password: string) => {
@@ -62,6 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
     setUser(null)
+  }, [])
+
+  // Listen for 401s from any API call — log out immediately
+  useEffect(() => {
+    const handle = () => {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+      setUser(null)
+    }
+    window.addEventListener('auth:unauthorized', handle)
+    return () => window.removeEventListener('auth:unauthorized', handle)
   }, [])
 
   // no-ops kept for Header2 compatibility

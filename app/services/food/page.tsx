@@ -60,6 +60,46 @@ const TIME_SLOTS = [
 ]
 
 type Step = 'browse' | 'pickup' | 'delivery' | 'details' | 'payment' | 'confirm'
+          | 'cat-event' | 'cat-venue' | 'cat-menu' | 'cat-review' | 'cat-confirm'
+
+const EVENT_TYPES = [
+  { value: 'corporate',  label: 'Corporate lunch / dinner' },
+  { value: 'wedding',    label: 'Wedding reception' },
+  { value: 'birthday',   label: 'Birthday party' },
+  { value: 'burial',     label: 'Burial / funeral reception' },
+  { value: 'religious',  label: 'Religious / church gathering' },
+  { value: 'office',     label: 'Office party' },
+  { value: 'private',    label: 'Private party' },
+  { value: 'other',      label: 'Other' },
+]
+
+const GUEST_RANGES = [
+  { value: '10-30',   label: '10 – 30 guests' },
+  { value: '30-50',   label: '30 – 50 guests' },
+  { value: '50-100',  label: '50 – 100 guests' },
+  { value: '100-200', label: '100 – 200 guests' },
+  { value: '200-500', label: '200 – 500 guests' },
+  { value: '500+',    label: '500+ guests' },
+]
+
+const MENU_STYLES = [
+  { value: 'nigerian',    label: 'Nigerian (rice, stew, pounded yam, etc.)' },
+  { value: 'continental', label: 'Continental' },
+  { value: 'buffet',      label: 'Buffet (Nigerian + Continental mix)' },
+  { value: 'finger',      label: 'Finger food / cocktail style' },
+  { value: 'fullcourse',  label: 'Full course / fine dining' },
+  { value: 'custom',      label: 'Custom — I will describe below' },
+]
+
+const EVENT_TIMES = [
+  { value: '08:00', label: '8:00 AM' },
+  { value: '10:00', label: '10:00 AM' },
+  { value: '12:00', label: '12:00 PM' },
+  { value: '14:00', label: '2:00 PM' },
+  { value: '16:00', label: '4:00 PM' },
+  { value: '18:00', label: '6:00 PM' },
+  { value: '20:00', label: '8:00 PM' },
+]
 
 interface Restaurant {
   id: string; name: string; cuisine: string
@@ -81,7 +121,7 @@ const INPUT_LABEL = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function FoodPage() {
-  const { getSubsidiary, walletBalance, formatPrice } = usePlatform()
+  const { getSubsidiary, formatPrice } = usePlatform()
   const sub = getSubsidiary('food')!
 
   const [step, setStep] = useState<Step>('browse')
@@ -99,20 +139,33 @@ export default function FoodPage() {
   const [note, setNote] = useState('')
   const [timeSlot, setTimeSlot] = useState<string | null>('asap')
 
+  // Catering enquiry
+  const [catEventType, setCatEventType] = useState<string | null>(null)
+  const [catGuestRange, setCatGuestRange] = useState<string | null>(null)
+  const [catDate, setCatDate] = useState('')
+  const [catTime, setCatTime] = useState<string | null>(null)
+  const [catVenueArea, setCatVenueArea] = useState<string | null>(null)
+  const [catVenueAddress, setCatVenueAddress] = useState('')
+  const [catMenuStyle, setCatMenuStyle] = useState<string | null>(null)
+  const [catDietary, setCatDietary] = useState('')
+  const [catNote, setCatNote] = useState('')
+
   const active = sub.services.find(s => s.id === selectedService)!
   const isRestaurant = selectedService === 'restaurant'
+  const isCatering = selectedService === 'catering'
 
   const deliveryZone = deliveryArea ? zoneOf(deliveryArea) : null
   const resolvedPickupZone = pickupZone ?? (isRestaurant ? null : DEFAULT_KITCHEN_ZONE)
   const deliveryFee = resolvedPickupZone && deliveryZone ? getDeliveryFee(resolvedPickupZone, deliveryZone) : null
   const total = deliveryFee !== null ? active.startingPrice + deliveryFee : null
-  const canAfford = total !== null && walletBalance >= total
 
   // Stable order ID (only used in confirm step)
   const [orderId] = useState(() => `LGA-${Math.random().toString(36).slice(2, 8).toUpperCase()}`)
 
   // ── Step breadcrumbs ──────────────────────────────────────────────────────
-  const STEPS: { id: Step; label: string }[] = isRestaurant
+  const STEPS: { id: Step; label: string }[] = isCatering
+    ? [{ id: 'cat-event', label: 'Event' }, { id: 'cat-venue', label: 'Venue' }, { id: 'cat-menu', label: 'Menu' }, { id: 'cat-review', label: 'Review' }]
+    : isRestaurant
     ? [{ id: 'pickup', label: 'Restaurant' }, { id: 'delivery', label: 'Delivery' }, { id: 'details', label: 'Details' }, { id: 'payment', label: 'Payment' }]
     : [{ id: 'delivery', label: 'Delivery' }, { id: 'details', label: 'Details' }, { id: 'payment', label: 'Payment' }]
 
@@ -126,7 +179,7 @@ export default function FoodPage() {
         {/* Hero */}
         <Box px="md" pt="lg" pb="lg" style={{ background: `linear-gradient(135deg,${sub.color},${sub.colorLight})` }}>
           <Box maw={900} mx="auto">
-            <Anchor component={Link} href="/home" fz="xs" c="rgba(255,255,255,0.6)" mb="sm" display="block">← All services</Anchor>
+            <Anchor component="button" fz="xs" c="rgba(255,255,255,0.6)" mb="sm" display="block" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }} onClick={() => window.history.back()}>← All services</Anchor>
             <Group gap="md" wrap="wrap" align="center" mb="md">
               <Box style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>
                 {sub.icon}
@@ -144,7 +197,7 @@ export default function FoodPage() {
         </Box>
 
         {/* Progress bar */}
-        {step !== 'browse' && step !== 'confirm' && (
+        {step !== 'browse' && step !== 'confirm' && step !== 'cat-confirm' && (
           <Box style={{ background: 'white', borderBottom: '1px solid var(--color-border)' }} px="md" py="sm">
             <Box maw={900} mx="auto">
               <Group gap={0} wrap="nowrap">
@@ -216,34 +269,40 @@ export default function FoodPage() {
 
               {/* Sticky summary */}
               <Card radius="xl" withBorder p="lg" style={{ borderColor: 'var(--color-border)', flex: 1, minWidth: 240, position: 'sticky', top: 80 }}>
-                <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)" mb="md">Order summary</Text>
+                <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)" mb="md">{isCatering ? 'Enquiry summary' : 'Order summary'}</Text>
                 <Stack gap="xs" mb="md">
                   <Group justify="space-between">
                     <Text fz="sm" c="var(--color-muted)">{active.name}</Text>
-                    <Text fz="sm" fw={500}>{formatPrice(active.startingPrice)}</Text>
+                    {isCatering
+                      ? <Text fz="xs" c="var(--color-muted)">Quote on request</Text>
+                      : <Text fz="sm" fw={500}>{formatPrice(active.startingPrice)}</Text>}
                   </Group>
-                  <Group justify="space-between">
-                    <Text fz="sm" c="var(--color-muted)">Delivery fee</Text>
-                    <Text fz="xs" c="var(--color-muted)">by location</Text>
-                  </Group>
+                  {!isCatering && (
+                    <Group justify="space-between">
+                      <Text fz="sm" c="var(--color-muted)">Delivery fee</Text>
+                      <Text fz="xs" c="var(--color-muted)">by location</Text>
+                    </Group>
+                  )}
                   <Box style={{ height: 1, background: 'var(--color-border)' }} />
                   <Group justify="space-between">
-                    <Text ff="var(--font-montserrat)" fw={700}>From</Text>
+                    <Text ff="var(--font-montserrat)" fw={700}>{isCatering ? 'Starting from' : 'From'}</Text>
                     <Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{formatPrice(active.startingPrice)}</Text>
                   </Group>
+                  {isCatering && (
+                    <Text fz={10} c="var(--color-muted)">Final price depends on guest count and menu. Our team will send a full quote within 24 hours.</Text>
+                  )}
                 </Stack>
-                <Text fz={10} c="var(--color-muted)" mb="sm">
-                  💳 Wallet: <Text span fw={600} c="var(--color-ink)">{formatPrice(walletBalance)}</Text>
-                </Text>
                 <Button fullWidth radius="xl" size="md" mb="xs"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
                   onClick={() => {
                     setRestaurant(null); setPickupZone(null)
                     setDeliveryArea(null); setDeliveryAddress('')
                     setNote(''); setTimeSlot('asap')
-                    setStep(isRestaurant ? 'pickup' : 'delivery')
+                    setCatEventType(null); setCatGuestRange(null); setCatDate(''); setCatTime(null)
+                    setCatVenueArea(null); setCatVenueAddress(''); setCatMenuStyle(null); setCatDietary(''); setCatNote('')
+                    setStep(isCatering ? 'cat-event' : isRestaurant ? 'pickup' : 'delivery')
                   }}>
-                  Continue →
+                  {isCatering ? 'Request a quote →' : 'Continue →'}
                 </Button>
                 <Button fullWidth radius="xl" size="sm" component="a"
                   href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank"
@@ -484,26 +543,6 @@ export default function FoodPage() {
                   </Stack>
                 </Card>
 
-                {/* Wallet balance */}
-                <Card radius="xl" withBorder p="md"
-                  style={{ borderColor: 'var(--color-border)', background: canAfford ? 'white' : '#FFF5F5' }}>
-                  <Group justify="space-between">
-                    <Box>
-                      <Text fz="xs" c="var(--color-muted)">Wallet balance</Text>
-                      <Text fw={700} fz="md" c="var(--color-ink)">{formatPrice(walletBalance)}</Text>
-                    </Box>
-                    <Badge radius="sm" size="sm"
-                      style={{ background: canAfford ? '#EBFBEE' : '#FFE3E3', color: canAfford ? '#2F9E44' : '#E03131' }}>
-                      {canAfford ? '✓ Sufficient' : '✗ Insufficient'}
-                    </Badge>
-                  </Group>
-                  {!canAfford && total !== null && (
-                    <Text fz="xs" c="red" mt="xs">
-                      You need {formatPrice(total - walletBalance)} more. Please top up your wallet.
-                    </Text>
-                  )}
-                </Card>
-
                 {note && (
                   <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
                     <Text fz="xs" c="var(--color-muted)" mb={4}>Special instructions</Text>
@@ -513,7 +552,7 @@ export default function FoodPage() {
               </Stack>
 
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!canAfford || total === null}
+                disabled={total === null}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
                 onClick={() => {
                   if (total === null || !deliveryZone || !resolvedPickupZone) return
@@ -539,7 +578,7 @@ export default function FoodPage() {
                   })
                   setStep('confirm')
                 }}>
-                Pay {total !== null ? formatPrice(total) : ''} from wallet →
+                Place order {total !== null ? `· ${formatPrice(total)}` : ''} →
               </Button>
             </Box>
           )}
@@ -600,7 +639,7 @@ export default function FoodPage() {
                   </Group>
                   <Group justify="space-between">
                     <Text fz="sm" c="var(--color-muted)">Payment</Text>
-                    <Text fz="sm" fw={500} c="#2F9E44">Wallet ✓</Text>
+                    <Text fz="sm" fw={500} c="#2F9E44">Confirmed ✓</Text>
                   </Group>
                 </Stack>
               </Card>
@@ -613,6 +652,205 @@ export default function FoodPage() {
                 <Button component={Link} href={`/dashboard/orders/${orderId}`} radius="xl" size="md"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}>
                   Track order →
+                </Button>
+              </Group>
+            </Box>
+          )}
+
+          {/* ── Catering: Event details ────────────────────────────────────── */}
+          {step === 'cat-event' && (
+            <Box maw={480}>
+              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block"
+                style={{ cursor: 'pointer' }} onClick={() => setStep('browse')}>← Back</Anchor>
+              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>Event details</Title>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">Tell us about your event so we can plan the right menu</Text>
+              <Stack gap="md">
+                <Select label="Event type" placeholder="Select event type" data={EVENT_TYPES}
+                  value={catEventType} onChange={setCatEventType} size="md" radius="xl" styles={INPUT_LABEL} />
+                <Select label="Expected guest count" placeholder="Select range" data={GUEST_RANGES}
+                  value={catGuestRange} onChange={setCatGuestRange} size="md" radius="xl" styles={INPUT_LABEL} />
+                <TextInput label="Event date" type="date" size="md" radius="xl"
+                  value={catDate} onChange={e => setCatDate(e.target.value)}
+                  min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                  styles={INPUT_LABEL} />
+                <Select label="Event start time" placeholder="Select time" data={EVENT_TIMES}
+                  value={catTime} onChange={setCatTime} size="md" radius="xl"
+                  leftSection={<IconClock size={16} />} styles={INPUT_LABEL} />
+              </Stack>
+              <Button fullWidth radius="xl" size="md" mt="xl"
+                disabled={!catEventType || !catGuestRange || !catDate || !catTime}
+                style={{ background: sub.color, color: 'white', fontWeight: 700 }}
+                onClick={() => setStep('cat-venue')}>
+                Continue →
+              </Button>
+            </Box>
+          )}
+
+          {/* ── Catering: Venue ────────────────────────────────────────────── */}
+          {step === 'cat-venue' && (
+            <Box maw={480}>
+              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block"
+                style={{ cursor: 'pointer' }} onClick={() => setStep('cat-event')}>← Back</Anchor>
+              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>Venue location</Title>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">Where will the event be held?</Text>
+              <Stack gap="md">
+                <Select label="Venue area" placeholder="Select area in Lagos" data={ALL_AREA_OPTIONS}
+                  value={catVenueArea} onChange={setCatVenueArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                <TextInput label="Venue address / name" placeholder="e.g. Eko Hotel, Victoria Island or 12 Park Lane, Lekki"
+                  value={catVenueAddress} onChange={e => setCatVenueAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+              </Stack>
+              <Button fullWidth radius="xl" size="md" mt="xl"
+                disabled={!catVenueArea || !catVenueAddress.trim()}
+                style={{ background: sub.color, color: 'white', fontWeight: 700 }}
+                onClick={() => setStep('cat-menu')}>
+                Continue →
+              </Button>
+            </Box>
+          )}
+
+          {/* ── Catering: Menu preferences ─────────────────────────────────── */}
+          {step === 'cat-menu' && (
+            <Box maw={480}>
+              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block"
+                style={{ cursor: 'pointer' }} onClick={() => setStep('cat-venue')}>← Back</Anchor>
+              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>Menu preferences</Title>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">Help us prepare the right food for your guests</Text>
+              <Stack gap="md">
+                <Select label="Menu style" placeholder="Select style" data={MENU_STYLES}
+                  value={catMenuStyle} onChange={setCatMenuStyle} size="md" radius="xl" styles={INPUT_LABEL} />
+                <TextInput label="Dietary requirements (optional)"
+                  placeholder="e.g. Vegetarian options, no pork, halal only…"
+                  value={catDietary} onChange={e => setCatDietary(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                <Textarea label="Additional notes (optional)"
+                  placeholder="Any specific dishes, allergies, serving style preferences…"
+                  value={catNote} onChange={e => setCatNote(e.target.value)} size="md" radius="md" minRows={3} autosize styles={INPUT_LABEL} />
+              </Stack>
+              <Button fullWidth radius="xl" size="md" mt="xl"
+                disabled={!catMenuStyle}
+                style={{ background: sub.color, color: 'white', fontWeight: 700 }}
+                onClick={() => setStep('cat-review')}>
+                Review enquiry →
+              </Button>
+            </Box>
+          )}
+
+          {/* ── Catering: Review & submit ──────────────────────────────────── */}
+          {step === 'cat-review' && (
+            <Box maw={480}>
+              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block"
+                style={{ cursor: 'pointer' }} onClick={() => setStep('cat-menu')}>← Back</Anchor>
+              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb="xl">Review enquiry</Title>
+              <Stack gap="md">
+                <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
+                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Event details</Text>
+                  <Stack gap="xs">
+                    {[
+                      ['Event type',   EVENT_TYPES.find(e => e.value === catEventType)?.label ?? ''],
+                      ['Guest count',  GUEST_RANGES.find(g => g.value === catGuestRange)?.label ?? ''],
+                      ['Date',         catDate ? new Date(catDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''],
+                      ['Start time',   EVENT_TIMES.find(t => t.value === catTime)?.label ?? ''],
+                    ].map(([k, v]) => (
+                      <Group key={k} justify="space-between">
+                        <Text fz="sm" c="var(--color-muted)">{k}</Text>
+                        <Text fz="sm" fw={500}>{v}</Text>
+                      </Group>
+                    ))}
+                  </Stack>
+                </Card>
+
+                <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
+                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Venue</Text>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text fz="sm" c="var(--color-muted)">Address</Text>
+                      <Text fz="sm" fw={500} ta="right" style={{ maxWidth: 220 }}>{catVenueAddress}</Text>
+                    </Group>
+                    <Group justify="space-between">
+                      <Text fz="sm" c="var(--color-muted)">Area</Text>
+                      <Text fz="sm" fw={500}>{catVenueArea}</Text>
+                    </Group>
+                  </Stack>
+                </Card>
+
+                <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
+                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Menu</Text>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text fz="sm" c="var(--color-muted)">Style</Text>
+                      <Text fz="sm" fw={500}>{MENU_STYLES.find(m => m.value === catMenuStyle)?.label}</Text>
+                    </Group>
+                    {catDietary && (
+                      <Group justify="space-between" align="flex-start">
+                        <Text fz="sm" c="var(--color-muted)">Dietary</Text>
+                        <Text fz="sm" fw={500} ta="right" style={{ maxWidth: 220 }}>{catDietary}</Text>
+                      </Group>
+                    )}
+                    {catNote && (
+                      <Group justify="space-between" align="flex-start">
+                        <Text fz="sm" c="var(--color-muted)">Notes</Text>
+                        <Text fz="sm" fw={500} ta="right" style={{ maxWidth: 220 }}>{catNote}</Text>
+                      </Group>
+                    )}
+                  </Stack>
+                </Card>
+
+                <Card radius="xl" p="md" style={{ background: sub.colorPale, border: `1px solid ${sub.color}30` }}>
+                  <Group gap="sm">
+                    <Text fz="lg">💡</Text>
+                    <Box>
+                      <Text fz="sm" fw={700} c="var(--color-ink)">Starting from {formatPrice(active.startingPrice)}</Text>
+                      <Text fz="xs" c="var(--color-muted)" mt={2}>Our catering team will review your enquiry and send a full quote within 24 hours. No payment required now.</Text>
+                    </Box>
+                  </Group>
+                </Card>
+              </Stack>
+
+              <Button fullWidth radius="xl" size="md" mt="xl"
+                style={{ background: sub.color, color: 'white', fontWeight: 700 }}
+                onClick={() => setStep('cat-confirm')}>
+                Submit enquiry →
+              </Button>
+            </Box>
+          )}
+
+          {/* ── Catering: Confirmation ─────────────────────────────────────── */}
+          {step === 'cat-confirm' && (
+            <Box maw={480} mx="auto" py="xl" style={{ textAlign: 'center' }}>
+              <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>
+                📋
+              </Box>
+              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Enquiry received!</Title>
+              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="sm">
+                Our catering team will review your request for{' '}
+                <strong>{EVENT_TYPES.find(e => e.value === catEventType)?.label}</strong> on{' '}
+                <strong>{catDate ? new Date(catDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</strong>{' '}
+                and send a full quote to you within 24 hours.
+              </Text>
+              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
+                You can also reach us directly on WhatsApp to discuss details.
+              </Text>
+
+              <Stack gap="sm" align="center" mb="xl">
+                {[
+                  ['Guests', GUEST_RANGES.find(g => g.value === catGuestRange)?.label ?? ''],
+                  ['Venue', `${catVenueAddress}, ${catVenueArea}`],
+                  ['Menu style', MENU_STYLES.find(m => m.value === catMenuStyle)?.label ?? ''],
+                ].map(([k, v]) => (
+                  <Group key={k} justify="space-between" w="100%">
+                    <Text fz="sm" c="var(--color-muted)">{k}</Text>
+                    <Text fz="sm" fw={500} ta="right" style={{ maxWidth: 240 }}>{v}</Text>
+                  </Group>
+                ))}
+              </Stack>
+
+              <Group grow>
+                <Button component={Link} href="/home" radius="xl" size="md" variant="default"
+                  styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>
+                  Back to home
+                </Button>
+                <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank"
+                  radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>
+                  💬 Chat on WhatsApp
                 </Button>
               </Group>
             </Box>

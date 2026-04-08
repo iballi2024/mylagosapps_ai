@@ -122,7 +122,7 @@ export async function apiChangePassword(payload: {
   newPassword: string
   confirmNewPassword: string
 }): Promise<void> {
-  await apiFetch<{ success: boolean; message: string }>('/app/profile/change-password', {
+  await apiFetch<{ success: boolean; message: string }>('/app/profile/password', {
     method: 'PUT',
     body: JSON.stringify(payload),
   })

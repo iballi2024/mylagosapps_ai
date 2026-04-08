@@ -28,18 +28,18 @@ import {
 // import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
 import Logo from "@/components/Logo";
+import { useNotifications } from "@/context/NotificationsContext";
 
 const serviceCategories = [
-  { name: "Solar, Renewables and More", icon: "solar_power", href: "#" },
-  { name: "Cars, Vans and Rides", icon: "directions_car", href: "#" },
-  { name: "Food, Groceries and Household", icon: "restaurant", href: "#" },
-  { name: "Health and Wellness", icon: "health_and_safety", href: "#" },
-  { name: "Events and Studios", icon: "celebration", href: "#" },
-  { name: "A Better You", icon: "school", href: "#" },
+  { name: "Food, Groceries and Household", icon: "restaurant",      href: "/services/food"       },
+  { name: "Cars, Vans and Rides",          icon: "directions_car",  href: "/services/rides"      },
+  { name: "Health and Wellness",           icon: "health_and_safety",href: "/services/healthcare" },
+  { name: "Events and Studios",            icon: "celebration",     href: "/services/events"     },
+  { name: "Solar, Renewables and More",    icon: "solar_power",     href: "/services/solar"      },
 ];
 
 const demoLinks = [
-  { label: "About", href: "#about" },
+  { label: "About", href: "/about" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -47,6 +47,7 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user, isAuthenticated, loading } = useAuth();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
@@ -159,23 +160,25 @@ export default function Header() {
 
           {/* Right actions */}
           <Group gap="sm">
-            {/* Join CTA */}
-            <Button
-              component="a"
-              href="#membership"
-              className="bg-primary-gradient"
-              fw={700}
-              visibleFrom="md"
-            >
-              Join LagosApps
-            </Button>
+            {/* Join CTA — hidden when already signed in */}
+            {!loading && !isAuthenticated && (
+              <Button
+                component="a"
+                href="#membership"
+                className="bg-primary-gradient"
+                fw={700}
+                visibleFrom="md"
+              >
+                Join LagosApps
+              </Button>
+            )}
             {/* Authenticated: bell + avatar */}
             {!loading && isAuthenticated && user ? (
               <Group gap="sm" visibleFrom="md">
-                <Indicator label="3" size={16} color="red" offset={4}>
+                <Indicator label={String(unreadCount)} size={16} color="red" offset={4} disabled={unreadCount === 0}>
                   <ActionIcon
                     component="a"
-                    href="/dashboard"
+                    href="/dashboard/notifications"
                     variant="subtle"
                     size="lg"
                     aria-label="Notifications"
@@ -221,7 +224,7 @@ export default function Header() {
                   <IconUser size={20} />
                 </ActionIcon>
               </Button>
-                <Button
+                {/* <Button
                   component="a"
                   href="/auth/login"
                   variant="subtle"
@@ -237,7 +240,7 @@ export default function Header() {
                   fw={700}
                 >
                   Sign Up
-                </Button>
+                </Button> */}
                 
               </Group>
             ) : null}
