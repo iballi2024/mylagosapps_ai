@@ -4,7 +4,7 @@ import {
   Box, Card, Text, Button, Stack, Group, Divider, Anchor,
   Collapse, TextInput, Checkbox, ActionIcon, Tooltip, CopyButton, Select,
 } from '@mantine/core'
-import { apiInitiateServicePayment, apiVerifyPayment, type VirtualAccount } from '@/lib/billing'
+import { apiInitiateServicePayment, apiVerifyPayment, apiGetBillingAddress, type VirtualAccount } from '@/lib/billing'
 
 const METHODS = [
   { value: 'card',          icon: '💳', label: 'Card',                 desc: 'Mastercard, Visa, Verve — powered by Paystack' },
@@ -54,7 +54,7 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
   if (billingTouched.city    && !billing.city.trim())    billingErrors.city    = 'Required'
   if (billingTouched.state   && !billing.state)          billingErrors.state   = 'Required'
 
-  // Load Paystack inline script once
+  // Load Paystack script + prefill billing address from API
   useEffect(() => {
     if (!document.getElementById('paystack-inline-js')) {
       const script = document.createElement('script')
@@ -63,6 +63,18 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
       script.async = true
       document.body.appendChild(script)
     }
+
+    apiGetBillingAddress().then(saved => {
+      if (saved) {
+        setBilling({
+          address: saved.address ?? '',
+          city:    saved.city    ?? '',
+          state:   saved.state   ?? '',
+          country: saved.country ?? 'NG',
+        })
+      }
+      // null → form stays empty, user fills it in
+    })
   }, [])
 
   async function handlePay() {

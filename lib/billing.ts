@@ -97,6 +97,32 @@ export async function apiRemovePaymentMethod(id: string): Promise<void> {
   })
 }
 
+// ── Billing address ───────────────────────────────────────────────────────────
+
+export interface BillingAddress {
+  address: string
+  city: string
+  state: string
+  country: string
+}
+
+interface BillingAddressApiResponse {
+  success: boolean
+  message: string
+  data: { billingAddress: BillingAddress | null }
+  error: null | string
+}
+
+export async function apiGetBillingAddress(): Promise<BillingAddress | null> {
+  if (isDev) return null   // no mock — form stays empty in dev
+  try {
+    const res = await apiFetch<BillingAddressApiResponse>('/app/profile/billing-address')
+    return res.data.billingAddress ?? null
+  } catch {
+    return null            // silently fall through — form stays empty
+  }
+}
+
 // ── Plans ────────────────────────────────────────────────────────────────────
 
 export interface PlanBenefit {
