@@ -370,6 +370,10 @@ export interface ServicePaymentPayload {
   email: string
   description: string
   paymentMethod: 'card' | 'transfer'
+  billingAddress?: string
+  billingCity?: string
+  billingState?: string
+  billingCountry?: string
 }
 
 export interface ServicePaymentResponse {

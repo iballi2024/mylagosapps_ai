@@ -202,7 +202,7 @@ export default function ContactSection() {
                   onChange={(e) => handleChange("name", e.target.value)}
                   onBlur={() => handleBlur("name")}
                   aria-describedby={errors.name ? "error-name" : undefined}
-                  aria-invalid={!!errors.name && touched.name}
+                  aria-invalid={errors.name && touched.name ? "true" : undefined}
                 />
                 {errors.name && touched.name && (
                   <p id="error-name" className="flex items-center gap-1 text-xs text-error">
@@ -224,7 +224,7 @@ export default function ContactSection() {
                   onChange={(e) => handleChange("email", e.target.value)}
                   onBlur={() => handleBlur("email")}
                   aria-describedby={errors.email ? "error-email" : undefined}
-                  aria-invalid={!!errors.email && touched.email}
+                  aria-invalid={errors.email && touched.email ? "true" : undefined}
                 />
                 {errors.email && touched.email && (
                   <p id="error-email" className="flex items-center gap-1 text-xs text-error">
@@ -248,7 +248,7 @@ export default function ContactSection() {
                 onChange={(e) => handleChange("phone", e.target.value)}
                 onBlur={() => handleBlur("phone")}
                 aria-describedby={errors.phone ? "error-phone" : undefined}
-                aria-invalid={!!errors.phone && touched.phone}
+                aria-invalid={errors.phone && touched.phone ? "true" : undefined}
               />
               {errors.phone && touched.phone && (
                 <p id="error-phone" className="flex items-center gap-1 text-xs text-error">
@@ -271,7 +271,7 @@ export default function ContactSection() {
                 onChange={(e) => handleChange("message", e.target.value)}
                 onBlur={() => handleBlur("message")}
                 aria-describedby={errors.message ? "error-message" : undefined}
-                aria-invalid={!!errors.message && touched.message}
+                aria-invalid={errors.message && touched.message ? "true" : undefined}
               />
               {errors.message && touched.message && (
                 <p id="error-message" className="flex items-center gap-1 text-xs text-error">

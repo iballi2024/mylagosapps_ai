@@ -1,13 +1,29 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { Box, Card, Text, Button, Stack, Group, Divider, Anchor, Collapse, TextInput, Checkbox, ActionIcon, Tooltip, CopyButton } from '@mantine/core'
+import {
+  Box, Card, Text, Button, Stack, Group, Divider, Anchor,
+  Collapse, TextInput, Checkbox, ActionIcon, Tooltip, CopyButton, Select,
+} from '@mantine/core'
 import { apiInitiateServicePayment, apiVerifyPayment, type VirtualAccount } from '@/lib/billing'
 
 const METHODS = [
-  { value: 'saved-card',    icon: '💳', label: 'Saved card',           desc: 'Visa •••• 4242' },
-  { value: 'new-card',      icon: '🏦', label: 'New card',              desc: 'Mastercard, Visa, Verve' },
-  { value: 'bank-transfer', icon: '🔁', label: 'Bank transfer / USSD', desc: 'Instant transfer from any Nigerian bank' },
+  { value: 'card',          icon: '💳', label: 'Card',                 desc: 'Mastercard, Visa, Verve — powered by Paystack' },
+  { value: 'bank-transfer', icon: '🏦', label: 'Bank Transfer / USSD', desc: 'Instant transfer from any Nigerian bank' },
 ]
+
+const NG_STATES = [
+  'Abia','Adamawa','Akwa Ibom','Anambra','Bauchi','Bayelsa','Benue','Borno',
+  'Cross River','Delta','Ebonyi','Edo','Ekiti','Enugu','FCT — Abuja','Gombe',
+  'Imo','Jigawa','Kaduna','Kano','Katsina','Kebbi','Kogi','Kwara','Lagos',
+  'Nasarawa','Niger','Ogun','Ondo','Osun','Oyo','Plateau','Rivers','Sokoto',
+  'Taraba','Yobe','Zamfara',
+].map(s => ({ value: s, label: s }))
+
+const COUNTRIES = [{ value: 'NG', label: 'Nigeria' }]
+
+const INPUT_STYLES = {
+  label: { fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 }
+}
 
 interface Props {
   amount: number
@@ -21,13 +37,22 @@ interface Props {
 }
 
 export default function PaymentStep({ amount, formatPrice, color, email, description, summaryRows, onBack, onPay }: Props) {
-  const [method, setMethod] = useState('saved-card')
-  const [couponOpen, setCouponOpen] = useState(false)
-  const [coupon, setCoupon] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
-  const [virtualAccount, setVirtualAccount] = useState<VirtualAccount | null>(null)
+  const [method, setMethod]                     = useState('card')
+  const [couponOpen, setCouponOpen]             = useState(false)
+  const [coupon, setCoupon]                     = useState('')
+  const [loading, setLoading]                   = useState(false)
+  const [paymentError, setPaymentError]         = useState<string | null>(null)
+  const [virtualAccount, setVirtualAccount]     = useState<VirtualAccount | null>(null)
   const [transferConfirmed, setTransferConfirmed] = useState(false)
+
+  // Billing address
+  const [billing, setBilling] = useState({ address: '', city: '', state: '', country: 'NG' })
+  const [billingTouched, setBillingTouched] = useState<Record<string, boolean>>({})
+
+  const billingErrors: Record<string, string> = {}
+  if (billingTouched.address && !billing.address.trim()) billingErrors.address = 'Required'
+  if (billingTouched.city    && !billing.city.trim())    billingErrors.city    = 'Required'
+  if (billingTouched.state   && !billing.state)          billingErrors.state   = 'Required'
 
   // Load Paystack inline script once
   useEffect(() => {
@@ -41,6 +66,12 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
   }, [])
 
   async function handlePay() {
+    if (method === 'card') {
+      // Validate billing address first
+      setBillingTouched({ address: true, city: true, state: true })
+      if (!billing.address.trim() || !billing.city.trim() || !billing.state) return
+    }
+
     setPaymentError(null)
     setLoading(true)
 
@@ -53,6 +84,10 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
         email: userEmail,
         description: description ?? summaryRows?.[0]?.value ?? 'LagosApps service',
         paymentMethod: isTransfer ? 'transfer' : 'card',
+        billingAddress: billing.address,
+        billingCity:    billing.city,
+        billingState:   billing.state,
+        billingCountry: billing.country,
       })
 
       if (isTransfer) {
@@ -61,16 +96,15 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
         return
       }
 
-      // Card payment via Paystack popup
       if (!window.PaystackPop) {
         throw new Error('Payment provider not ready. Please wait a moment and try again.')
       }
 
       const handler = window.PaystackPop.setup({
-        key: result.publicKey,
-        email: result.email,
+        key:    result.publicKey,
+        email:  result.email,
         amount: result.amountKobo,
-        ref: result.reference,
+        ref:    result.reference,
         currency: 'NGN',
 
         callback: function (response) {
@@ -89,9 +123,7 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
           })()
         },
 
-        onClose: () => {
-          setLoading(false)
-        },
+        onClose: () => { setLoading(false) },
       })
 
       handler.openIframe()
@@ -126,6 +158,7 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
 
       <Text ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb="xl">Payment</Text>
 
+      {/* Order summary */}
       {summaryRows && summaryRows.length > 0 && (
         <Card radius="xl" withBorder p="md" mb="md" style={{ borderColor: 'var(--color-border)' }}>
           <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="sm">Order summary</Text>
@@ -145,7 +178,7 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
         </Card>
       )}
 
-      {/* Virtual account panel (bank transfer only) */}
+      {/* Virtual account panel (bank transfer) */}
       {virtualAccount ? (
         <Stack gap="md">
           <Card radius="xl" withBorder p="lg" style={{ background: 'var(--color-surface2)', borderColor: 'var(--color-border)' }}>
@@ -197,16 +230,18 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
             disabled={!transferConfirmed}
             style={transferConfirmed ? { background: color, color: 'white', fontWeight: 700 } : {}}
             onClick={handleTransferConfirm}>
-            Confirm transfer →
+            I&apos;ve paid — Confirm →
           </Button>
         </Stack>
       ) : (
-        <>
-          <Card radius="xl" withBorder p="md" mb="sm" style={{ borderColor: 'var(--color-border)' }}>
+        <Stack gap="md">
+
+          {/* Payment method selection */}
+          <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
             <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="sm">Payment method</Text>
             <Stack gap="sm">
               {METHODS.map(m => (
-                <Box key={m.value} onClick={() => setMethod(m.value)}
+                <Box key={m.value} onClick={() => { setMethod(m.value); setPaymentError(null) }}
                   style={{
                     padding: '10px 14px', borderRadius: 12, cursor: 'pointer',
                     border: `2px solid ${method === m.value ? color : 'var(--color-border)'}`,
@@ -234,13 +269,64 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
             </Stack>
           </Card>
 
-          <Anchor component="button" fz="xs" c="var(--color-muted)" mb="sm" display="block"
+          {/* Billing address — card only */}
+          {method === 'card' && (
+            <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
+              <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Billing address</Text>
+              <Stack gap="sm">
+                <TextInput
+                  label="Street address"
+                  placeholder="12 Broad Street"
+                  radius="md"
+                  value={billing.address}
+                  error={billingErrors.address}
+                  onChange={e => setBilling(p => ({ ...p, address: e.target.value }))}
+                  onBlur={() => setBillingTouched(p => ({ ...p, address: true }))}
+                  styles={INPUT_STYLES}
+                />
+                <TextInput
+                  label="City"
+                  placeholder="Lagos"
+                  radius="md"
+                  value={billing.city}
+                  error={billingErrors.city}
+                  onChange={e => setBilling(p => ({ ...p, city: e.target.value }))}
+                  onBlur={() => setBillingTouched(p => ({ ...p, city: true }))}
+                  styles={INPUT_STYLES}
+                />
+                <Group grow>
+                  <Select
+                    label="State"
+                    placeholder="Select state"
+                    radius="md"
+                    data={NG_STATES}
+                    searchable
+                    value={billing.state}
+                    error={billingErrors.state}
+                    onChange={v => { setBilling(p => ({ ...p, state: v ?? '' })); setBillingTouched(p => ({ ...p, state: true })) }}
+                    styles={INPUT_STYLES}
+                  />
+                  <Select
+                    label="Country"
+                    radius="md"
+                    data={COUNTRIES}
+                    value={billing.country}
+                    onChange={v => setBilling(p => ({ ...p, country: v ?? 'NG' }))}
+                    styles={INPUT_STYLES}
+                  />
+                </Group>
+              </Stack>
+            </Card>
+          )}
+
+          {/* Discount code */}
+          <Anchor component="button" fz="xs" c="var(--color-muted)" display="block"
             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
             onClick={() => setCouponOpen(o => !o)}>
             {couponOpen ? '▲' : '▼'} Have a discount code?
           </Anchor>
           <Collapse in={couponOpen}>
-            <Group mb="md" gap="sm">
+            <Group mb="xs" gap="sm">
               <TextInput flex={1} size="sm" radius="xl" placeholder="Enter discount code"
                 value={coupon} onChange={e => setCoupon(e.target.value)} />
               <Button size="sm" radius="xl" variant="outline" style={{ borderColor: color, color }}>Apply</Button>
@@ -248,15 +334,22 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
           </Collapse>
 
           {paymentError && (
-            <Text fz="sm" c="red" ta="center" mb="sm">{paymentError}</Text>
+            <Text fz="sm" c="red" ta="center">{paymentError}</Text>
           )}
 
-          <Button fullWidth radius="xl" size="md" mt="sm" loading={loading}
+          <Button fullWidth radius="xl" size="md" loading={loading}
             style={{ background: color, color: 'white', fontWeight: 700 }}
             onClick={handlePay}>
-            {loading ? 'Processing…' : `Pay ${formatPrice(amount)} →`}
+            {loading ? 'Processing…' : `🔒 Pay ${formatPrice(amount)}`}
           </Button>
-        </>
+
+          <Text fz="xs" c="var(--color-muted)" ta="center">
+            {method === 'card'
+              ? 'Your card is charged immediately via Paystack. SSL encrypted.'
+              : 'You will be shown bank transfer details on the next screen.'}
+          </Text>
+
+        </Stack>
       )}
     </Box>
   )
