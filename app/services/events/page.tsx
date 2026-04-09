@@ -6,10 +6,13 @@ import {
   Box, Title, Text, Card, Button, Group, Stack, Badge,
   Anchor, Select, TextInput, Textarea, NumberInput, Divider,
 } from '@mantine/core'
-import { IconClock, IconCheck } from '@tabler/icons-react'
+import { DatePickerInput } from '@mantine/dates'
+import '@mantine/dates/styles.css'
+import { IconClock, IconCheck, IconCalendar } from '@tabler/icons-react'
 import { usePlatform } from '@/context/PlatformContext'
-import BookingCalendar from '@/components/BookingCalendar'
+import PaymentStep from '@/components/PaymentStep'
 import dayjs from 'dayjs'
+import { reqSelect } from '@/lib/validation'
 
 // ── Shared constants ──────────────────────────────────────────────────────────
 const INPUT_LABEL = {
@@ -104,13 +107,13 @@ const UPCOMING_EVENTS = [
 type Step =
   | 'browse'
   // Venue Hire
-  | 'venue-event' | 'venue-details' | 'venue-review' | 'venue-confirm'
+  | 'venue-event' | 'venue-details' | 'venue-review' | 'venue-pay' | 'venue-confirm'
   // TV Studio
-  | 'tv-project' | 'tv-details' | 'tv-review' | 'tv-confirm'
+  | 'tv-project' | 'tv-details' | 'tv-review' | 'tv-pay' | 'tv-confirm'
   // Audio Studio
-  | 'audio-session' | 'audio-details' | 'audio-review' | 'audio-confirm'
+  | 'audio-session' | 'audio-details' | 'audio-review' | 'audio-pay' | 'audio-confirm'
   // Event Tickets
-  | 'tickets-browse' | 'tickets-review' | 'tickets-confirm'
+  | 'tickets-browse' | 'tickets-review' | 'tickets-pay' | 'tickets-confirm'
 
 function formatEventDate(date: string | Date | null) {
   if (!date) return ''
@@ -129,7 +132,7 @@ export default function EventsPage() {
   // Venue Hire state
   const [venueEventType, setVenueEventType] = useState<string | null>(null)
   const [venueGuests, setVenueGuests] = useState<string | null>(null)
-  const [venueDate, setVenueDate] = useState<Date | null>(null)
+  const [venueDateRange, setVenueDateRange] = useState<[Date | null, Date | null]>([null, null])
   const [venueDuration, setVenueDuration] = useState<string | null>(null)
   const [venueSetup, setVenueSetup] = useState<string | null>(null)
   const [venueNote, setVenueNote] = useState('')
@@ -155,19 +158,59 @@ export default function EventsPage() {
 
   const active = sub.services.find(s => s.id === selectedService)!
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  // ── Validation ──────────────────────────────────────────────────────────────
+  const venueEventErrors = {
+    venueEventType: reqSelect(venueEventType, 'an event type'),
+    venueGuests:    reqSelect(venueGuests, 'expected guests'),
+    venueDuration:  reqSelect(venueDuration, 'a duration'),
+    venueDateRange: !venueDateRange[0] ? 'Please select a start date' : !venueDateRange[1] ? 'Please select an end date' : '',
+  }
+  const venueDetailsErrors = { venueSetup: reqSelect(venueSetup, 'a setup style') }
+  const tvProjectErrors = {
+    tvProject:  reqSelect(tvProject, 'a project type'),
+    tvDate:     !tvDate ? 'Please select a preferred date' : '',
+    tvDuration: reqSelect(tvDuration, 'a duration'),
+  }
+  const tvDetailsErrors = { tvCrew: reqSelect(tvCrew, 'a crew option') }
+  const audioSessionErrors = {
+    audioSession:  reqSelect(audioSession, 'a session type'),
+    audioDate:     !audioDate ? 'Please select a preferred date' : '',
+    audioEngineer: reqSelect(audioEngineer, 'an engineer option'),
+  }
+
+  function touchVenueEvent()  { setTouched(p => ({ ...p, venueEventType: true, venueGuests: true, venueDuration: true, venueDateRange: true })) }
+  function touchVenueDetails(){ setTouched(p => ({ ...p, venueSetup: true })) }
+  function touchTvProject()   { setTouched(p => ({ ...p, tvProject: true, tvDate: true, tvDuration: true })) }
+  function touchTvDetails()   { setTouched(p => ({ ...p, tvCrew: true })) }
+  function touchAudioSession(){ setTouched(p => ({ ...p, audioSession: true, audioDate: true, audioEngineer: true })) }
+
   const audioHoursNum = Number(audioHours) || 1
   const audioSubtotal = 25000 * audioHoursNum + (audioEngineer === 'yes' ? 15000 : 0)
   const ticketQtyNum = Number(ticketQty) || 1
   const ticketTotal = selectedEvent ? selectedEvent.price * ticketQtyNum : 0
 
+  // Formatted date strings for display
+  const venueDateStart = venueDateRange[0] ? dayjs(venueDateRange[0]).format('D MMM YYYY') : ''
+  const venueDateEnd   = venueDateRange[1] ? dayjs(venueDateRange[1]).format('D MMM YYYY') : ''
+  const venueDateLabel = venueDateStart && venueDateEnd ? `${venueDateStart} – ${venueDateEnd}` : venueDateStart
+  const tvDateFormatted    = tvDate    ? dayjs(tvDate).format('D MMM YYYY') : ''
+  const audioDateFormatted = audioDate ? dayjs(audioDate).format('D MMM YYYY') : ''
+
+  // minDate helpers
+  const minVenueDate = dayjs().add(7, 'day').toDate()
+  const minTvDate    = dayjs().add(2, 'day').toDate()
+  const minAudioDate = dayjs().add(1, 'day').toDate()
+
   const FLOW_STEPS: Record<string, { id: Step; label: string }[]> = {
-    'event-venue': [{ id: 'venue-event', label: 'Event' }, { id: 'venue-details', label: 'Details' }, { id: 'venue-review', label: 'Review' }],
-    'tv-studio':   [{ id: 'tv-project', label: 'Project' }, { id: 'tv-details', label: 'Details' }, { id: 'tv-review', label: 'Review' }],
-    'audio-studio':[{ id: 'audio-session', label: 'Session' }, { id: 'audio-details', label: 'Details' }, { id: 'audio-review', label: 'Review' }],
-    'event-tickets':[{ id: 'tickets-browse', label: 'Select' }, { id: 'tickets-review', label: 'Review' }],
+    'event-venue':  [{ id: 'venue-event', label: 'Event' }, { id: 'venue-details', label: 'Details' }, { id: 'venue-review', label: 'Review' }, { id: 'venue-pay', label: 'Pay' }],
+    'tv-studio':    [{ id: 'tv-project', label: 'Project' }, { id: 'tv-details', label: 'Details' }, { id: 'tv-review', label: 'Review' }, { id: 'tv-pay', label: 'Pay' }],
+    'audio-studio': [{ id: 'audio-session', label: 'Session' }, { id: 'audio-details', label: 'Details' }, { id: 'audio-review', label: 'Review' }, { id: 'audio-pay', label: 'Pay' }],
+    'event-tickets':[{ id: 'tickets-browse', label: 'Select' }, { id: 'tickets-review', label: 'Review' }, { id: 'tickets-pay', label: 'Pay' }],
   }
 
-  const CONFIRM_STEPS: Step[] = ['venue-confirm', 'tv-confirm', 'audio-confirm', 'tickets-confirm']
+  const CONFIRM_STEPS: Step[] = ['venue-confirm', 'tv-confirm', 'audio-confirm', 'tickets-confirm', 'venue-pay', 'tv-pay', 'audio-pay', 'tickets-pay']
   const steps = FLOW_STEPS[selectedService] ?? []
   const currentIdx = steps.findIndex(s => s.id === step)
   const isConfirm = CONFIRM_STEPS.includes(step)
@@ -279,7 +322,7 @@ export default function EventsPage() {
                   <Text fz={10} c="var(--color-muted)" mb="sm">Browse and buy tickets to upcoming LagosApps events</Text>
                 )}
                 {(selectedService === 'event-venue' || selectedService === 'tv-studio' || selectedService === 'audio-studio') && (
-                  <Text fz={10} c="var(--color-muted)" mb="sm">No payment required now — we'll confirm availability and send a quote.</Text>
+                  <Text fz={10} c="var(--color-muted)" mb="sm">No payment required now — we&apos;ll confirm availability and send a quote.</Text>
                 )}
                 <Button fullWidth radius="xl" size="md" mb="xs" mt="sm"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }} onClick={startFlow}>
@@ -303,20 +346,35 @@ export default function EventsPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Tell us about your event</Text>
               <Stack gap="md">
                 <Select label="Event type" placeholder="What kind of event?" data={VENUE_EVENT_TYPES}
-                  value={venueEventType} onChange={setVenueEventType} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={venueEventType}
+                  onChange={v => { setVenueEventType(v); setTouched(p => ({ ...p, venueEventType: true })) }}
+                  error={touched.venueEventType ? venueEventErrors.venueEventType : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Select label="Expected guests" placeholder="How many guests?" data={VENUE_GUEST_RANGES}
-                  value={venueGuests} onChange={setVenueGuests} size="md" radius="xl" styles={INPUT_LABEL} />
-                <Box>
-                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="xs">Event date</Text>
-                  <BookingCalendar serviceId="event-venue" value={venueDate} onChange={setVenueDate} minDaysAhead={7} />
-                </Box>
+                  value={venueGuests}
+                  onChange={v => { setVenueGuests(v); setTouched(p => ({ ...p, venueGuests: true })) }}
+                  error={touched.venueGuests ? venueEventErrors.venueGuests : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
+                <DatePickerInput
+                  type="range"
+                  label="Event dates"
+                  placeholder="Select start and end dates"
+                  value={venueDateRange}
+                  onChange={v => { setVenueDateRange(v); setTouched(p => ({ ...p, venueDateRange: true })) }}
+                  error={touched.venueDateRange ? venueEventErrors.venueDateRange : undefined}
+                  minDate={minVenueDate}
+                  leftSection={<IconCalendar size={16} />}
+                  size="md" radius="xl" styles={INPUT_LABEL}
+                />
                 <Select label="Duration" placeholder="How long do you need the venue?" data={VENUE_DURATION}
-                  value={venueDuration} onChange={setVenueDuration} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={venueDuration}
+                  onChange={v => { setVenueDuration(v); setTouched(p => ({ ...p, venueDuration: true })) }}
+                  error={touched.venueDuration ? venueEventErrors.venueDuration : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!venueEventType || !venueGuests || !venueDate || !venueDuration}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('venue-details')}>
+                onClick={() => { touchVenueEvent(); if (Object.values(venueEventErrors).some(Boolean)) return; setStep('venue-details') }}>
                 Continue →
               </Button>
             </Box>
@@ -329,16 +387,18 @@ export default function EventsPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Help us prepare the right space for you</Text>
               <Stack gap="md">
                 <Select label="Preferred seating / setup style" placeholder="Select setup" data={VENUE_SETUPS}
-                  value={venueSetup} onChange={setVenueSetup} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={venueSetup}
+                  onChange={v => { setVenueSetup(v); setTouched(p => ({ ...p, venueSetup: true })) }}
+                  error={touched.venueSetup ? venueDetailsErrors.venueSetup : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Textarea label="Additional requirements (optional)"
                   placeholder="e.g. AV equipment, projector, stage, catering arrangements, décor…"
                   value={venueNote} onChange={e => setVenueNote(e.target.value)}
                   size="md" radius="md" minRows={4} autosize styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!venueSetup}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('venue-review')}>
+                onClick={() => { touchVenueDetails(); if (Object.values(venueDetailsErrors).some(Boolean)) return; setStep('venue-review') }}>
                 Review enquiry →
               </Button>
             </Box>
@@ -355,7 +415,7 @@ export default function EventsPage() {
                     {[
                       ['Event type',   VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label ?? ''],
                       ['Guests',       VENUE_GUEST_RANGES.find(g => g.value === venueGuests)?.label ?? ''],
-                      ['Date',         venueDate ? formatEventDate(venueDate) : ''],
+                      ['Dates',        venueDateLabel],
                       ['Duration',     VENUE_DURATION.find(d => d.value === venueDuration)?.label ?? ''],
                       ['Setup style',  VENUE_SETUPS.find(s => s.value === venueSetup)?.label ?? ''],
                     ].map(([k, v]) => (
@@ -384,10 +444,26 @@ export default function EventsPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('venue-confirm')}>
-                Submit enquiry →
+                onClick={() => setStep('venue-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'venue-pay' && (
+            <PaymentStep
+              amount={sub.services.find(s => s.id === 'event-venue')!.startingPrice}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Event Venue Hire' },
+                { label: 'Event type', value: VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label ?? '' },
+                { label: 'Dates', value: venueDateLabel },
+                { label: 'Duration', value: VENUE_DURATION.find(d => d.value === venueDuration)?.label ?? '' },
+              ]}
+              onBack={() => setStep('venue-review')}
+              onPay={() => setStep('venue-confirm')}
+            />
           )}
 
           {step === 'venue-confirm' && (
@@ -395,7 +471,7 @@ export default function EventsPage() {
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>📋</Box>
               <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Enquiry received!</Title>
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Our team will confirm venue availability for your <strong>{VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label}</strong> on <strong>{venueDate ? formatEventDate(venueDate) : ''}</strong> and send a full quote within 4 hours.
+                Our team will confirm venue availability for your <strong>{VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label}</strong> on <strong>{venueDateLabel}</strong> and send a full quote within 4 hours.
               </Text>
               <Group grow>
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
@@ -413,19 +489,30 @@ export default function EventsPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Tell us about your project</Text>
               <Stack gap="md">
                 <Select label="Project type" placeholder="What are you shooting?" data={TV_PROJECT_TYPES}
-                  value={tvProject} onChange={setTvProject} size="md" radius="xl" styles={INPUT_LABEL} />
-                <Box>
-                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="xs">Preferred date</Text>
-                  <BookingCalendar serviceId="tv-studio" value={tvDate} onChange={setTvDate} minDaysAhead={2} />
-                </Box>
+                  value={tvProject}
+                  onChange={v => { setTvProject(v); setTouched(p => ({ ...p, tvProject: true })) }}
+                  error={touched.tvProject ? tvProjectErrors.tvProject : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
+                <DatePickerInput
+                  label="Preferred date"
+                  placeholder="Select a date"
+                  value={tvDate}
+                  onChange={v => { setTvDate(v); setTouched(p => ({ ...p, tvDate: true })) }}
+                  error={touched.tvDate ? (!tvDate ? 'Please select a preferred date' : '') : undefined}
+                  minDate={minTvDate}
+                  leftSection={<IconCalendar size={16} />}
+                  size="md" radius="xl" styles={INPUT_LABEL}
+                />
                 <Select label="Studio duration" placeholder="How long do you need?" data={TV_DURATION}
-                  value={tvDuration} onChange={setTvDuration} size="md" radius="xl"
+                  value={tvDuration}
+                  onChange={v => { setTvDuration(v); setTouched(p => ({ ...p, tvDuration: true })) }}
+                  error={touched.tvDuration ? tvProjectErrors.tvDuration : undefined}
+                  size="md" radius="xl"
                   leftSection={<IconClock size={16} />} styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!tvProject || !tvDate || !tvDuration}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('tv-details')}>
+                onClick={() => { touchTvProject(); if (Object.values(tvProjectErrors).some(Boolean)) return; setStep('tv-details') }}>
                 Continue →
               </Button>
             </Box>
@@ -438,7 +525,10 @@ export default function EventsPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Help us set up the studio for your shoot</Text>
               <Stack gap="md">
                 <Select label="Do you need our crew?" placeholder="Select crew option" data={TV_CREW_OPTIONS}
-                  value={tvCrew} onChange={setTvCrew} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={tvCrew}
+                  onChange={v => { setTvCrew(v); setTouched(p => ({ ...p, tvCrew: true })) }}
+                  error={touched.tvCrew ? tvDetailsErrors.tvCrew : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <TextInput label="Number of cast / presenters" placeholder="e.g. 2 presenters, 1 guest"
                   value={tvCast ?? ''} onChange={e => setTvCast(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
                 <Textarea label="Additional notes (optional)"
@@ -447,9 +537,8 @@ export default function EventsPage() {
                   size="md" radius="md" minRows={3} autosize styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!tvCrew}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('tv-review')}>
+                onClick={() => { touchTvDetails(); if (Object.values(tvDetailsErrors).some(Boolean)) return; setStep('tv-review') }}>
                 Review booking →
               </Button>
             </Box>
@@ -465,7 +554,7 @@ export default function EventsPage() {
                   <Stack gap="xs">
                     {[
                       ['Project type', TV_PROJECT_TYPES.find(p => p.value === tvProject)?.label ?? ''],
-                      ['Date',         tvDate ? formatEventDate(tvDate) : ''],
+                      ['Date',         tvDateFormatted],
                       ['Duration',     TV_DURATION.find(d => d.value === tvDuration)?.label ?? ''],
                       ['Crew',         TV_CREW_OPTIONS.find(c => c.value === tvCrew)?.label ?? ''],
                       ...(tvCast ? [['Cast / presenters', tvCast]] : []),
@@ -500,10 +589,25 @@ export default function EventsPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('tv-confirm')}>
-                Submit booking request →
+                onClick={() => setStep('tv-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'tv-pay' && (
+            <PaymentStep
+              amount={tvDuration === 'full' ? 150000 : 80000}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'TV Studio Rental' },
+                { label: 'Project type', value: TV_PROJECT_TYPES.find(p => p.value === tvProject)?.label ?? '' },
+                { label: 'Duration', value: TV_DURATION.find(d => d.value === tvDuration)?.label ?? '' },
+              ]}
+              onBack={() => setStep('tv-review')}
+              onPay={() => setStep('tv-confirm')}
+            />
           )}
 
           {step === 'tv-confirm' && (
@@ -511,7 +615,7 @@ export default function EventsPage() {
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>📺</Box>
               <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Booking request sent!</Title>
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Our studio team will confirm availability for <strong>{tvDate ? formatEventDate(tvDate) : ''}</strong> and contact you within 2 hours to confirm and arrange payment.
+                Our studio team will confirm availability for <strong>{tvDateFormatted}</strong> and contact you within 2 hours to confirm and arrange payment.
               </Text>
               <Group grow>
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
@@ -529,11 +633,20 @@ export default function EventsPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Tell us about your session</Text>
               <Stack gap="md">
                 <Select label="Session type" placeholder="What are you recording?" data={AUDIO_SESSION_TYPES}
-                  value={audioSession} onChange={setAudioSession} size="md" radius="xl" styles={INPUT_LABEL} />
-                <Box>
-                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="xs">Preferred date</Text>
-                  <BookingCalendar serviceId="audio-studio" value={audioDate} onChange={setAudioDate} minDaysAhead={1} />
-                </Box>
+                  value={audioSession}
+                  onChange={v => { setAudioSession(v); setTouched(p => ({ ...p, audioSession: true })) }}
+                  error={touched.audioSession ? audioSessionErrors.audioSession : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
+                <DatePickerInput
+                  label="Preferred date"
+                  placeholder="Select a date"
+                  value={audioDate}
+                  onChange={v => { setAudioDate(v); setTouched(p => ({ ...p, audioDate: true })) }}
+                  error={touched.audioDate ? (!audioDate ? 'Please select a preferred date' : '') : undefined}
+                  minDate={minAudioDate}
+                  leftSection={<IconCalendar size={16} />}
+                  size="md" radius="xl" styles={INPUT_LABEL}
+                />
                 <Box>
                   <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="xs">Hours needed</Text>
                   <Group gap="sm">
@@ -544,12 +657,14 @@ export default function EventsPage() {
                   </Group>
                 </Box>
                 <Select label="In-house engineer?" placeholder="Do you need our sound engineer?" data={AUDIO_ENGINEER}
-                  value={audioEngineer} onChange={setAudioEngineer} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={audioEngineer}
+                  onChange={v => { setAudioEngineer(v); setTouched(p => ({ ...p, audioEngineer: true })) }}
+                  error={touched.audioEngineer ? audioSessionErrors.audioEngineer : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!audioSession || !audioDate || !audioEngineer}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('audio-details')}>
+                onClick={() => { touchAudioSession(); if (Object.values(audioSessionErrors).some(Boolean)) return; setStep('audio-details') }}>
                 Continue →
               </Button>
             </Box>
@@ -582,7 +697,7 @@ export default function EventsPage() {
                   <Stack gap="xs">
                     {[
                       ['Session type', AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label ?? ''],
-                      ['Date',         audioDate ? formatEventDate(audioDate) : ''],
+                      ['Date',         audioDateFormatted],
                       ['Duration',     `${audioHoursNum} hour${audioHoursNum > 1 ? 's' : ''}`],
                       ['Engineer',     AUDIO_ENGINEER.find(e => e.value === audioEngineer)?.label ?? ''],
                     ].map(([k, v]) => (
@@ -616,10 +731,26 @@ export default function EventsPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('audio-confirm')}>
-                Submit booking request →
+                onClick={() => setStep('audio-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'audio-pay' && (
+            <PaymentStep
+              amount={audioSubtotal}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Audio Studio' },
+                { label: 'Session type', value: AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label ?? '' },
+                { label: 'Hours', value: `${audioHoursNum} hr${audioHoursNum > 1 ? 's' : ''}` },
+                { label: 'Engineer', value: audioEngineer === 'yes' ? 'Included' : 'Self-engineered' },
+              ]}
+              onBack={() => setStep('audio-review')}
+              onPay={() => setStep('audio-confirm')}
+            />
           )}
 
           {step === 'audio-confirm' && (
@@ -627,7 +758,7 @@ export default function EventsPage() {
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>🎙️</Box>
               <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Booking request sent!</Title>
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Our studio team will confirm your <strong>{audioHoursNum}-hour {AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label?.toLowerCase()} session</strong> on <strong>{audioDate ? formatEventDate(audioDate) : ''}</strong> and contact you to arrange payment. Total: <strong>{formatPrice(audioSubtotal)}</strong>.
+                Our studio team will confirm your <strong>{audioHoursNum}-hour {AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label?.toLowerCase()} session</strong> on <strong>{audioDateFormatted}</strong> and contact you to arrange payment. Total: <strong>{formatPrice(audioSubtotal)}</strong>.
               </Text>
               <Group grow>
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
@@ -645,7 +776,7 @@ export default function EventsPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Select an event to buy tickets</Text>
               <Stack gap="sm">
                 {UPCOMING_EVENTS.map(ev => (
-                  <Card key={ev.id} radius="xl" withBorder p="md" onClick={() => setSelectedEvent(ev)}
+                  <Card key={ev.id} radius="xl" withBorder p="md" onClick={() => { setSelectedEvent(ev); setTicketQty(1) }}
                     style={{ borderColor: selectedEvent?.id === ev.id ? sub.color + '80' : 'var(--color-border)', background: selectedEvent?.id === ev.id ? sub.colorPale : 'white', cursor: 'pointer', outline: selectedEvent?.id === ev.id ? `2px solid ${sub.color}50` : 'none' }}>
                     <Group gap="sm" justify="space-between" wrap="nowrap">
                       <Group gap="sm" wrap="nowrap" style={{ flex: 1, minWidth: 0 }}>
@@ -726,10 +857,26 @@ export default function EventsPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('tickets-confirm')}>
-                Place order · {formatPrice(ticketTotal)} →
+                onClick={() => setStep('tickets-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'tickets-pay' && selectedEvent && (
+            <PaymentStep
+              amount={ticketTotal}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Event', value: selectedEvent.title },
+                { label: 'Date', value: selectedEvent.date },
+                { label: 'Qty', value: String(ticketQtyNum) },
+                { label: 'Price per ticket', value: formatPrice(selectedEvent.price) },
+              ]}
+              onBack={() => setStep('tickets-review')}
+              onPay={() => setStep('tickets-confirm')}
+            />
           )}
 
           {step === 'tickets-confirm' && selectedEvent && (

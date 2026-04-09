@@ -65,7 +65,7 @@ export default function NotificationsPage() {
         <Card radius="xl" withBorder p="xl" style={{ borderColor: 'var(--color-border)', textAlign: 'center' }}>
           <Text fz={32} mb="xs">🔔</Text>
           <Text fw={600} c="var(--color-ink)" mb={4}>No notifications</Text>
-          <Text fz="sm" c="var(--color-muted)">You're all caught up.</Text>
+          <Text fz="sm" c="var(--color-muted)">You&apos;re all caught up.</Text>
         </Card>
       ) : (
         <Stack gap="xs">

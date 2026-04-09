@@ -6,7 +6,7 @@ import { Box, Title, Text, Card, Button, Group, Stack, Badge, Anchor } from '@ma
 import { usePlatform } from '@/context/PlatformContext'
 
 export default function ServicePage() {
-  const { getSubsidiary, walletBalance, formatPrice } = usePlatform()
+  const { getSubsidiary, formatPrice } = usePlatform()
   const sub = getSubsidiary('groceries')!
   const [selectedService, setSelectedService] = useState(sub?.services[0].id)
   const [step, setStep] = useState<'browse' | 'confirm'>('browse')
@@ -75,7 +75,6 @@ export default function ServicePage() {
                   <Box style={{ height: 1, background: 'var(--color-border)' }} />
                   <Group justify="space-between"><Text ff="var(--font-montserrat)" fw={700}>Total</Text><Text ff="var(--font-montserrat)" fw={700} style={{ color: sub?.color }}>{formatPrice(total)}</Text></Group>
                 </Stack>
-                <Text fz={10} c="var(--color-muted)" mb="sm">💳 Wallet: <Text span fw={600} c="var(--color-ink)">{formatPrice(walletBalance)}</Text></Text>
                 <Button fullWidth radius="xl" size="md" mb="xs"
                   style={{ background: sub?.color, color: 'white', fontWeight: 700 }} onClick={() => setStep('confirm')}>
                   Book now →

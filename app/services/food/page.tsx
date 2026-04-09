@@ -9,6 +9,11 @@ import {
 import { IconMapPin, IconClock, IconCheck } from '@tabler/icons-react'
 import { usePlatform } from '@/context/PlatformContext'
 import { saveOrder } from '@/lib/orders'
+import PaymentStep from '@/components/PaymentStep'
+import { DateInput } from '@mantine/dates'
+import '@mantine/dates/styles.css'
+import dayjs from 'dayjs'
+import { reqText, reqSelect } from '@/lib/validation'
 
 // ── Lagos delivery zones ──────────────────────────────────────────────────────
 const ZONES = [
@@ -142,7 +147,7 @@ export default function FoodPage() {
   // Catering enquiry
   const [catEventType, setCatEventType] = useState<string | null>(null)
   const [catGuestRange, setCatGuestRange] = useState<string | null>(null)
-  const [catDate, setCatDate] = useState('')
+  const [catDate, setCatDate] = useState<Date | null>(null)
   const [catTime, setCatTime] = useState<string | null>(null)
   const [catVenueArea, setCatVenueArea] = useState<string | null>(null)
   const [catVenueAddress, setCatVenueAddress] = useState('')
@@ -159,8 +164,34 @@ export default function FoodPage() {
   const deliveryFee = resolvedPickupZone && deliveryZone ? getDeliveryFee(resolvedPickupZone, deliveryZone) : null
   const total = deliveryFee !== null ? active.startingPrice + deliveryFee : null
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
   // Stable order ID (only used in confirm step)
   const [orderId] = useState(() => `LGA-${Math.random().toString(36).slice(2, 8).toUpperCase()}`)
+
+  // ── Validation ────────────────────────────────────────────────────────────
+  const deliveryErrors = {
+    deliveryArea:    reqSelect(deliveryArea, 'a delivery area'),
+    deliveryAddress: reqText(deliveryAddress, 'Street address'),
+  }
+  const catEventErrors = {
+    catEventType:  reqSelect(catEventType, 'an event type'),
+    catGuestRange: reqSelect(catGuestRange, 'guest count'),
+    catDate:       catDate === null ? 'Please select an event date' : '',
+    catTime:       reqSelect(catTime, 'a start time'),
+  }
+  const catVenueErrors = {
+    catVenueArea:    reqSelect(catVenueArea, 'a venue area'),
+    catVenueAddress: reqText(catVenueAddress, 'Venue address'),
+  }
+  const catMenuErrors = {
+    catMenuStyle: reqSelect(catMenuStyle, 'a menu style'),
+  }
+
+  function touchDelivery() { setTouched(p => ({ ...p, deliveryArea: true, deliveryAddress: true })) }
+  function touchCatEvent() { setTouched(p => ({ ...p, catEventType: true, catGuestRange: true, catDate: true, catTime: true })) }
+  function touchCatVenue() { setTouched(p => ({ ...p, catVenueArea: true, catVenueAddress: true })) }
+  function touchCatMenu()  { setTouched(p => ({ ...p, catMenuStyle: true })) }
 
   // ── Step breadcrumbs ──────────────────────────────────────────────────────
   const STEPS: { id: Step; label: string }[] = isCatering
@@ -298,7 +329,7 @@ export default function FoodPage() {
                     setRestaurant(null); setPickupZone(null)
                     setDeliveryArea(null); setDeliveryAddress('')
                     setNote(''); setTimeSlot('asap')
-                    setCatEventType(null); setCatGuestRange(null); setCatDate(''); setCatTime(null)
+                    setCatEventType(null); setCatGuestRange(null); setCatDate(null); setCatTime(null)
                     setCatVenueArea(null); setCatVenueAddress(''); setCatMenuStyle(null); setCatDietary(''); setCatNote('')
                     setStep(isCatering ? 'cat-event' : isRestaurant ? 'pickup' : 'delivery')
                   }}>
@@ -397,7 +428,8 @@ export default function FoodPage() {
                   placeholder="Select your area in Lagos"
                   data={ALL_AREA_OPTIONS}
                   value={deliveryArea}
-                  onChange={setDeliveryArea}
+                  onChange={v => { setDeliveryArea(v); setTouched(p => ({ ...p, deliveryArea: true })) }}
+                  error={touched.deliveryArea ? deliveryErrors.deliveryArea : undefined}
                   size="md" radius="xl" searchable
                   styles={INPUT_LABEL}
                 />
@@ -406,6 +438,8 @@ export default function FoodPage() {
                   placeholder="e.g. 14 Admiralty Way, Flat 3"
                   value={deliveryAddress}
                   onChange={e => setDeliveryAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, deliveryAddress: true }))}
+                  error={touched.deliveryAddress ? deliveryErrors.deliveryAddress : undefined}
                   size="md" radius="xl"
                   styles={INPUT_LABEL}
                 />
@@ -432,9 +466,8 @@ export default function FoodPage() {
               </Stack>
 
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!deliveryArea || !deliveryAddress.trim()}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('details')}>
+                onClick={() => { touchDelivery(); if (Object.values(deliveryErrors).some(Boolean)) return; setStep('details') }}>
                 Continue →
               </Button>
             </Box>
@@ -480,8 +513,6 @@ export default function FoodPage() {
           {/* ── Payment / Review ───────────────────────────────────────────── */}
           {step === 'payment' && (
             <Box maw={480}>
-              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block"
-                style={{ cursor: 'pointer' }} onClick={() => setStep('details')}>← Back</Anchor>
               <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb="xl">Review & pay</Title>
 
               <Stack gap="md">
@@ -551,35 +582,38 @@ export default function FoodPage() {
                 )}
               </Stack>
 
-              <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={total === null}
-                style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => {
-                  if (total === null || !deliveryZone || !resolvedPickupZone) return
-                  saveOrder({
-                    id: orderId,
-                    service: selectedService,
-                    serviceName: active.name,
-                    subsidiary: sub.name,
-                    restaurant: restaurant?.name,
-                    restaurantArea: restaurant?.area,
-                    pickupZone: resolvedPickupZone,
-                    deliveryAddress,
-                    deliveryArea: deliveryArea!,
-                    deliveryZone,
-                    timeSlot: timeSlot ?? 'asap',
-                    note,
-                    deliveryFee: deliveryFee!,
-                    subtotal: active.startingPrice,
-                    total,
-                    status: 'placed',
-                    createdAt: new Date().toISOString(),
-                    estimatedMinutes: restaurant ? parseInt(restaurant.deliveryTime) : 45,
-                  })
-                  setStep('confirm')
-                }}>
-                Place order {total !== null ? `· ${formatPrice(total)}` : ''} →
-              </Button>
+              {total !== null && (
+                <PaymentStep
+                  amount={total}
+                  formatPrice={formatPrice}
+                  color={sub.color}
+                  onBack={() => setStep('details')}
+                  onPay={() => {
+                    if (total === null || !deliveryZone || !resolvedPickupZone) return
+                    saveOrder({
+                      id: orderId,
+                      service: selectedService,
+                      serviceName: active.name,
+                      subsidiary: sub.name,
+                      restaurant: restaurant?.name,
+                      restaurantArea: restaurant?.area,
+                      pickupZone: resolvedPickupZone,
+                      deliveryAddress,
+                      deliveryArea: deliveryArea!,
+                      deliveryZone,
+                      timeSlot: timeSlot ?? 'asap',
+                      note,
+                      deliveryFee: deliveryFee!,
+                      subtotal: active.startingPrice,
+                      total,
+                      status: 'placed',
+                      createdAt: new Date().toISOString(),
+                      estimatedMinutes: restaurant ? parseInt(restaurant.deliveryTime) : 45,
+                    })
+                    setStep('confirm')
+                  }}
+                />
+              )}
             </Box>
           )}
 
@@ -666,21 +700,32 @@ export default function FoodPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Tell us about your event so we can plan the right menu</Text>
               <Stack gap="md">
                 <Select label="Event type" placeholder="Select event type" data={EVENT_TYPES}
-                  value={catEventType} onChange={setCatEventType} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={catEventType}
+                  onChange={v => { setCatEventType(v); setTouched(p => ({ ...p, catEventType: true })) }}
+                  error={touched.catEventType ? catEventErrors.catEventType : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Select label="Expected guest count" placeholder="Select range" data={GUEST_RANGES}
-                  value={catGuestRange} onChange={setCatGuestRange} size="md" radius="xl" styles={INPUT_LABEL} />
-                <TextInput label="Event date" type="date" size="md" radius="xl"
-                  value={catDate} onChange={e => setCatDate(e.target.value)}
-                  min={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                  value={catGuestRange}
+                  onChange={v => { setCatGuestRange(v); setTouched(p => ({ ...p, catGuestRange: true })) }}
+                  error={touched.catGuestRange ? catEventErrors.catGuestRange : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
+                <DateInput label="Event date" placeholder="Pick a date" size="md" radius="xl"
+                  value={catDate}
+                  onChange={v => { setCatDate(v); setTouched(p => ({ ...p, catDate: true })) }}
+                  onBlur={() => setTouched(p => ({ ...p, catDate: true }))}
+                  error={touched.catDate ? catEventErrors.catDate : undefined}
+                  minDate={new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)}
                   styles={INPUT_LABEL} />
                 <Select label="Event start time" placeholder="Select time" data={EVENT_TIMES}
-                  value={catTime} onChange={setCatTime} size="md" radius="xl"
+                  value={catTime}
+                  onChange={v => { setCatTime(v); setTouched(p => ({ ...p, catTime: true })) }}
+                  error={touched.catTime ? catEventErrors.catTime : undefined}
+                  size="md" radius="xl"
                   leftSection={<IconClock size={16} />} styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!catEventType || !catGuestRange || !catDate || !catTime}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('cat-venue')}>
+                onClick={() => { touchCatEvent(); if (Object.values(catEventErrors).some(Boolean)) return; setStep('cat-venue') }}>
                 Continue →
               </Button>
             </Box>
@@ -695,14 +740,19 @@ export default function FoodPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Where will the event be held?</Text>
               <Stack gap="md">
                 <Select label="Venue area" placeholder="Select area in Lagos" data={ALL_AREA_OPTIONS}
-                  value={catVenueArea} onChange={setCatVenueArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                  value={catVenueArea}
+                  onChange={v => { setCatVenueArea(v); setTouched(p => ({ ...p, catVenueArea: true })) }}
+                  error={touched.catVenueArea ? catVenueErrors.catVenueArea : undefined}
+                  size="md" radius="xl" searchable styles={INPUT_LABEL} />
                 <TextInput label="Venue address / name" placeholder="e.g. Eko Hotel, Victoria Island or 12 Park Lane, Lekki"
-                  value={catVenueAddress} onChange={e => setCatVenueAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={catVenueAddress} onChange={e => setCatVenueAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, catVenueAddress: true }))}
+                  error={touched.catVenueAddress ? catVenueErrors.catVenueAddress : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!catVenueArea || !catVenueAddress.trim()}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('cat-menu')}>
+                onClick={() => { touchCatVenue(); if (Object.values(catVenueErrors).some(Boolean)) return; setStep('cat-menu') }}>
                 Continue →
               </Button>
             </Box>
@@ -717,7 +767,10 @@ export default function FoodPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Help us prepare the right food for your guests</Text>
               <Stack gap="md">
                 <Select label="Menu style" placeholder="Select style" data={MENU_STYLES}
-                  value={catMenuStyle} onChange={setCatMenuStyle} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={catMenuStyle}
+                  onChange={v => { setCatMenuStyle(v); setTouched(p => ({ ...p, catMenuStyle: true })) }}
+                  error={touched.catMenuStyle ? catMenuErrors.catMenuStyle : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <TextInput label="Dietary requirements (optional)"
                   placeholder="e.g. Vegetarian options, no pork, halal only…"
                   value={catDietary} onChange={e => setCatDietary(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
@@ -726,9 +779,8 @@ export default function FoodPage() {
                   value={catNote} onChange={e => setCatNote(e.target.value)} size="md" radius="md" minRows={3} autosize styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!catMenuStyle}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('cat-review')}>
+                onClick={() => { touchCatMenu(); if (Object.values(catMenuErrors).some(Boolean)) return; setStep('cat-review') }}>
                 Review enquiry →
               </Button>
             </Box>
@@ -747,7 +799,7 @@ export default function FoodPage() {
                     {[
                       ['Event type',   EVENT_TYPES.find(e => e.value === catEventType)?.label ?? ''],
                       ['Guest count',  GUEST_RANGES.find(g => g.value === catGuestRange)?.label ?? ''],
-                      ['Date',         catDate ? new Date(catDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''],
+                      ['Date',         catDate ? dayjs(catDate).format('D MMMM YYYY') : ''],
                       ['Start time',   EVENT_TIMES.find(t => t.value === catTime)?.label ?? ''],
                     ].map(([k, v]) => (
                       <Group key={k} justify="space-between">
@@ -823,7 +875,7 @@ export default function FoodPage() {
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="sm">
                 Our catering team will review your request for{' '}
                 <strong>{EVENT_TYPES.find(e => e.value === catEventType)?.label}</strong> on{' '}
-                <strong>{catDate ? new Date(catDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : ''}</strong>{' '}
+                <strong>{catDate ? dayjs(catDate).format('D MMMM YYYY') : ''}</strong>{' '}
                 and send a full quote to you within 24 hours.
               </Text>
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">

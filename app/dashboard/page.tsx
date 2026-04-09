@@ -4,10 +4,20 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor, Modal } from '@mantine/core'
 import { usePlatform, SUBSIDIARIES } from '@/context/PlatformContext'
+import { useAuthContext } from '@/context/AuthContext'
 import { MOCK_PLAN, TIER_META } from './plan'
+
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 export default function DashboardPage() {
   const { loyaltyPoints, transactions, formatPrice } = usePlatform()
+  const { user } = useAuthContext()
+  const displayName = user ? `${user.firstName} ${user.lastName}` : ''
   const [modalOpen, setModalOpen] = useState(false)
   const router = useRouter()
   const thisMonth = transactions
@@ -20,9 +30,9 @@ export default function DashboardPage() {
       {/* Header */}
       <Group justify="space-between" mb="xl" wrap="wrap" gap="sm">
         <Box>
-          <Text fz="sm" c="var(--color-muted)" mb={2}>Good afternoon 👋</Text>
+          <Text fz="sm" c="var(--color-muted)" mb={2}>{getGreeting()} 👋</Text>
           <Title order={1} ff="var(--font-montserrat)" fw={800} fz={{ base: 22, md: 26 }} c="var(--color-ink)">
-            Chidi Okonkwo
+            {displayName}
           </Title>
         </Box>
         <Button radius="xl" size="sm"

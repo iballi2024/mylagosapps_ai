@@ -45,7 +45,7 @@ export default function VerifiedInsights() {
             </h2>
             <p className="text-on-surface-variant leading-relaxed">
               Every membership tier comes with free services that pay for
-              themselves. Here's what our members are saying.
+              themselves. Here&apos;s what our members are saying.
             </p>
             <div className="pt-4">
               <div className="text-4xl md:text-5xl font-black text-primary">5</div>
@@ -77,7 +77,7 @@ export default function VerifiedInsights() {
                       </span>
                     </div>
                     <p className="text-xs text-on-surface-variant italic">
-                      "{item.quote}"
+                      &ldquo;{item.quote}&rdquo;
                     </p>
                   </div>
                 </div>

@@ -363,6 +363,60 @@ export async function apiInitiateCheckout(payload: CheckoutPayload): Promise<Che
   return res.data
 }
 
+// ── Service payment initiation ────────────────────────────────────────────────
+
+export interface ServicePaymentPayload {
+  amount: number          // in Naira
+  email: string
+  description: string
+  paymentMethod: 'card' | 'transfer'
+}
+
+export interface ServicePaymentResponse {
+  reference: string
+  publicKey: string
+  email: string
+  amountKobo: number     // amount × 100
+  virtualAccount?: VirtualAccount
+}
+
+interface ServicePaymentApiResponse {
+  success: boolean
+  message: string
+  data: ServicePaymentResponse
+  error: null | string
+}
+
+export async function apiInitiateServicePayment(payload: ServicePaymentPayload): Promise<ServicePaymentResponse> {
+  if (isDev) {
+    const ref = `LAGOS-SVC-${Date.now().toString().slice(-8)}`
+    const base = {
+      reference: ref,
+      publicKey: 'pk_test_000000000000000000000000000000000000000',
+      email: payload.email,
+      amountKobo: payload.amount * 100,
+    }
+    if (payload.paymentMethod === 'transfer') {
+      return {
+        ...base,
+        virtualAccount: {
+          bankName: 'GTBank (Guaranty Trust Bank)',
+          accountNumber: '0123456789',
+          accountName: 'LagosApps Technologies Ltd',
+          amount: payload.amount,
+          reference: ref,
+        },
+      }
+    }
+    return base
+  }
+  const res = await apiFetch<ServicePaymentApiResponse>('/app/orders/initiate', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+  return res.data
+}
+
 // ── Payment verification ──────────────────────────────────────────────────────
 
 export interface VerifyPaymentPayload {

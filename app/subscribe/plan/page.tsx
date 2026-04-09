@@ -78,6 +78,7 @@ function PlanPageInner() {
       })
       .catch(e => setFetchError(e?.message ?? 'Failed to load plans. Please refresh.'))
       .finally(() => setLoading(false))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const selected = plans.find(p => p.slug === selectedSlug) ?? null

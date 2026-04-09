@@ -129,11 +129,11 @@ export default function ContactSection() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-10 grid md:grid-cols-2 gap-12 md:gap-20">
         <div className="space-y-8">
           <h2 className="text-4xl md:text-5xl font-extrabold tracking-tighter">
-            Let's Talk.
+            Let&apos;s Talk.
           </h2>
           <p className="text-primary-fixed opacity-80 text-lg leading-relaxed max-w-md">
             Whether you need help choosing a solar package, booking a van, or
-            finding the right membership tier — we're here. No bots, no runaround.
+            finding the right membership tier — we&apos;re here. No bots, no runaround.
             Real people, real answers.
           </p>
           <div className="space-y-4 pt-4">

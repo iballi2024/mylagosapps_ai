@@ -9,6 +9,8 @@ import {
 import { IconMapPin, IconCheck, IconClock } from '@tabler/icons-react'
 import { usePlatform } from '@/context/PlatformContext'
 import BookingCalendar from '@/components/BookingCalendar'
+import PaymentStep from '@/components/PaymentStep'
+import { validatePhone, reqText, reqSelect } from '@/lib/validation'
 import dayjs from 'dayjs'
 
 // ── Lagos zones & fare matrix ─────────────────────────────────────────────────
@@ -101,11 +103,11 @@ const INPUT_LABEL = {
 type Step =
   | 'browse'
   // Car Hire
-  | 'car-route' | 'car-type' | 'car-schedule' | 'car-review' | 'car-confirm'
+  | 'car-route' | 'car-type' | 'car-schedule' | 'car-review' | 'car-pay' | 'car-confirm'
   // Dispatch
-  | 'dispatch-route' | 'dispatch-package' | 'dispatch-review' | 'dispatch-confirm'
+  | 'dispatch-route' | 'dispatch-package' | 'dispatch-review' | 'dispatch-pay' | 'dispatch-confirm'
   // Airport Transfer
-  | 'airport-details' | 'airport-car' | 'airport-schedule' | 'airport-review' | 'airport-confirm'
+  | 'airport-details' | 'airport-car' | 'airport-schedule' | 'airport-review' | 'airport-pay' | 'airport-confirm'
 
 function formatDate(d: Date | null) {
   if (!d) return ''
@@ -153,6 +155,37 @@ export default function RidesPage() {
 
   const active = sub.services.find(s => s.id === selectedService)!
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
+  // ── Validation ────────────────────────────────────────────────────────────
+  const carRouteErrors = {
+    carPickupArea:    reqSelect(carPickupArea, 'a pickup area'),
+    carPickupAddress: reqText(carPickupAddress, 'Pickup address'),
+    carDropoffArea:   reqSelect(carDropoffArea, 'a drop-off area'),
+    carDropoffAddress: reqText(carDropoffAddress, 'Drop-off address'),
+  }
+  const dispRouteErrors = {
+    dispPickupArea:    reqSelect(dispPickupArea, 'a pickup area'),
+    dispPickupAddress: reqText(dispPickupAddress, 'Pickup address'),
+    dispDropoffArea:   reqSelect(dispDropoffArea, 'a delivery area'),
+    dispDropoffAddress: reqText(dispDropoffAddress, 'Delivery address'),
+  }
+  const dispPackageErrors = {
+    dispRecipient:      reqText(dispRecipient, 'Recipient name'),
+    dispRecipientPhone: validatePhone(dispRecipientPhone),
+  }
+  const airportDetailsErrors = {
+    airportTerminal:  reqSelect(airportTerminal, 'a terminal'),
+    airportDirection: reqSelect(airportDirection, 'a transfer direction'),
+    airportArea:      reqSelect(airportArea, 'an area'),
+    airportAddress:   reqText(airportAddress, 'Address'),
+  }
+
+  function touchCarRoute()      { setTouched(p => ({ ...p, carPickupArea: true, carPickupAddress: true, carDropoffArea: true, carDropoffAddress: true })) }
+  function touchDispRoute()     { setTouched(p => ({ ...p, dispPickupArea: true, dispPickupAddress: true, dispDropoffArea: true, dispDropoffAddress: true })) }
+  function touchDispPackage()   { setTouched(p => ({ ...p, dispRecipient: true, dispRecipientPhone: true })) }
+  function touchAirportDetails(){ setTouched(p => ({ ...p, airportTerminal: true, airportDirection: true, airportArea: true, airportAddress: true })) }
+
   // ── Computed fares ──────────────────────────────────────────────────────────
   const carPickupZone = carPickupArea ? zoneOf(carPickupArea) : null
   const carDropoffZone = carDropoffArea ? zoneOf(carDropoffArea) : null
@@ -169,12 +202,12 @@ export default function RidesPage() {
 
   // ── Step maps ───────────────────────────────────────────────────────────────
   const FLOW_STEPS: Record<string, { id: Step; label: string }[]> = {
-    'car':      [{ id: 'car-route', label: 'Route' }, { id: 'car-type', label: 'Vehicle' }, { id: 'car-schedule', label: 'Schedule' }, { id: 'car-review', label: 'Review' }],
-    'dispatch': [{ id: 'dispatch-route', label: 'Route' }, { id: 'dispatch-package', label: 'Package' }, { id: 'dispatch-review', label: 'Review' }],
-    'airport':  [{ id: 'airport-details', label: 'Details' }, { id: 'airport-car', label: 'Vehicle' }, { id: 'airport-schedule', label: 'Schedule' }, { id: 'airport-review', label: 'Review' }],
+    'car':      [{ id: 'car-route', label: 'Route' }, { id: 'car-type', label: 'Vehicle' }, { id: 'car-schedule', label: 'Schedule' }, { id: 'car-review', label: 'Review' }, { id: 'car-pay', label: 'Pay' }],
+    'dispatch': [{ id: 'dispatch-route', label: 'Route' }, { id: 'dispatch-package', label: 'Package' }, { id: 'dispatch-review', label: 'Review' }, { id: 'dispatch-pay', label: 'Pay' }],
+    'airport':  [{ id: 'airport-details', label: 'Details' }, { id: 'airport-car', label: 'Vehicle' }, { id: 'airport-schedule', label: 'Schedule' }, { id: 'airport-review', label: 'Review' }, { id: 'airport-pay', label: 'Pay' }],
   }
 
-  const CONFIRM_STEPS: Step[] = ['car-confirm', 'dispatch-confirm', 'airport-confirm']
+  const CONFIRM_STEPS: Step[] = ['car-confirm', 'dispatch-confirm', 'airport-confirm', 'car-pay', 'dispatch-pay', 'airport-pay']
   const steps = FLOW_STEPS[selectedService] ?? []
   const currentIdx = steps.findIndex(s => s.id === step)
   const isConfirm = CONFIRM_STEPS.includes(step)
@@ -300,13 +333,25 @@ export default function RidesPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Where are you travelling from and to?</Text>
               <Stack gap="md">
                 <Select label="Pickup area" placeholder="Select area" data={ALL_AREA_OPTIONS}
-                  value={carPickupArea} onChange={setCarPickupArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                  value={carPickupArea}
+                  onChange={v => { setCarPickupArea(v); setTouched(p => ({ ...p, carPickupArea: true })) }}
+                  error={touched.carPickupArea ? carRouteErrors.carPickupArea : undefined}
+                  size="md" radius="xl" searchable styles={INPUT_LABEL} />
                 <TextInput label="Pickup address" placeholder="e.g. 14 Ozumba Mbadiwe, Victoria Island"
-                  value={carPickupAddress} onChange={e => setCarPickupAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={carPickupAddress} onChange={e => setCarPickupAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, carPickupAddress: true }))}
+                  error={touched.carPickupAddress ? carRouteErrors.carPickupAddress : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Select label="Drop-off area" placeholder="Select area" data={ALL_AREA_OPTIONS}
-                  value={carDropoffArea} onChange={setCarDropoffArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                  value={carDropoffArea}
+                  onChange={v => { setCarDropoffArea(v); setTouched(p => ({ ...p, carDropoffArea: true })) }}
+                  error={touched.carDropoffArea ? carRouteErrors.carDropoffArea : undefined}
+                  size="md" radius="xl" searchable styles={INPUT_LABEL} />
                 <TextInput label="Drop-off address" placeholder="e.g. 3 Admiralty Way, Lekki Phase 1"
-                  value={carDropoffAddress} onChange={e => setCarDropoffAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={carDropoffAddress} onChange={e => setCarDropoffAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, carDropoffAddress: true }))}
+                  error={touched.carDropoffAddress ? carRouteErrors.carDropoffAddress : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
 
                 {/* Live fare preview */}
                 {carPickupZone && carDropoffZone && (
@@ -329,9 +374,8 @@ export default function RidesPage() {
                 )}
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!carPickupArea || !carPickupAddress.trim() || !carDropoffArea || !carDropoffAddress.trim()}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('car-type')}>
+                onClick={() => { touchCarRoute(); if (Object.values(carRouteErrors).some(Boolean)) return; setStep('car-type') }}>
                 Choose vehicle →
               </Button>
             </Box>
@@ -470,10 +514,27 @@ export default function RidesPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('car-confirm')}>
-                Confirm booking · {carTotal ? formatPrice(carTotal) : ''} →
+                onClick={() => setStep('car-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'car-pay' && (
+            <PaymentStep
+              amount={carTotal ?? 0}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Car Hire' },
+                { label: 'Vehicle', value: CAR_TYPES.find(c => c.value === carType)?.label ?? '' },
+                { label: 'Date', value: formatDate(carDate) },
+                { label: 'Time', value: TIME_OPTIONS.find(t => t.value === carTime)?.label ?? '' },
+                { label: 'Route', value: `${carPickupArea} → ${carDropoffArea}` },
+              ]}
+              onBack={() => setStep('car-review')}
+              onPay={() => setStep('car-confirm')}
+            />
           )}
 
           {step === 'car-confirm' && (
@@ -483,7 +544,7 @@ export default function RidesPage() {
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="sm">
                 Your {CAR_TYPES.find(c => c.value === carType)?.label} has been booked for <strong>{formatDate(carDate)}</strong> at <strong>{TIME_OPTIONS.find(t => t.value === carTime)?.label}</strong>.
               </Text>
-              <Text fz="sm" c="var(--color-muted)" mb="xl">Your driver's details will be sent via WhatsApp before pickup.</Text>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">Your driver&apos;s details will be sent via WhatsApp before pickup.</Text>
               <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
               <Group grow>
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
@@ -501,13 +562,25 @@ export default function RidesPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Where should the rider collect from and deliver to?</Text>
               <Stack gap="md">
                 <Select label="Pickup area" placeholder="Select area" data={ALL_AREA_OPTIONS}
-                  value={dispPickupArea} onChange={setDispPickupArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                  value={dispPickupArea}
+                  onChange={v => { setDispPickupArea(v); setTouched(p => ({ ...p, dispPickupArea: true })) }}
+                  error={touched.dispPickupArea ? dispRouteErrors.dispPickupArea : undefined}
+                  size="md" radius="xl" searchable styles={INPUT_LABEL} />
                 <TextInput label="Pickup address" placeholder="e.g. 5 Marina Street, Lagos Island"
-                  value={dispPickupAddress} onChange={e => setDispPickupAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={dispPickupAddress} onChange={e => setDispPickupAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, dispPickupAddress: true }))}
+                  error={touched.dispPickupAddress ? dispRouteErrors.dispPickupAddress : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Select label="Delivery area" placeholder="Select area" data={ALL_AREA_OPTIONS}
-                  value={dispDropoffArea} onChange={setDispDropoffArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                  value={dispDropoffArea}
+                  onChange={v => { setDispDropoffArea(v); setTouched(p => ({ ...p, dispDropoffArea: true })) }}
+                  error={touched.dispDropoffArea ? dispRouteErrors.dispDropoffArea : undefined}
+                  size="md" radius="xl" searchable styles={INPUT_LABEL} />
                 <TextInput label="Delivery address" placeholder="e.g. 12 Allen Avenue, Ikeja"
-                  value={dispDropoffAddress} onChange={e => setDispDropoffAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={dispDropoffAddress} onChange={e => setDispDropoffAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, dispDropoffAddress: true }))}
+                  error={touched.dispDropoffAddress ? dispRouteErrors.dispDropoffAddress : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
 
                 {dispPickupZone && dispDropoffZone && (
                   <Card radius="xl" p="md" style={{ background: 'var(--color-surface2)', border: '1px solid var(--color-border)' }}>
@@ -528,9 +601,8 @@ export default function RidesPage() {
                 )}
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!dispPickupArea || !dispPickupAddress.trim() || !dispDropoffArea || !dispDropoffAddress.trim()}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('dispatch-package')}>
+                onClick={() => { touchDispRoute(); if (Object.values(dispRouteErrors).some(Boolean)) return; setStep('dispatch-package') }}>
                 Package details →
               </Button>
             </Box>
@@ -560,17 +632,22 @@ export default function RidesPage() {
                   </Stack>
                 </Box>
                 <TextInput label="Recipient name" placeholder="Who should receive the package?"
-                  value={dispRecipient} onChange={e => setDispRecipient(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={dispRecipient} onChange={e => setDispRecipient(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, dispRecipient: true }))}
+                  error={touched.dispRecipient ? dispPackageErrors.dispRecipient : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <TextInput label="Recipient phone number" placeholder="e.g. 08012345678" type="tel"
-                  value={dispRecipientPhone} onChange={e => setDispRecipientPhone(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={dispRecipientPhone} onChange={e => setDispRecipientPhone(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, dispRecipientPhone: true }))}
+                  error={touched.dispRecipientPhone ? dispPackageErrors.dispRecipientPhone : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Textarea label="Additional notes (optional)" placeholder="e.g. Handle with care, call before delivery, gate code 1234…"
                   value={dispNote} onChange={e => setDispNote(e.target.value)}
                   size="md" radius="md" minRows={3} autosize styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!dispPackage || !dispRecipient.trim() || !dispRecipientPhone.trim()}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('dispatch-review')}>
+                onClick={() => { touchDispPackage(); if (!dispPackage || Object.values(dispPackageErrors).some(Boolean)) return; setStep('dispatch-review') }}>
                 Review order →
               </Button>
             </Box>
@@ -618,10 +695,26 @@ export default function RidesPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('dispatch-confirm')}>
-                Place order · {dispFare ? formatPrice(dispFare) : ''} →
+                onClick={() => setStep('dispatch-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'dispatch-pay' && (
+            <PaymentStep
+              amount={dispFare ?? 0}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Dispatch Rider' },
+                { label: 'Package', value: PACKAGE_TYPES.find(p => p.value === dispPackage)?.label ?? '' },
+                { label: 'From', value: dispPickupArea ?? '' },
+                { label: 'To', value: dispDropoffArea ?? '' },
+              ]}
+              onBack={() => setStep('dispatch-review')}
+              onPay={() => setStep('dispatch-confirm')}
+            />
           )}
 
           {step === 'dispatch-confirm' && (
@@ -648,22 +741,33 @@ export default function RidesPage() {
               <Text fz="sm" c="var(--color-muted)" mb="xl">Pickup or drop-off at the airport?</Text>
               <Stack gap="md">
                 <Select label="Airport terminal" placeholder="Select terminal" data={AIRPORTS}
-                  value={airportTerminal} onChange={setAirportTerminal} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={airportTerminal}
+                  onChange={v => { setAirportTerminal(v); setTouched(p => ({ ...p, airportTerminal: true })) }}
+                  error={touched.airportTerminal ? airportDetailsErrors.airportTerminal : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Select label="Transfer direction" placeholder="Select" data={FLIGHT_DIRECTIONS}
-                  value={airportDirection} onChange={setAirportDirection} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={airportDirection}
+                  onChange={v => { setAirportDirection(v); setTouched(p => ({ ...p, airportDirection: true })) }}
+                  error={touched.airportDirection ? airportDetailsErrors.airportDirection : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <Select label={airportDirection === 'pickup' ? 'Drop-off area (your destination)' : 'Pickup area (your location)'}
                   placeholder="Select your area" data={ALL_AREA_OPTIONS}
-                  value={airportArea} onChange={setAirportArea} size="md" radius="xl" searchable styles={INPUT_LABEL} />
+                  value={airportArea}
+                  onChange={v => { setAirportArea(v); setTouched(p => ({ ...p, airportArea: true })) }}
+                  error={touched.airportArea ? airportDetailsErrors.airportArea : undefined}
+                  size="md" radius="xl" searchable styles={INPUT_LABEL} />
                 <TextInput label={airportDirection === 'pickup' ? 'Drop-off address' : 'Pickup address'}
                   placeholder="e.g. 4 Bourdillon Road, Ikoyi"
-                  value={airportAddress} onChange={e => setAirportAddress(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
+                  value={airportAddress} onChange={e => setAirportAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, airportAddress: true }))}
+                  error={touched.airportAddress ? airportDetailsErrors.airportAddress : undefined}
+                  size="md" radius="xl" styles={INPUT_LABEL} />
                 <TextInput label="Flight number (optional)" placeholder="e.g. QR 1425"
                   value={airportFlight} onChange={e => setAirportFlight(e.target.value)} size="md" radius="xl" styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
-                disabled={!airportTerminal || !airportDirection || !airportArea || !airportAddress.trim()}
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('airport-car')}>
+                onClick={() => { touchAirportDetails(); if (Object.values(airportDetailsErrors).some(Boolean)) return; setStep('airport-car') }}>
                 Choose vehicle →
               </Button>
             </Box>
@@ -758,10 +862,27 @@ export default function RidesPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('airport-confirm')}>
-                Confirm booking · {airportFare ? formatPrice(airportFare) : ''} →
+                onClick={() => setStep('airport-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {step === 'airport-pay' && (
+            <PaymentStep
+              amount={airportFare ?? 0}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Airport Transfer' },
+                { label: 'Terminal', value: AIRPORTS.find(a => a.value === airportTerminal)?.label ?? '' },
+                { label: 'Direction', value: FLIGHT_DIRECTIONS.find(d => d.value === airportDirection)?.label ?? '' },
+                { label: 'Vehicle', value: AIRPORT_CAR_TYPES.find(c => c.value === airportCarType)?.label ?? '' },
+                { label: 'Date', value: formatDate(airportDate) },
+              ]}
+              onBack={() => setStep('airport-review')}
+              onPay={() => setStep('airport-confirm')}
+            />
           )}
 
           {step === 'airport-confirm' && (
@@ -769,7 +890,7 @@ export default function RidesPage() {
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>✈️</Box>
               <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Transfer booked!</Title>
               <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Your airport transfer on <strong>{formatDate(airportDate)}</strong> at <strong>{TIME_OPTIONS.find(t => t.value === airportTime)?.label}</strong> is confirmed. Your driver's details will be sent via WhatsApp 2 hours before the transfer.
+                Your airport transfer on <strong>{formatDate(airportDate)}</strong> at <strong>{TIME_OPTIONS.find(t => t.value === airportTime)?.label}</strong> is confirmed. Your driver&apos;s details will be sent via WhatsApp 2 hours before the transfer.
               </Text>
               <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
               <Group grow>

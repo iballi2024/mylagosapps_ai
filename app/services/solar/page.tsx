@@ -2,8 +2,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Box, Title, Text, Card, Button, Group, Stack, Badge, TextInput, Select, Anchor } from '@mantine/core'
+import { DateInput } from '@mantine/dates'
+import '@mantine/dates/styles.css'
 import { usePlatform } from '@/context/PlatformContext'
+import PaymentStep from '@/components/PaymentStep'
 import Header2 from '@/app/home/components/Header2'
+import { validatePhone, reqText, reqSelect } from '@/lib/validation'
+import dayjs from 'dayjs'
 
 const PROPERTY_TYPES = [
   { value: 'residential', label: 'Residential' },
@@ -11,16 +16,78 @@ const PROPERTY_TYPES = [
   { value: 'industrial', label: 'Industrial' },
 ]
 
+// Price per service per property type (Naira)
+const SERVICE_PRICES: Record<string, Record<string, number>> = {
+  installation: { residential: 450000,  commercial: 750000,  industrial: 1200000 },
+  inverter:     { residential: 280000,  commercial: 420000,  industrial: 680000  },
+  maintenance:  { residential: 15000,   commercial: 25000,   industrial: 40000   },
+  'ev-charger': { residential: 180000,  commercial: 320000,  industrial: 550000  },
+}
+
+const EV_MODELS = [
+  { value: 'e-motorcycle', label: 'Electric Motorcycle' },
+  { value: 'e-car-entry',  label: 'Electric Car — Entry (₦8M – ₦15M)' },
+  { value: 'e-car-mid',    label: 'Electric Car — Mid-range (₦15M – ₦35M)' },
+  { value: 'e-car-premium',label: 'Electric Car — Premium (₦35M+)' },
+]
+
+const TIME_SLOTS = [
+  { value: '08:00', label: '8:00 AM – 10:00 AM' },
+  { value: '10:00', label: '10:00 AM – 12:00 PM' },
+  { value: '12:00', label: '12:00 PM – 2:00 PM' },
+  { value: '14:00', label: '2:00 PM – 4:00 PM' },
+  { value: '16:00', label: '4:00 PM – 6:00 PM' },
+]
+
+const INPUT_LABEL = {
+  label: { fontSize: 10, textTransform: 'uppercase' as const, letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 }
+}
+
 export default function SolarPage() {
   const { getSubsidiary, formatPrice } = usePlatform()
   const sub = getSubsidiary('solar')!
   const [selectedService, setSelectedService] = useState(sub.services[0].id)
-  const [step, setStep] = useState<'browse' | 'booking' | 'confirm'>('browse')
-  const [form, setForm] = useState({ address: '', propertyType: '', phone: '', preferredDate: '' })
+  const [step, setStep] = useState<'browse' | 'booking' | 'pay' | 'confirm'>('browse')
+  const [form, setForm] = useState({ name: '', address: '', propertyType: '', phone: '', vehicleInterest: '', timeSlot: '' })
+  const [bookingDate, setBookingDate] = useState<Date | null>(null)
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   const active = sub.services.find(s => s.id === selectedService)!
   const isAudit = active.id === 'audit'
-  const canProceed = form.address.trim() && form.propertyType && form.phone.trim()
+  const isEV    = active.id === 'ev'
+  const isEnquiry = isAudit || isEV   // no payment step
+
+  // Resolve price: free for enquiries, property-type-specific for paid services
+  const activePrice: number = isEnquiry
+    ? 0
+    : (form.propertyType && SERVICE_PRICES[active.id]?.[form.propertyType])
+      ? SERVICE_PRICES[active.id][form.propertyType]
+      : active.startingPrice
+
+  const errors = {
+    // EV enquiry fields
+    name:            isEV ? reqText(form.name, 'Your name') : '',
+    vehicleInterest: isEV ? reqSelect(form.vehicleInterest, 'a vehicle type') : '',
+    // Standard booking fields (audit + paid)
+    address:      !isEV ? reqText(form.address, 'Address') : '',
+    propertyType: !isEV ? reqSelect(form.propertyType, 'a property type') : '',
+    // Common
+    phone:        validatePhone(form.phone),
+    // Paid services only
+    bookingDate:  !isEnquiry ? (bookingDate === null ? 'Please select a booking date' : '') : '',
+    timeSlot:     !isEnquiry ? reqSelect(form.timeSlot, 'a time slot') : '',
+  }
+  const hasErrors = Object.values(errors).some(Boolean)
+
+  const formattedDate = bookingDate ? dayjs(bookingDate).format('D MMM YYYY') : ''
+
+  function touchAll() {
+    if (isEV) {
+      setTouched({ name: true, vehicleInterest: true, phone: true })
+    } else {
+      setTouched({ address: true, propertyType: true, phone: true, bookingDate: true, timeSlot: true })
+    }
+  }
 
   return (
     <>
@@ -67,7 +134,7 @@ export default function SolarPage() {
                           <Group gap="xs" mb={2} wrap="wrap">
                             <Text fw={700} fz="sm" c="var(--color-ink)">{sv.name}</Text>
                             {sv.popular && <Badge size="xs" radius="xl" style={{ background: sub.color, color: 'white' }}>Popular</Badge>}
-                            {sv.id === 'audit' && <Badge size="xs" radius="xl" style={{ background: '#E8F5EE', color: sub.color, border: `1px solid ${sub.color}40` }}>Free</Badge>}
+                            {(sv.id === 'audit' || sv.id === 'ev') && <Badge size="xs" radius="xl" style={{ background: '#E8F5EE', color: sub.color, border: `1px solid ${sub.color}40` }}>{sv.id === 'ev' ? 'Enquiry' : 'Free'}</Badge>}
                           </Group>
                           <Text fz="xs" c="var(--color-muted)" lh={1.5}>{sv.description}</Text>
                           <Text fw={700} fz="sm" mt={4} style={{ color: sub.color }}>
@@ -87,16 +154,17 @@ export default function SolarPage() {
                   <Group justify="space-between">
                     <Text fz="sm" c="var(--color-muted)">{active.name}</Text>
                     <Text fz="sm" fw={600} style={{ color: sub.color }}>
-                      {active.startingPrice === 0 ? 'Free' : formatPrice(active.startingPrice)}
+                      {isEnquiry ? (isEV ? 'Free enquiry' : 'Free') : `From ${formatPrice(active.startingPrice)}`}
                     </Text>
                   </Group>
-                  {!isAudit && (
+                  {!isEnquiry && (
                     <>
                       <Box style={{ height: 1, background: 'var(--color-border)' }} />
                       <Group justify="space-between">
                         <Text ff="var(--font-montserrat)" fw={700}>Starting from</Text>
                         <Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{formatPrice(active.startingPrice)}</Text>
                       </Group>
+                      <Text fz="xs" c="var(--color-muted)">Price varies by property type. Select a property type on the booking form to see your exact price.</Text>
                     </>
                   )}
                 </Stack>
@@ -105,10 +173,15 @@ export default function SolarPage() {
                     <Text fz="xs" c={sub.color} fw={600}>✅ No payment needed — our engineer visits your site and gives a full report.</Text>
                   </Box>
                 )}
+                {isEV && (
+                  <Box mb="md" p="sm" style={{ background: '#E8F5EE', borderRadius: 10, border: '1px solid #C8E8D4' }}>
+                    <Text fz="xs" c={sub.color} fw={600}>🚗 Submit your interest and our EV advisor will contact you within 24 hours.</Text>
+                  </Box>
+                )}
                 <Button fullWidth radius="xl" size="md" mb="xs"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
                   onClick={() => setStep('booking')}>
-                  {isAudit ? 'Book free audit →' : 'Request a quote →'}
+                  {isAudit ? 'Book free audit →' : isEV ? 'Enquire now →' : 'Book now →'}
                 </Button>
                 <Button fullWidth radius="xl" size="sm" variant="outline"
                   component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank"
@@ -123,70 +196,167 @@ export default function SolarPage() {
             <Box maw={480}>
               <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block" style={{ cursor: 'pointer' }} onClick={() => setStep('browse')}>← Back</Anchor>
               <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>
-                {isAudit ? 'Book your free solar audit' : 'Request a quote'}
+                {isAudit ? 'Book your free solar audit' : isEV ? 'Electric Vehicle Enquiry' : `Book — ${active.name}`}
               </Title>
               <Text fz="sm" c="var(--color-muted)" mb="xl">
                 {isAudit
-                  ? 'Tell us about your property and we\'ll schedule a free site visit.'
-                  : 'Share your details and we\'ll send a tailored quote within 24 hours.'}
+                  ? "Tell us about your property and we'll schedule a free site visit."
+                  : isEV
+                  ? "Tell us what you're interested in and our EV advisor will contact you within 24 hours."
+                  : "Choose a date and time and we'll confirm your booking within 2 hours."}
               </Text>
               <Stack gap="md">
-                <TextInput label="Property Address" placeholder="e.g. 14 Admiralty Way, Lekki Phase 1"
-                  value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
-                  size="md" radius="xl"
-                  styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
-                <Select label="Property Type" placeholder="Select type"
-                  data={PROPERTY_TYPES} value={form.propertyType} onChange={v => setForm(p => ({ ...p, propertyType: v ?? '' }))}
-                  size="md" radius="xl"
-                  styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
-                <TextInput label="Phone Number" placeholder="+234 801 234 5678" type="tel"
-                  value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
-                  size="md" radius="xl"
-                  styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
-                <TextInput label="Preferred Date (optional)" placeholder="e.g. 15 Apr 2026" type="text"
-                  value={form.preferredDate} onChange={e => setForm(p => ({ ...p, preferredDate: e.target.value }))}
-                  size="md" radius="xl"
-                  styles={{ label: { fontSize: 10, textTransform: 'uppercase', letterSpacing: 2, color: 'var(--color-muted)', fontWeight: 600 } }} />
 
-                <Box p="md" style={{ background: 'var(--color-surface2)', borderRadius: 14, border: '1px solid var(--color-border)' }}>
-                  <Group justify="space-between">
-                    <Text fz="sm" c="var(--color-muted)">{active.name}</Text>
-                    <Text fz="sm" fw={600} style={{ color: sub.color }}>{active.startingPrice === 0 ? 'Free' : `From ${formatPrice(active.startingPrice)}`}</Text>
-                  </Group>
-                </Box>
+                {isEV ? (
+                  // ── EV enquiry form ───────────────────────────────────────
+                  <>
+                    <TextInput label="Your Name" placeholder="Full name"
+                      value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                      onBlur={() => setTouched(p => ({ ...p, name: true }))}
+                      error={touched.name ? errors.name : undefined}
+                      size="md" radius="xl" styles={INPUT_LABEL} />
+                    <TextInput label="Phone Number" placeholder="+234 801 234 5678" type="tel"
+                      value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                      onBlur={() => setTouched(p => ({ ...p, phone: true }))}
+                      error={touched.phone ? errors.phone : undefined}
+                      size="md" radius="xl" styles={INPUT_LABEL} />
+                    <Select label="Vehicle Interest" placeholder="What are you interested in?"
+                      data={EV_MODELS} value={form.vehicleInterest}
+                      onChange={v => { setForm(p => ({ ...p, vehicleInterest: v ?? '' })); setTouched(p => ({ ...p, vehicleInterest: true })) }}
+                      error={touched.vehicleInterest ? errors.vehicleInterest : undefined}
+                      size="md" radius="xl" styles={INPUT_LABEL} />
+                    <DateInput label="Preferred Visit / Call Date (optional)" placeholder="Pick a date"
+                      value={bookingDate} onChange={setBookingDate}
+                      minDate={new Date()}
+                      size="md" radius="xl" styles={INPUT_LABEL} clearable />
+                    <Box p="md" style={{ background: '#E8F5EE', borderRadius: 14, border: '1px solid #C8E8D4' }}>
+                      <Text fz="xs" c={sub.color} fw={600}>🚗 No payment required. Our EV advisor will reach out to schedule a test drive or consultation.</Text>
+                    </Box>
+                  </>
+                ) : (
+                  // ── Standard booking form (audit + paid services) ─────────
+                  <>
+                    <TextInput label="Property Address" placeholder="e.g. 14 Admiralty Way, Lekki Phase 1"
+                      value={form.address} onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
+                      onBlur={() => setTouched(p => ({ ...p, address: true }))}
+                      error={touched.address ? errors.address : undefined}
+                      size="md" radius="xl" styles={INPUT_LABEL} />
+                    <Select label="Property Type" placeholder="Select type"
+                      data={PROPERTY_TYPES} value={form.propertyType}
+                      onChange={v => { setForm(p => ({ ...p, propertyType: v ?? '' })); setTouched(p => ({ ...p, propertyType: true })) }}
+                      error={touched.propertyType ? errors.propertyType : undefined}
+                      size="md" radius="xl" styles={INPUT_LABEL} />
+                    <TextInput label="Phone Number" placeholder="+234 801 234 5678" type="tel"
+                      value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
+                      onBlur={() => setTouched(p => ({ ...p, phone: true }))}
+                      error={touched.phone ? errors.phone : undefined}
+                      size="md" radius="xl" styles={INPUT_LABEL} />
 
-                <Button fullWidth radius="xl" size="md" disabled={!canProceed}
+                    {isAudit ? (
+                      <DateInput label="Preferred Date (optional)" placeholder="Pick a date"
+                        value={bookingDate} onChange={setBookingDate}
+                        minDate={new Date()}
+                        size="md" radius="xl" styles={INPUT_LABEL} clearable />
+                    ) : (
+                      <>
+                        <DateInput label="Booking Date" placeholder="Pick a date" required
+                          value={bookingDate} onChange={v => { setBookingDate(v); setTouched(p => ({ ...p, bookingDate: true })) }}
+                          onBlur={() => setTouched(p => ({ ...p, bookingDate: true }))}
+                          error={touched.bookingDate ? errors.bookingDate : undefined}
+                          minDate={new Date()}
+                          size="md" radius="xl" styles={INPUT_LABEL} />
+                        <Select label="Preferred Time" placeholder="Select a time slot" required
+                          data={TIME_SLOTS} value={form.timeSlot}
+                          onChange={v => { setForm(p => ({ ...p, timeSlot: v ?? '' })); setTouched(p => ({ ...p, timeSlot: true })) }}
+                          error={touched.timeSlot ? errors.timeSlot : undefined}
+                          size="md" radius="xl" styles={INPUT_LABEL} />
+                      </>
+                    )}
+
+                    <Box p="md" style={{ background: 'var(--color-surface2)', borderRadius: 14, border: '1px solid var(--color-border)' }}>
+                      <Stack gap={6}>
+                        <Group justify="space-between">
+                          <Text fz="sm" c="var(--color-muted)">{active.name}</Text>
+                          <Text fz="sm" fw={700} style={{ color: sub.color }}>
+                            {isAudit ? 'Free' : formatPrice(activePrice)}
+                          </Text>
+                        </Group>
+                        {!isAudit && form.propertyType && (
+                          <Text fz="xs" c="var(--color-muted)">
+                            {PROPERTY_TYPES.find(p => p.value === form.propertyType)?.label} pricing
+                          </Text>
+                        )}
+                        {!isAudit && !form.propertyType && (
+                          <Text fz="xs" c="var(--color-muted)">Select a property type above to see your price</Text>
+                        )}
+                      </Stack>
+                    </Box>
+                  </>
+                )}
+
+                <Button fullWidth radius="xl" size="md"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                  onClick={() => setStep('confirm')}>
-                  {isAudit ? 'Confirm booking →' : 'Submit request →'}
+                  onClick={() => { touchAll(); if (hasErrors) return; isEnquiry ? setStep('confirm') : setStep('pay') }}>
+                  {isAudit ? 'Confirm booking →' : isEV ? 'Submit enquiry →' : 'Continue to payment →'}
                 </Button>
               </Stack>
             </Box>
           )}
 
+          {step === 'pay' && (
+            <PaymentStep
+              amount={activePrice}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: active.name },
+                { label: 'Property type', value: PROPERTY_TYPES.find(p => p.value === form.propertyType)?.label ?? '' },
+                { label: 'Address', value: form.address },
+                { label: 'Date', value: formattedDate },
+                { label: 'Time', value: TIME_SLOTS.find(t => t.value === form.timeSlot)?.label ?? '' },
+              ]}
+              onBack={() => setStep('booking')}
+              onPay={() => setStep('confirm')}
+            />
+          )}
+
           {step === 'confirm' && (
             <Box maw={480} mx="auto" style={{ textAlign: 'center' }} py="xl">
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>
-                {isAudit ? '✅' : '📋'}
+                ✅
               </Box>
               <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">
-                {isAudit ? 'Audit booked!' : 'Request submitted!'}
+                {isAudit ? 'Audit booked!' : isEV ? 'Enquiry received!' : 'Booking confirmed!'}
               </Title>
               <Text fz="sm" c="var(--color-muted)" mb="xl" lh={1.7}>
                 {isAudit
-                  ? 'Our solar engineer will contact you within 24 hours to confirm your visit. You\'ll receive a full energy report at no cost.'
-                  : 'Our team will review your details and send a tailored quote within 24 hours.'}
+                  ? "Our solar engineer will contact you within 24 hours to confirm your visit. You'll receive a full energy report at no cost."
+                  : isEV
+                  ? `Thanks, ${form.name}! Our EV advisor will contact you on ${form.phone} within 24 hours to discuss your interest in ${EV_MODELS.find(m => m.value === form.vehicleInterest)?.label ?? 'electric vehicles'}.`
+                  : `Your ${active.name} has been booked for ${formattedDate}. Our team will contact you on ${form.phone} to confirm the appointment.`}
               </Text>
               <Card radius="xl" withBorder p="lg" mb="xl" style={{ textAlign: 'left', borderColor: 'var(--color-border)' }}>
-                <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb="md">Booking details</Text>
+                <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb="md">{isEV ? 'Enquiry details' : 'Booking details'}</Text>
                 <Stack gap="xs">
-                  {[
+                  {isEV ? [
+                    ['Name',     form.name],
+                    ['Phone',    form.phone],
+                    ['Interest', EV_MODELS.find(m => m.value === form.vehicleInterest)?.label ?? '—'],
+                    ...(bookingDate ? [['Preferred date', formattedDate]] : []),
+                    ['Cost', 'Free enquiry'],
+                  ].map(([k, v]) => (
+                    <Group key={k} justify="space-between">
+                      <Text fz="sm" c="var(--color-muted)">{k}</Text>
+                      <Text fz="sm" fw={500}>{v}</Text>
+                    </Group>
+                  )) : [
                     ['Service', active.name],
                     ['Property', form.address],
                     ['Type', PROPERTY_TYPES.find(p => p.value === form.propertyType)?.label ?? '—'],
                     ['Phone', form.phone],
-                    ...(form.preferredDate ? [['Preferred date', form.preferredDate]] : []),
-                    ['Cost', active.startingPrice === 0 ? 'Free' : `From ${formatPrice(active.startingPrice)}`],
+                    ...(bookingDate ? [['Date', formattedDate]] : []),
+                    ...(form.timeSlot ? [['Time', TIME_SLOTS.find(t => t.value === form.timeSlot)?.label ?? form.timeSlot]] : []),
+                    ['Cost', isAudit ? 'Free' : formatPrice(activePrice)],
                   ].map(([k, v]) => (
                     <Group key={k} justify="space-between">
                       <Text fz="sm" c="var(--color-muted)">{k}</Text>

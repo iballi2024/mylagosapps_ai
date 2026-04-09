@@ -8,7 +8,9 @@ import {
   Anchor, TextInput, Textarea, Select, Checkbox, Progress, SimpleGrid,
 } from '@mantine/core'
 import { usePlatform } from '@/context/PlatformContext'
+import PaymentStep from '@/components/PaymentStep'
 import dayjs from 'dayjs'
+import { validatePhone, reqText, reqSelect } from '@/lib/validation'
 
 // ── Zone data (same 7-zone Lagos grid as rides) ──────────────────────────────
 const ZONES = [
@@ -62,9 +64,9 @@ const TIME_SLOTS = ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:
 
 type Step =
   | 'browse'
-  | 'ph-items'    | 'ph-address'   | 'ph-review'    | 'ph-confirm'
-  | 'lab-tests'   | 'lab-schedule' | 'lab-review'   | 'lab-confirm'
-  | 'doc-specialty'| 'doc-schedule'| 'doc-symptoms' | 'doc-review' | 'doc-confirm'
+  | 'ph-items'    | 'ph-address'   | 'ph-review'    | 'ph-pay'    | 'ph-confirm'
+  | 'lab-tests'   | 'lab-schedule' | 'lab-review'   | 'lab-pay'   | 'lab-confirm'
+  | 'doc-specialty'| 'doc-schedule'| 'doc-symptoms' | 'doc-review'| 'doc-pay' | 'doc-confirm'
 
 export default function ServicePage() {
   const { getSubsidiary, formatPrice } = usePlatform()
@@ -96,6 +98,8 @@ export default function ServicePage() {
   const [docName, setDocName] = useState('')
   const [docPhone, setDocPhone] = useState('')
 
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
+
   const isPharmacy = selectedService === 'pharmacy'
   const isLab      = selectedService === 'lab'
   const isDoctor   = selectedService === 'doctor'
@@ -112,6 +116,28 @@ export default function ServicePage() {
   const specialtyObj = SPECIALTIES.find(s => s.value === docSpecialty)
   const docFee = specialtyObj?.price ?? 0
 
+  // ── Validation ────────────────────────────────────────────────────────────
+  const phItemsErrors  = { phItems: reqText(phItems, 'Item list') }
+  const phAddressErrors = {
+    phZoneFrom: reqSelect(phZoneFrom, 'a pharmacy zone'),
+    phZoneTo:   reqSelect(phZoneTo, 'your delivery zone'),
+    phAddress:  reqText(phAddress, 'Street address'),
+  }
+  const labScheduleErrors = {
+    labAddress: reqText(labAddress, 'Home address'),
+    labPhone:   validatePhone(labPhone),
+  }
+  const docSymptomsErrors = {
+    docName:     reqText(docName, 'Your name'),
+    docPhone:    validatePhone(docPhone),
+    docSymptoms: reqText(docSymptoms, 'Symptoms / reason for visit'),
+  }
+
+  function touchPhItems()    { setTouched(p => ({ ...p, phItems: true })) }
+  function touchPhAddress()  { setTouched(p => ({ ...p, phZoneFrom: true, phZoneTo: true, phAddress: true })) }
+  function touchLabSchedule(){ setTouched(p => ({ ...p, labAddress: true, labPhone: true })) }
+  function touchDocSymptoms(){ setTouched(p => ({ ...p, docName: true, docPhone: true, docSymptoms: true })) }
+
   function startFlow() {
     if (isPharmacy) setStep('ph-items')
     else if (isLab)  setStep('lab-tests')
@@ -121,14 +147,17 @@ export default function ServicePage() {
   function getProgress() {
     if (step === 'ph-items')      return 33
     if (step === 'ph-address')    return 66
-    if (step === 'ph-review')     return 100
+    if (step === 'ph-review')     return 75
+    if (step === 'ph-pay')        return 100
     if (step === 'lab-tests')     return 33
     if (step === 'lab-schedule')  return 66
-    if (step === 'lab-review')    return 100
+    if (step === 'lab-review')    return 75
+    if (step === 'lab-pay')       return 100
     if (step === 'doc-specialty') return 25
     if (step === 'doc-schedule')  return 50
     if (step === 'doc-symptoms')  return 75
-    if (step === 'doc-review')    return 100
+    if (step === 'doc-review')    return 88
+    if (step === 'doc-pay')       return 100
     return 0
   }
 
@@ -228,7 +257,7 @@ export default function ServicePage() {
           {step === 'ph-items' && (
             <Box maw={560} mx="auto">
               <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>What do you need?</Title>
-              <Text fz="sm" c="var(--color-muted)" mb="lg">Tell us what medicines you need. We'll source from the nearest licensed pharmacy.</Text>
+              <Text fz="sm" c="var(--color-muted)" mb="lg">Tell us what medicines you need. We&apos;ll source from the nearest licensed pharmacy.</Text>
               <Stack gap="md">
                 <Box>
                   <Text fw={600} fz="sm" c="var(--color-ink)" mb="xs">Order type</Text>
@@ -251,6 +280,8 @@ export default function ServicePage() {
                   placeholder={'e.g. Amoxicillin 500mg × 21 capsules\nMetronidazole 200mg × 21 tablets'}
                   minRows={4} radius="lg"
                   value={phItems} onChange={e => setPhItems(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, phItems: true }))}
+                  error={touched.phItems ? phItemsErrors.phItems : undefined}
                 />
 
                 {phType === 'prescription' && (
@@ -259,9 +290,9 @@ export default function ServicePage() {
                   </Card>
                 )}
 
-                <Button radius="xl" size="md" disabled={!phType || !phItems.trim()}
+                <Button radius="xl" size="md"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                  onClick={() => setStep('ph-address')}>
+                  onClick={() => { touchPhItems(); if (!phType || Object.values(phItemsErrors).some(Boolean)) return; setStep('ph-address') }}>
                   Continue →
                 </Button>
               </Stack>
@@ -276,11 +307,20 @@ export default function ServicePage() {
               <Text fz="sm" c="var(--color-muted)" mb="lg">Where should we pick up and deliver to?</Text>
               <Stack gap="md">
                 <Select label="Pharmacy zone (nearest pharmacy)" placeholder="Select zone"
-                  data={ZONE_OPTIONS} value={phZoneFrom} onChange={setPhZoneFrom} radius="lg" />
+                  data={ZONE_OPTIONS} value={phZoneFrom}
+                  onChange={v => { setPhZoneFrom(v); setTouched(p => ({ ...p, phZoneFrom: true })) }}
+                  error={touched.phZoneFrom ? phAddressErrors.phZoneFrom : undefined}
+                  radius="lg" />
                 <Select label="Your delivery zone" placeholder="Select your zone"
-                  data={ZONE_OPTIONS} value={phZoneTo} onChange={setPhZoneTo} radius="lg" />
+                  data={ZONE_OPTIONS} value={phZoneTo}
+                  onChange={v => { setPhZoneTo(v); setTouched(p => ({ ...p, phZoneTo: true })) }}
+                  error={touched.phZoneTo ? phAddressErrors.phZoneTo : undefined}
+                  radius="lg" />
                 <TextInput label="Street address" placeholder="House number, street, estate, landmark"
-                  value={phAddress} onChange={e => setPhAddress(e.target.value)} radius="lg" />
+                  value={phAddress} onChange={e => setPhAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, phAddress: true }))}
+                  error={touched.phAddress ? phAddressErrors.phAddress : undefined}
+                  radius="lg" />
 
                 {phFare !== null && (
                   <Card radius="lg" p="sm" style={{ background: sub.colorPale, borderColor: sub.color + '40' }} withBorder>
@@ -291,9 +331,9 @@ export default function ServicePage() {
                   </Card>
                 )}
 
-                <Button radius="xl" size="md" disabled={!phZoneFrom || !phZoneTo || !phAddress.trim()}
+                <Button radius="xl" size="md"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                  onClick={() => setStep('ph-review')}>
+                  onClick={() => { touchPhAddress(); if (Object.values(phAddressErrors).some(Boolean)) return; setStep('ph-review') }}>
                   Review order →
                 </Button>
               </Stack>
@@ -332,10 +372,25 @@ export default function ServicePage() {
               </Card>
               <Button fullWidth radius="xl" size="md"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('ph-confirm')}>
-                Confirm order →
+                onClick={() => setStep('ph-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {/* PHARMACY: Pay */}
+          {step === 'ph-pay' && phFare !== null && (
+            <PaymentStep
+              amount={phFare}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Pharmacy Delivery' },
+                { label: 'Delivery fee', value: formatPrice(phFare) },
+              ]}
+              onBack={() => setStep('ph-review')}
+              onPay={() => setStep('ph-confirm')}
+            />
           )}
 
           {/* PHARMACY: Confirm */}
@@ -424,15 +479,20 @@ export default function ServicePage() {
                 )}
 
                 <TextInput label="Home address" placeholder="House number, street, estate, landmark"
-                  value={labAddress} onChange={e => setLabAddress(e.target.value)} radius="lg" />
+                  value={labAddress} onChange={e => setLabAddress(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, labAddress: true }))}
+                  error={touched.labAddress ? labScheduleErrors.labAddress : undefined}
+                  radius="lg" />
                 <TextInput label="Phone number" placeholder="+234 800 000 0000"
                   description="We'll call to confirm and for any updates"
-                  value={labPhone} onChange={e => setLabPhone(e.target.value)} radius="lg" />
+                  value={labPhone} onChange={e => setLabPhone(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, labPhone: true }))}
+                  error={touched.labPhone ? labScheduleErrors.labPhone : undefined}
+                  radius="lg" />
 
                 <Button radius="xl" size="md"
-                  disabled={!labDate || !labTime || !labAddress.trim() || !labPhone.trim()}
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                  onClick={() => setStep('lab-review')}>
+                  onClick={() => { touchLabSchedule(); if (!labDate || !labTime || Object.values(labScheduleErrors).some(Boolean)) return; setStep('lab-review') }}>
                   Review booking →
                 </Button>
               </Stack>
@@ -475,10 +535,25 @@ export default function ServicePage() {
               </Card>
               <Button fullWidth radius="xl" size="md"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('lab-confirm')}>
-                Confirm booking →
+                onClick={() => setStep('lab-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {/* LAB TESTS: Pay */}
+          {step === 'lab-pay' && (
+            <PaymentStep
+              amount={labTotal}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                ...selectedTestObjs.map(t => ({ label: t.name, value: formatPrice(t.price) })),
+                { label: 'Home visit fee', value: formatPrice(HOME_VISIT_FEE) },
+              ]}
+              onBack={() => setStep('lab-review')}
+              onPay={() => setStep('lab-confirm')}
+            />
           )}
 
           {/* LAB TESTS: Confirm */}
@@ -585,18 +660,25 @@ export default function ServicePage() {
               <Text fz="sm" c="var(--color-muted)" mb="lg">Brief the doctor ahead of the call so they can prepare.</Text>
               <Stack gap="md">
                 <TextInput label="Your name" placeholder="Full name"
-                  value={docName} onChange={e => setDocName(e.target.value)} radius="lg" />
+                  value={docName} onChange={e => setDocName(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, docName: true }))}
+                  error={touched.docName ? docSymptomsErrors.docName : undefined}
+                  radius="lg" />
                 <TextInput label="Phone number" placeholder="+234 800 000 0000"
                   description="We'll send the meeting link or call instructions here"
-                  value={docPhone} onChange={e => setDocPhone(e.target.value)} radius="lg" />
+                  value={docPhone} onChange={e => setDocPhone(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, docPhone: true }))}
+                  error={touched.docPhone ? docSymptomsErrors.docPhone : undefined}
+                  radius="lg" />
                 <Textarea label="Symptoms / reason for visit"
                   placeholder="Briefly describe what you're experiencing or what you'd like to discuss..."
                   minRows={4} radius="lg"
-                  value={docSymptoms} onChange={e => setDocSymptoms(e.target.value)} />
+                  value={docSymptoms} onChange={e => setDocSymptoms(e.target.value)}
+                  onBlur={() => setTouched(p => ({ ...p, docSymptoms: true }))}
+                  error={touched.docSymptoms ? docSymptomsErrors.docSymptoms : undefined} />
                 <Button radius="xl" size="md"
-                  disabled={!docName.trim() || !docPhone.trim() || !docSymptoms.trim()}
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                  onClick={() => setStep('doc-review')}>
+                  onClick={() => { touchDocSymptoms(); if (Object.values(docSymptomsErrors).some(Boolean)) return; setStep('doc-review') }}>
                   Review booking →
                 </Button>
               </Stack>
@@ -640,10 +722,26 @@ export default function ServicePage() {
               </Card>
               <Button fullWidth radius="xl" size="md"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('doc-confirm')}>
-                Confirm & pay {formatPrice(docFee)} →
+                onClick={() => setStep('doc-pay')}>
+                Choose payment →
               </Button>
             </Box>
+          )}
+
+          {/* DOCTOR: Pay */}
+          {step === 'doc-pay' && (
+            <PaymentStep
+              amount={docFee}
+              formatPrice={formatPrice}
+              color={sub.color}
+              summaryRows={[
+                { label: 'Service', value: 'Doctor Consultation' },
+                { label: 'Specialty', value: SPECIALTIES.find(s => s.value === docSpecialty)?.label ?? '' },
+                { label: 'Mode', value: docMode === 'video' ? 'Video call' : 'Phone call' },
+              ]}
+              onBack={() => setStep('doc-review')}
+              onPay={() => setStep('doc-confirm')}
+            />
           )}
 
           {/* DOCTOR: Confirm */}

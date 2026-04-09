@@ -65,6 +65,7 @@ export default function OrderTrackingPage() {
       setOrder(prev => prev ? { ...prev, status: next } : prev)
     }, delay)
     return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.status, id])
 
   if (notFound) {
