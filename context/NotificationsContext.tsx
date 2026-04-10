@@ -1,6 +1,7 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { apiGetNotifications, apiGetUnreadCount } from '@/lib/notifications'
+import { useAuthContext } from '@/context/AuthContext'
 
 export type NotifType = 'order' | 'system' | 'promo' | 'account'
 
@@ -32,9 +33,10 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(nul
 const PAGE_LIMIT = 20
 
 export function NotificationsProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, loading: authLoading } = useAuthContext()
   const [items, setItems] = useState<Notif[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(false)
@@ -57,9 +59,12 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Only fetch once auth has resolved and the user is confirmed authenticated
   useEffect(() => {
-    fetchPage(1, true)
-  }, [fetchPage])
+    if (!authLoading && isAuthenticated) {
+      fetchPage(1, true)
+    }
+  }, [fetchPage, isAuthenticated, authLoading])
 
   function loadMore() {
     if (!loading && hasMore) {
