@@ -405,8 +405,7 @@ export interface CreateOrderPayload {
   delivery_country?: string
   payment_status?: 'pending' | 'paid' | 'failed'
   order_status?: 'pending' | 'confirmed' | 'cancelled'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  meta?: Record<string, any>
+  meta?: Record<string, unknown>
 }
 
 export interface CreateOrderResponse {
