@@ -203,3 +203,18 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #4F6B57;   /* $color-muted */
 }
+
+/* ── Confirm screen action buttons ──────────────────────────────────────────
+   Stacked (full-width) on mobile, side-by-side on ≥576px               */
+.confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.confirm-actions > * { width: 100%; }
+
+@media (min-width: 576px) {
+  .confirm-actions { flex-direction: row; }
+  .confirm-actions > * { flex: 1; width: auto; }
+}
+

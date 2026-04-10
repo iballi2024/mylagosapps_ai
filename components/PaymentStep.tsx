@@ -1,10 +1,15 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Box, Card, Text, Button, Stack, Group, Divider, Anchor,
   Collapse, TextInput, Checkbox, ActionIcon, Tooltip, CopyButton, Select,
 } from '@mantine/core'
-import { apiInitiateServicePayment, apiVerifyPayment, apiGetBillingAddress, type VirtualAccount } from '@/lib/billing'
+import {
+  apiInitiateServicePayment, apiVerifyPayment, apiGetBillingAddress,
+  apiCreateOrder, apiUpdatePayment,
+  type VirtualAccount, type CreateOrderPayload,
+} from '@/lib/billing'
 
 const METHODS = [
   { value: 'card',          icon: '💳', label: 'Card',                 desc: 'Mastercard, Visa, Verve — powered by Paystack' },
@@ -32,11 +37,14 @@ interface Props {
   email?: string
   description?: string
   summaryRows?: { label: string; value: string }[]
+  /** Full order payload sent to /orders/create before Paystack is opened */
+  orderPayload?: Partial<CreateOrderPayload>
   onBack: () => void
   onPay: () => void
 }
 
-export default function PaymentStep({ amount, formatPrice, color, email, description, summaryRows, onBack, onPay }: Props) {
+export default function PaymentStep({ amount, formatPrice, color, email, description, summaryRows, orderPayload, onBack, onPay }: Props) {
+  const router = useRouter()
   const [method, setMethod]                     = useState('card')
   const [couponOpen, setCouponOpen]             = useState(false)
   const [coupon, setCoupon]                     = useState('')
@@ -44,6 +52,8 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
   const [paymentError, setPaymentError]         = useState<string | null>(null)
   const [virtualAccount, setVirtualAccount]     = useState<VirtualAccount | null>(null)
   const [transferConfirmed, setTransferConfirmed] = useState(false)
+  const [createdOrderId, setCreatedOrderId]     = useState<number>(0)
+  const [createdOrderRef, setCreatedOrderRef]   = useState<string>('')
 
   // Billing address
   const [billing, setBilling] = useState({ address: '', city: '', state: '', country: 'NG' })
@@ -78,8 +88,22 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
   }, [])
 
   async function handlePay() {
+    // Guard: must be logged in to pay
+    if (typeof window !== 'undefined' && !localStorage.getItem('lagos_token')) {
+      // Save the full checkout context so /checkout/resume can restore it after login
+      sessionStorage.setItem('lagos_pending_checkout', JSON.stringify({
+        amount,
+        summaryRows,
+        orderPayload,
+        color,
+        description,
+        email,
+      }))
+      router.push('/auth/login?next=/checkout/resume')
+      return
+    }
+
     if (method === 'card') {
-      // Validate billing address first
       setBillingTouched({ address: true, city: true, state: true })
       if (!billing.address.trim() || !billing.city.trim() || !billing.state) return
     }
@@ -90,46 +114,74 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
     try {
       const userEmail = email ?? 'guest@lagosapps.com'
       const isTransfer = method === 'bank-transfer'
+      const serviceTitle = description ?? summaryRows?.[0]?.value ?? 'LagosApps service'
 
-      const result = await apiInitiateServicePayment({
-        amount,
-        email: userEmail,
-        description: description ?? summaryRows?.[0]?.value ?? 'LagosApps service',
-        paymentMethod: isTransfer ? 'transfer' : 'card',
-        billingAddress: billing.address,
-        billingCity:    billing.city,
-        billingState:   billing.state,
-        billingCountry: billing.country,
+      // ── Step 1: Create order ──────────────────────────────────────────────
+      const order = await apiCreateOrder({
+        service_title:       orderPayload?.service_title       ?? serviceTitle,
+        service_description: orderPayload?.service_description ?? summaryRows?.map(r => `${r.label}: ${r.value}`).join(' | '),
+        category:            orderPayload?.category            ?? 'LagosApps Service',
+        total_amount:        orderPayload?.total_amount        ?? amount,
+        discount_amount:     orderPayload?.discount_amount     ?? 0,
+        final_amount:        orderPayload?.final_amount        ?? amount,
+        currency:            orderPayload?.currency            ?? 'NGN',
+        delivery_address:    orderPayload?.delivery_address    ?? billing.address,
+        delivery_area:       orderPayload?.delivery_area       ?? '',
+        delivery_state:      orderPayload?.delivery_state      ?? billing.state,
+        delivery_country:    orderPayload?.delivery_country    ?? billing.country,
+        payment_status:      'pending',
+        order_status:        'pending',
+        meta:                orderPayload?.meta,
       })
 
+      setCreatedOrderId(order.id)
+      setCreatedOrderRef(order.order_reference)
+
+      // ── Step 2 (transfer): get virtual account details ────────────────────
       if (isTransfer) {
+        const result = await apiInitiateServicePayment({
+          amount,
+          email: userEmail,
+          description: serviceTitle,
+          paymentMethod: 'transfer',
+          billingAddress: billing.address,
+          billingCity:    billing.city,
+          billingState:   billing.state,
+          billingCountry: billing.country,
+        })
         setVirtualAccount(result.virtualAccount ?? null)
         setLoading(false)
         return
       }
 
+      // ── Step 2 (card): open Paystack with publicKey from order ────────────
       if (!window.PaystackPop) {
         throw new Error('Payment provider not ready. Please wait a moment and try again.')
       }
 
       const handler = window.PaystackPop.setup({
-        key:    result.publicKey,
-        email:  result.email,
-        amount: result.amountKobo,
-        ref:    result.reference,
+        key:      order.gatewayParams.publicKey,
+        email:    userEmail,
+        amount:   amount * 100,
+        ref:      order.order_reference,
         currency: 'NGN',
 
+        // ── Step 3: PATCH /orders/:reference/payment ─────────────────────
         callback: function (response) {
           ;(async () => {
             try {
-              await apiVerifyPayment({
-                orderId: 0,
-                transactionId: response.transaction,
-                reference: response.reference,
-                status: 'success',
+              const now = new Date().toISOString().replace('T', ' ').slice(0, 19)
+              await apiUpdatePayment(order.order_reference, {
+                payment_reference: response.reference,
+                transaction_id:    response.transaction ?? '',
+                gateway:           'paystack',
+                payment_status:    'success',
+                paid_at:           now,
+                payment_method:    response.channel ?? 'card',
+                channel:           response.channel ?? 'card',
               })
             } catch (err) {
-              console.error('Payment verification error:', err)
+              console.error('Payment update error:', err)
             }
             onPay()
           })()
@@ -149,14 +201,18 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
     if (!virtualAccount) return
     setLoading(true)
     try {
-      await apiVerifyPayment({
-        orderId: 0,
-        transactionId: '',
-        reference: virtualAccount.reference,
-        status: 'success',
+      const now = new Date().toISOString().replace('T', ' ').slice(0, 19)
+      await apiUpdatePayment(createdOrderRef, {
+        payment_reference: virtualAccount.reference,
+        transaction_id:    '',
+        gateway:           'paystack',
+        payment_status:    'success',
+        paid_at:           now,
+        payment_method:    'bank_transfer',
+        channel:           'bank_transfer',
       })
     } catch (err) {
-      console.error('Transfer verification error:', err)
+      console.error('Transfer update error:', err)
     }
     setLoading(false)
     onPay()

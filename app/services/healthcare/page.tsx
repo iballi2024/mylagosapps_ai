@@ -388,6 +388,22 @@ export default function ServicePage() {
                 { label: 'Service', value: 'Pharmacy Delivery' },
                 { label: 'Delivery fee', value: formatPrice(phFare) },
               ]}
+              orderPayload={{
+                service_title:       'Pharmacy Delivery',
+                service_description: phItems,
+                category:            'Health and Wellness',
+                total_amount:        phFare,
+                final_amount:        phFare,
+                delivery_address:    phAddress,
+                delivery_state:      'Lagos',
+                delivery_country:    'NG',
+                meta: {
+                  prescription_type: phType,
+                  items:             phItems,
+                  pickup_zone:       phZoneFrom,
+                  delivery_zone:     phZoneTo,
+                },
+              }}
               onBack={() => setStep('ph-review')}
               onPay={() => setStep('ph-confirm')}
             />
@@ -551,6 +567,24 @@ export default function ServicePage() {
                 ...selectedTestObjs.map(t => ({ label: t.name, value: formatPrice(t.price) })),
                 { label: 'Home visit fee', value: formatPrice(HOME_VISIT_FEE) },
               ]}
+              orderPayload={{
+                service_title:       'Home Lab Tests',
+                service_description: selectedTestObjs.map(t => t.name).join(', '),
+                category:            'Health and Wellness',
+                total_amount:        labTotal,
+                final_amount:        labTotal,
+                delivery_address:    labAddress,
+                delivery_state:      'Lagos',
+                delivery_country:    'NG',
+                meta: {
+                  tests:            selectedTests,
+                  test_names:       selectedTestObjs.map(t => t.name),
+                  appointment_date: labDate ? labDate.toISOString().split('T')[0] : null,
+                  preferred_time:   labTime,
+                  patient_phone:    labPhone,
+                  home_visit_fee:   HOME_VISIT_FEE,
+                },
+              }}
               onBack={() => setStep('lab-review')}
               onPay={() => setStep('lab-confirm')}
             />
@@ -739,6 +773,24 @@ export default function ServicePage() {
                 { label: 'Specialty', value: SPECIALTIES.find(s => s.value === docSpecialty)?.label ?? '' },
                 { label: 'Mode', value: docMode === 'video' ? 'Video call' : 'Phone call' },
               ]}
+              orderPayload={{
+                service_title:       'Doctor Consultation',
+                service_description: `${SPECIALTIES.find(s => s.value === docSpecialty)?.label ?? ''} — ${docMode === 'video' ? 'video call' : 'phone call'}`,
+                category:            'Health and Wellness',
+                total_amount:        docFee,
+                final_amount:        docFee,
+                delivery_state:      'Lagos',
+                delivery_country:    'NG',
+                meta: {
+                  specialty:        docSpecialty,
+                  consultation_mode: docMode,
+                  appointment_date: docDate ? docDate.toISOString().split('T')[0] : null,
+                  preferred_time:   docTime,
+                  patient_name:     docName,
+                  patient_phone:    docPhone,
+                  symptoms:         docSymptoms,
+                },
+              }}
               onBack={() => setStep('doc-review')}
               onPay={() => setStep('doc-confirm')}
             />

@@ -315,6 +315,24 @@ export default function SolarPage() {
                 { label: 'Date', value: formattedDate },
                 { label: 'Time', value: TIME_SLOTS.find(t => t.value === form.timeSlot)?.label ?? '' },
               ]}
+              orderPayload={{
+                service_title: active.name,
+                service_description: `${active.name} — ${PROPERTY_TYPES.find(p => p.value === form.propertyType)?.label ?? ''}`,
+                category: 'Solar and Energy',
+                total_amount: activePrice,
+                final_amount: activePrice,
+                delivery_address: form.address,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  service_type: selectedService,
+                  property_type: form.propertyType,
+                  customer_name: form.name,
+                  customer_phone: form.phone,
+                  appointment_date: bookingDate ? dayjs(bookingDate).format('YYYY-MM-DD') : null,
+                  preferred_time: form.timeSlot,
+                },
+              }}
               onBack={() => setStep('booking')}
               onPay={() => setStep('confirm')}
             />

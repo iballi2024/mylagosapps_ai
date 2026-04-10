@@ -343,7 +343,7 @@ export default function BetterYouPage() {
                 Your support interest for <strong>{causeMeta?.label.split(' —')[0]}</strong> has been registered.
                 Our team will be in touch on <strong>{impactPhone}</strong> to share how you can get more involved with Mainland Foundation and TEPLEARN.
               </Text>
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default"
                   styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>
                   Back to home
@@ -352,7 +352,7 @@ export default function BetterYouPage() {
                   radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>
                   💬 Chat on WhatsApp
                 </Button>
-              </Group>
+              </div>
             </Box>
           )}
 
@@ -490,6 +490,22 @@ export default function BetterYouPage() {
                 { label: 'Phone',       value: sponsorPhone },
                 ...(sponsorNote ? [{ label: 'Dedication', value: sponsorNote }] : []),
               ]}
+              orderPayload={{
+                service_title: 'Sponsorship',
+                service_description: sponsorMeta?.label ?? '',
+                category: 'Better You',
+                total_amount: sponsorAmount,
+                final_amount: sponsorAmount,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  sponsorship_type: sponsorType,
+                  sponsor_name: sponsorName,
+                  sponsor_phone: sponsorPhone,
+                  sponsor_email: sponsorEmail || null,
+                  dedication: sponsorNote || null,
+                },
+              }}
               onBack={() => setStep('sponsor-review')}
               onPay={() => setStep('sponsor-confirm')}
             />
@@ -504,7 +520,7 @@ export default function BetterYouPage() {
                 {sponsorNote && <> It will be dedicated: <em>&ldquo;{sponsorNote}&rdquo;</em>.</>}
                 {' '}You&apos;ll receive an impact update within 30 days.
               </Text>
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default"
                   styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>
                   Back to home
@@ -513,7 +529,7 @@ export default function BetterYouPage() {
                   radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>
                   💬 Chat on WhatsApp
                 </Button>
-              </Group>
+              </div>
             </Box>
           )}
 

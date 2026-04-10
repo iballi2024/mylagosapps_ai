@@ -389,6 +389,72 @@ export async function apiInitiateCheckout(payload: CheckoutPayload): Promise<Che
   return res.data
 }
 
+// ── Order creation ────────────────────────────────────────────────────────────
+
+export interface CreateOrderPayload {
+  service_title: string
+  service_description?: string
+  category: string
+  total_amount: number
+  discount_amount?: number
+  final_amount: number
+  currency?: string
+  delivery_address?: string
+  delivery_area?: string
+  delivery_state?: string
+  delivery_country?: string
+  payment_status?: 'pending' | 'paid' | 'failed'
+  order_status?: 'pending' | 'confirmed' | 'cancelled'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta?: Record<string, any>
+}
+
+export interface CreateOrderResponse {
+  id: number
+  order_reference: string
+  meta: Record<string, unknown>
+  gatewayParams: {
+    publicKey: string
+  }
+}
+
+interface CreateOrderApiResponse {
+  success: boolean
+  message: string
+  data: CreateOrderResponse
+  error: null | string
+}
+
+function stripNullish(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, v]) => v !== null && v !== undefined)
+  )
+}
+
+export async function apiCreateOrder(payload: CreateOrderPayload): Promise<CreateOrderResponse> {
+  const cleanMeta = payload.meta ? stripNullish(payload.meta) : undefined
+  if (!isDev) {
+    return {
+      id: Math.floor(Math.random() * 90000) + 10000,
+      order_reference: `ES-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      meta: cleanMeta ?? {},
+      gatewayParams: { publicKey: 'pk_test_000000000000000000000000000000000000000' },
+    }
+  }
+  const res = await apiFetch<CreateOrderApiResponse>('/orders/create', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...payload,
+      discount_amount: payload.discount_amount ?? 0,
+      currency: payload.currency ?? 'NGN',
+      payment_status: payload.payment_status ?? 'pending',
+      order_status: payload.order_status ?? 'pending',
+      meta: cleanMeta,
+    }),
+  })
+  return res.data
+}
+
 // ── Service payment initiation ────────────────────────────────────────────────
 
 export interface ServicePaymentPayload {
@@ -418,7 +484,7 @@ interface ServicePaymentApiResponse {
 }
 
 export async function apiInitiateServicePayment(payload: ServicePaymentPayload): Promise<ServicePaymentResponse> {
-  if (isDev) {
+  if (!isDev) {
     const ref = `LAGOS-SVC-${Date.now().toString().slice(-8)}`
     const base = {
       reference: ref,
@@ -447,7 +513,7 @@ export async function apiInitiateServicePayment(payload: ServicePaymentPayload):
   return res.data
 }
 
-// ── Payment verification ──────────────────────────────────────────────────────
+// ── Payment verification (subscriptions) ─────────────────────────────────────
 
 export interface VerifyPaymentPayload {
   orderId: number
@@ -460,6 +526,28 @@ export async function apiVerifyPayment(payload: VerifyPaymentPayload): Promise<v
   if (!isDev) return
   await apiFetch<{ success: boolean; message: string }>('/subscriptions/verify-payment', {
     method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+// ── Order payment update (service orders) ─────────────────────────────────────
+// Called after Paystack completes to record the payment against the order.
+// Endpoint: POST /orders/:reference/payment
+
+export interface UpdatePaymentPayload {
+  payment_reference: string
+  transaction_id: string
+  gateway: 'paystack'
+  payment_status: 'success' | 'failed' | 'pending'
+  paid_at: string             // format: "YYYY-MM-DD HH:mm:ss"
+  payment_method: string      // "card" | "bank_transfer" | etc.
+  channel: string             // Paystack channel e.g. "card", "bank_transfer"
+}
+
+export async function apiUpdatePayment(reference: string, payload: UpdatePaymentPayload): Promise<void> {
+  if (!isDev) return
+  await apiFetch<{ success: boolean; message: string }>(`/orders/${reference}/payment`, {
+    method: 'PATCH',
     body: JSON.stringify(payload),
   })
 }

@@ -431,6 +431,27 @@ export default function OfficePage() {
                 { label: 'Recipient', value: recipientName },
                 { label: 'Phone', value: phone },
               ]}
+              orderPayload={{
+                service_title: `${platformLabel} Order`,
+                service_description: itemDescription.slice(0, 120),
+                category: 'Office and Procurement',
+                total_amount: SERVICE_FEE,
+                final_amount: SERVICE_FEE,
+                delivery_address: address,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  platform,
+                  item_description: itemDescription,
+                  product_url: productUrl || null,
+                  quantity,
+                  budget,
+                  recipient_name: recipientName,
+                  recipient_phone: phone,
+                  delivery_date: deliveryDate ? dayjs(deliveryDate).format('YYYY-MM-DD') : null,
+                  note: orderNote || null,
+                },
+              }}
               onBack={() => setStep('order-review')}
               onPay={() => setStep('order-confirm')}
             />
@@ -447,7 +468,7 @@ export default function OfficePage() {
                 We&apos;ve received your <strong>{platformLabel}</strong> order request for <strong>{itemDescription.slice(0, 80)}{itemDescription.length > 80 ? '…' : ''}</strong>.
                 Our team will source the item, confirm the total cost, and contact <strong>{recipientName}</strong> on <strong>{phone}</strong> within 24 hours.
               </Text>
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default"
                   styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>
                   Back to home
@@ -456,7 +477,7 @@ export default function OfficePage() {
                   radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>
                   💬 Chat on WhatsApp
                 </Button>
-              </Group>
+              </div>
             </Box>
           )}
 

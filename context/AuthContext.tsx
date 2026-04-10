@@ -66,12 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
-  // Listen for 401s from any API call — log out immediately
+  // Listen for 401s from any API call — log out and redirect to login
   useEffect(() => {
     const handle = () => {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(USER_KEY)
       setUser(null)
+      const current = window.location.pathname + window.location.search
+      window.location.href = `/auth/login?next=${encodeURIComponent(current)}`
     }
     window.addEventListener('auth:unauthorized', handle)
     return () => window.removeEventListener('auth:unauthorized', handle)

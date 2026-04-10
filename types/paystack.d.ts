@@ -5,6 +5,9 @@ interface PaystackResponse {
   message: string
   transaction: string
   trxref: string
+  channel?: string        // e.g. "card", "bank_transfer", "ussd"
+  currency?: string
+  paid_at?: string
 }
 
 interface PaystackHandler {

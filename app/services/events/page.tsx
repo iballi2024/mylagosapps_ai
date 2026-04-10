@@ -32,10 +32,10 @@ const VENUE_EVENT_TYPES = [
 ]
 
 const VENUE_DURATION = [
-  { value: 'half', label: 'Half day (up to 6 hours)' },
-  { value: 'full', label: 'Full day (up to 12 hours)' },
-  { value: '2day', label: '2 days' },
-  { value: 'week', label: 'Weekly (5 days)' },
+  { value: 'half', label: 'Half day (up to 6 hours)',  price: 150000 },
+  { value: 'full', label: 'Full day (up to 12 hours)', price: 250000 },
+  { value: '2day', label: '2 days',                    price: 450000 },
+  { value: 'week', label: 'Weekly (5 days)',            price: 1000000 },
 ]
 
 const VENUE_GUEST_RANGES = [
@@ -68,8 +68,8 @@ const TV_PROJECT_TYPES = [
 ]
 
 const TV_DURATION = [
-  { value: 'half',  label: 'Half day (up to 5 hours) — ₦80,000' },
-  { value: 'full',  label: 'Full day (up to 10 hours) — ₦150,000' },
+  { value: 'half', label: 'Half day (up to 5 hours)',  price: 80000 },
+  { value: 'full', label: 'Full day (up to 10 hours)', price: 150000 },
 ]
 
 const TV_CREW_OPTIONS = [
@@ -111,7 +111,7 @@ type Step =
   // TV Studio
   | 'tv-project' | 'tv-details' | 'tv-review' | 'tv-pay' | 'tv-confirm'
   // Audio Studio
-  | 'audio-session' | 'audio-details' | 'audio-review' | 'audio-pay' | 'audio-confirm'
+  | 'audio-session' | 'audio-review' | 'audio-pay' | 'audio-confirm'
   // Event Tickets
   | 'tickets-browse' | 'tickets-review' | 'tickets-pay' | 'tickets-confirm'
 
@@ -191,6 +191,11 @@ export default function EventsPage() {
   const ticketQtyNum = Number(ticketQty) || 1
   const ticketTotal = selectedEvent ? selectedEvent.price * ticketQtyNum : 0
 
+  const venueDurationMeta = VENUE_DURATION.find(d => d.value === venueDuration)
+  const venueTotal = venueDurationMeta?.price ?? 0
+  const tvDurationMeta = TV_DURATION.find(d => d.value === tvDuration)
+  const tvTotal = tvDurationMeta?.price ?? 0
+
   // Formatted date strings for display
   const venueDateStart = venueDateRange[0] ? dayjs(venueDateRange[0]).format('D MMM YYYY') : ''
   const venueDateEnd   = venueDateRange[1] ? dayjs(venueDateRange[1]).format('D MMM YYYY') : ''
@@ -206,7 +211,7 @@ export default function EventsPage() {
   const FLOW_STEPS: Record<string, { id: Step; label: string }[]> = {
     'event-venue':  [{ id: 'venue-event', label: 'Event' }, { id: 'venue-details', label: 'Details' }, { id: 'venue-review', label: 'Review' }, { id: 'venue-pay', label: 'Pay' }],
     'tv-studio':    [{ id: 'tv-project', label: 'Project' }, { id: 'tv-details', label: 'Details' }, { id: 'tv-review', label: 'Review' }, { id: 'tv-pay', label: 'Pay' }],
-    'audio-studio': [{ id: 'audio-session', label: 'Session' }, { id: 'audio-details', label: 'Details' }, { id: 'audio-review', label: 'Review' }, { id: 'audio-pay', label: 'Pay' }],
+    'audio-studio': [{ id: 'audio-session', label: 'Session' }, { id: 'audio-review', label: 'Review' }, { id: 'audio-pay', label: 'Pay' }],
     'event-tickets':[{ id: 'tickets-browse', label: 'Select' }, { id: 'tickets-review', label: 'Review' }, { id: 'tickets-pay', label: 'Pay' }],
   }
 
@@ -318,15 +323,9 @@ export default function EventsPage() {
                   <Text fz="sm" c="var(--color-muted)">Starting from</Text>
                   <Text fw={700} fz="sm" style={{ color: sub.color }}>{formatPrice(active.startingPrice)}</Text>
                 </Group>
-                {selectedService === 'event-tickets' && (
-                  <Text fz={10} c="var(--color-muted)" mb="sm">Browse and buy tickets to upcoming LagosApps events</Text>
-                )}
-                {(selectedService === 'event-venue' || selectedService === 'tv-studio' || selectedService === 'audio-studio') && (
-                  <Text fz={10} c="var(--color-muted)" mb="sm">No payment required now — we&apos;ll confirm availability and send a quote.</Text>
-                )}
                 <Button fullWidth radius="xl" size="md" mb="xs" mt="sm"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }} onClick={startFlow}>
-                  {selectedService === 'event-tickets' ? 'Browse tickets →' : 'Make an enquiry →'}
+                  {selectedService === 'event-tickets' ? 'Browse tickets →' : 'Book Now →'}
                 </Button>
                 <Button fullWidth radius="xl" size="sm" component="a"
                   href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank"
@@ -399,7 +398,7 @@ export default function EventsPage() {
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
                 onClick={() => { touchVenueDetails(); if (Object.values(venueDetailsErrors).some(Boolean)) return; setStep('venue-review') }}>
-                Review enquiry →
+                Review booking →
               </Button>
             </Box>
           )}
@@ -432,14 +431,20 @@ export default function EventsPage() {
                     )}
                   </Stack>
                 </Card>
-                <Card radius="xl" p="md" style={{ background: sub.colorPale, border: `1px solid ${sub.color}30` }}>
-                  <Group gap="sm">
-                    <Text fz="lg">💡</Text>
-                    <Box>
-                      <Text fz="sm" fw={700} c="var(--color-ink)">Starting from {formatPrice(active.startingPrice)} / day</Text>
-                      <Text fz="xs" c="var(--color-muted)" mt={2}>Final quote depends on duration, guest count and extras. Our team will confirm availability and send a detailed quote within 4 hours.</Text>
-                    </Box>
-                  </Group>
+                <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
+                  <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Pricing</Text>
+                  <Stack gap="xs">
+                    <Group justify="space-between">
+                      <Text fz="sm" c="var(--color-muted)">{venueDurationMeta?.label ?? 'Duration'}</Text>
+                      <Text fz="sm" fw={500}>{venueDurationMeta ? formatPrice(venueDurationMeta.price) : '—'}</Text>
+                    </Group>
+                    <Divider />
+                    <Group justify="space-between">
+                      <Text ff="var(--font-montserrat)" fw={700}>Total</Text>
+                      <Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{formatPrice(venueTotal)}</Text>
+                    </Group>
+                    <Text fz="xs" c="var(--color-muted)">Extras (catering, AV, décor) quoted separately.</Text>
+                  </Stack>
                 </Card>
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
@@ -452,15 +457,34 @@ export default function EventsPage() {
 
           {step === 'venue-pay' && (
             <PaymentStep
-              amount={sub.services.find(s => s.id === 'event-venue')!.startingPrice}
+              amount={venueTotal}
               formatPrice={formatPrice}
               color={sub.color}
               summaryRows={[
-                { label: 'Service', value: 'Event Venue Hire' },
-                { label: 'Event type', value: VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label ?? '' },
-                { label: 'Dates', value: venueDateLabel },
-                { label: 'Duration', value: VENUE_DURATION.find(d => d.value === venueDuration)?.label ?? '' },
+                { label: 'Service',     value: 'Event Venue Hire' },
+                { label: 'Event type',  value: VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label ?? '' },
+                { label: 'Dates',       value: venueDateLabel },
+                { label: 'Duration',    value: venueDurationMeta?.label ?? '' },
+                { label: 'Venue total', value: formatPrice(venueTotal) },
               ]}
+              orderPayload={{
+                service_title: 'Event Venue Hire',
+                service_description: `${VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label ?? ''} — ${venueDurationMeta?.label ?? ''}`,
+                category: 'Events and Studios',
+                total_amount: venueTotal,
+                final_amount: venueTotal,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  event_type: venueEventType,
+                  expected_guests: venueGuests,
+                  duration: venueDuration,
+                  date_start: venueDateRange[0] ? dayjs(venueDateRange[0]).format('YYYY-MM-DD') : null,
+                  date_end: venueDateRange[1] ? dayjs(venueDateRange[1]).format('YYYY-MM-DD') : null,
+                  setup_style: venueSetup,
+                  note: venueNote || null,
+                },
+              }}
               onBack={() => setStep('venue-review')}
               onPay={() => setStep('venue-confirm')}
             />
@@ -468,15 +492,19 @@ export default function EventsPage() {
 
           {step === 'venue-confirm' && (
             <Box maw={480} mx="auto" py="xl" style={{ textAlign: 'center' }}>
-              <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>📋</Box>
-              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Enquiry received!</Title>
-              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Our team will confirm venue availability for your <strong>{VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label}</strong> on <strong>{venueDateLabel}</strong> and send a full quote within 4 hours.
+              <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>🏛️</Box>
+              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Venue booked!</Title>
+              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="sm">
+                Your <strong>{VENUE_EVENT_TYPES.find(e => e.value === venueEventType)?.label}</strong> venue is confirmed for <strong>{venueDateLabel}</strong> ({venueDurationMeta?.label}).
               </Text>
-              <Group grow>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">
+                Total paid: <strong>{formatPrice(venueTotal)}</strong>. Our events team will be in touch within 2 hours to coordinate setup and logistics.
+              </Text>
+              <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
                 <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Chat on WhatsApp</Button>
-              </Group>
+              </div>
             </Box>
           )}
 
@@ -570,19 +598,19 @@ export default function EventsPage() {
                   <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Pricing</Text>
                   <Stack gap="xs">
                     <Group justify="space-between">
-                      <Text fz="sm" c="var(--color-muted)">Studio ({TV_DURATION.find(d => d.value === tvDuration)?.label?.split(' —')[0]})</Text>
-                      <Text fz="sm" fw={500}>{tvDuration === 'half' ? '₦80,000' : '₦150,000'}</Text>
+                      <Text fz="sm" c="var(--color-muted)">Studio ({tvDurationMeta?.label ?? ''})</Text>
+                      <Text fz="sm" fw={500}>{tvDurationMeta ? formatPrice(tvDurationMeta.price) : '—'}</Text>
                     </Group>
-                    {tvCrew !== 'none' && (
+                    {tvCrew && tvCrew !== 'none' && (
                       <Group justify="space-between">
-                        <Text fz="sm" c="var(--color-muted)">Crew (quote on request)</Text>
+                        <Text fz="sm" c="var(--color-muted)">Crew (quoted separately)</Text>
                         <Text fz="xs" c="var(--color-muted)">TBD</Text>
                       </Group>
                     )}
                     <Divider />
                     <Group justify="space-between">
                       <Text ff="var(--font-montserrat)" fw={700}>Studio fee</Text>
-                      <Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{tvDuration === 'half' ? '₦80,000' : '₦150,000'}</Text>
+                      <Text ff="var(--font-montserrat)" fw={700} style={{ color: sub.color }}>{formatPrice(tvTotal)}</Text>
                     </Group>
                   </Stack>
                 </Card>
@@ -597,14 +625,33 @@ export default function EventsPage() {
 
           {step === 'tv-pay' && (
             <PaymentStep
-              amount={tvDuration === 'full' ? 150000 : 80000}
+              amount={tvTotal}
               formatPrice={formatPrice}
               color={sub.color}
               summaryRows={[
-                { label: 'Service', value: 'TV Studio Rental' },
+                { label: 'Service',      value: 'TV Studio Rental' },
                 { label: 'Project type', value: TV_PROJECT_TYPES.find(p => p.value === tvProject)?.label ?? '' },
-                { label: 'Duration', value: TV_DURATION.find(d => d.value === tvDuration)?.label ?? '' },
+                { label: 'Date',         value: tvDateFormatted },
+                { label: 'Duration',     value: tvDurationMeta?.label ?? '' },
+                { label: 'Studio fee',   value: formatPrice(tvTotal) },
               ]}
+              orderPayload={{
+                service_title: 'TV Studio Rental',
+                service_description: `${TV_PROJECT_TYPES.find(p => p.value === tvProject)?.label ?? ''} — ${tvDurationMeta?.label ?? ''}`,
+                category: 'Events and Studios',
+                total_amount: tvTotal,
+                final_amount: tvTotal,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  project_type: tvProject,
+                  booking_date: tvDate ? dayjs(tvDate).format('YYYY-MM-DD') : null,
+                  duration: tvDuration,
+                  crew_option: tvCrew,
+                  cast_size: tvCast,
+                  note: tvNote || null,
+                },
+              }}
               onBack={() => setStep('tv-review')}
               onPay={() => setStep('tv-confirm')}
             />
@@ -613,14 +660,18 @@ export default function EventsPage() {
           {step === 'tv-confirm' && (
             <Box maw={480} mx="auto" py="xl" style={{ textAlign: 'center' }}>
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>📺</Box>
-              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Booking request sent!</Title>
-              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Our studio team will confirm availability for <strong>{tvDateFormatted}</strong> and contact you within 2 hours to confirm and arrange payment.
+              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">TV Studio booked!</Title>
+              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="sm">
+                Your <strong>{tvDurationMeta?.label}</strong> TV studio session on <strong>{tvDateFormatted}</strong> is confirmed.
               </Text>
-              <Group grow>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">
+                Total paid: <strong>{formatPrice(tvTotal)}</strong>. Our studio team will contact you to coordinate your shoot.
+              </Text>
+              <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
                 <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Chat on WhatsApp</Button>
-              </Group>
+              </div>
             </Box>
           )}
 
@@ -661,27 +712,14 @@ export default function EventsPage() {
                   onChange={v => { setAudioEngineer(v); setTouched(p => ({ ...p, audioEngineer: true })) }}
                   error={touched.audioEngineer ? audioSessionErrors.audioEngineer : undefined}
                   size="md" radius="xl" styles={INPUT_LABEL} />
+                <Textarea label="Additional notes (optional)"
+                  placeholder="e.g. Number of vocalists, instruments you're bringing, references, mixing preferences…"
+                  value={audioNote} onChange={e => setAudioNote(e.target.value)}
+                  size="md" radius="md" minRows={3} autosize styles={INPUT_LABEL} />
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => { touchAudioSession(); if (Object.values(audioSessionErrors).some(Boolean)) return; setStep('audio-details') }}>
-                Continue →
-              </Button>
-            </Box>
-          )}
-
-          {step === 'audio-details' && (
-            <Box maw={480}>
-              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block" style={{ cursor: 'pointer' }} onClick={() => setStep('audio-session')}>← Back</Anchor>
-              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>Session requirements</Title>
-              <Text fz="sm" c="var(--color-muted)" mb="xl">Help us prepare the studio for you</Text>
-              <Textarea label="Additional notes (optional)"
-                placeholder="e.g. Number of vocalists, instruments you're bringing, references, mixing preferences…"
-                value={audioNote} onChange={e => setAudioNote(e.target.value)}
-                size="md" radius="md" minRows={4} autosize styles={INPUT_LABEL} />
-              <Button fullWidth radius="xl" size="md" mt="xl"
-                style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('audio-review')}>
+                onClick={() => { touchAudioSession(); if (Object.values(audioSessionErrors).some(Boolean)) return; setStep('audio-review') }}>
                 Review booking →
               </Button>
             </Box>
@@ -689,7 +727,7 @@ export default function EventsPage() {
 
           {step === 'audio-review' && (
             <Box maw={480}>
-              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block" style={{ cursor: 'pointer' }} onClick={() => setStep('audio-details')}>← Back</Anchor>
+              <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block" style={{ cursor: 'pointer' }} onClick={() => setStep('audio-session')}>← Back</Anchor>
               <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb="xl">Review booking</Title>
               <Stack gap="md">
                 <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
@@ -743,11 +781,29 @@ export default function EventsPage() {
               formatPrice={formatPrice}
               color={sub.color}
               summaryRows={[
-                { label: 'Service', value: 'Audio Studio' },
+                { label: 'Service',      value: 'Audio Studio' },
                 { label: 'Session type', value: AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label ?? '' },
-                { label: 'Hours', value: `${audioHoursNum} hr${audioHoursNum > 1 ? 's' : ''}` },
-                { label: 'Engineer', value: audioEngineer === 'yes' ? 'Included' : 'Self-engineered' },
+                { label: 'Date',         value: audioDateFormatted },
+                { label: 'Duration',     value: `${audioHoursNum} hr${audioHoursNum > 1 ? 's' : ''}` },
+                { label: 'Engineer',     value: audioEngineer === 'yes' ? 'Included (+₦15,000)' : 'Self-engineered' },
+                { label: 'Studio fee',   value: formatPrice(audioSubtotal) },
               ]}
+              orderPayload={{
+                service_title: 'Audio Studio',
+                service_description: `${AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label ?? ''} — ${audioHoursNum} hr${audioHoursNum > 1 ? 's' : ''}`,
+                category: 'Events and Studios',
+                total_amount: audioSubtotal,
+                final_amount: audioSubtotal,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  session_type: audioSession,
+                  booking_date: audioDate ? dayjs(audioDate).format('YYYY-MM-DD') : null,
+                  duration_hours: audioHoursNum,
+                  include_engineer: audioEngineer === 'yes',
+                  note: audioNote || null,
+                },
+              }}
               onBack={() => setStep('audio-review')}
               onPay={() => setStep('audio-confirm')}
             />
@@ -756,14 +812,18 @@ export default function EventsPage() {
           {step === 'audio-confirm' && (
             <Box maw={480} mx="auto" py="xl" style={{ textAlign: 'center' }}>
               <Box style={{ width: 80, height: 80, borderRadius: '50%', background: sub.colorPale, border: `2px solid ${sub.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}>🎙️</Box>
-              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Booking request sent!</Title>
-              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="xl">
-                Our studio team will confirm your <strong>{audioHoursNum}-hour {AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label?.toLowerCase()} session</strong> on <strong>{audioDateFormatted}</strong> and contact you to arrange payment. Total: <strong>{formatPrice(audioSubtotal)}</strong>.
+              <Title order={2} ff="var(--font-montserrat)" fw={800} fz={26} c="var(--color-ink)" mb="sm">Audio Studio booked!</Title>
+              <Text fz="sm" c="var(--color-muted)" lh={1.7} mb="sm">
+                Your <strong>{audioHoursNum}-hour {AUDIO_SESSION_TYPES.find(s => s.value === audioSession)?.label?.toLowerCase()} session</strong> on <strong>{audioDateFormatted}</strong> is confirmed.
               </Text>
-              <Group grow>
+              <Text fz="sm" c="var(--color-muted)" mb="xl">
+                Total paid: <strong>{formatPrice(audioSubtotal)}</strong>. Our studio team will be in touch to finalise session details.
+              </Text>
+              <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
                 <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Chat on WhatsApp</Button>
-              </Group>
+              </div>
             </Box>
           )}
 
@@ -874,6 +934,24 @@ export default function EventsPage() {
                 { label: 'Qty', value: String(ticketQtyNum) },
                 { label: 'Price per ticket', value: formatPrice(selectedEvent.price) },
               ]}
+              orderPayload={{
+                service_title: 'Event Tickets',
+                service_description: `${selectedEvent.title} — ${ticketQtyNum} ticket${ticketQtyNum > 1 ? 's' : ''}`,
+                category: 'Events and Studios',
+                total_amount: ticketTotal,
+                final_amount: ticketTotal,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  event_id: selectedEvent.id,
+                  event_title: selectedEvent.title,
+                  event_date: selectedEvent.date,
+                  event_time: selectedEvent.time,
+                  event_venue: selectedEvent.venue,
+                  quantity: ticketQtyNum,
+                  price_per_ticket: selectedEvent.price,
+                },
+              }}
               onBack={() => setStep('tickets-review')}
               onPay={() => setStep('tickets-confirm')}
             />

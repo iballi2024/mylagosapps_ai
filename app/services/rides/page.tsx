@@ -532,6 +532,25 @@ export default function RidesPage() {
                 { label: 'Time', value: TIME_OPTIONS.find(t => t.value === carTime)?.label ?? '' },
                 { label: 'Route', value: `${carPickupArea} → ${carDropoffArea}` },
               ]}
+              orderPayload={{
+                service_title: 'Car Hire',
+                service_description: `${CAR_TYPES.find(c => c.value === carType)?.label ?? ''} — ${carPickupArea} → ${carDropoffArea}`,
+                category: 'Rides and Logistics',
+                total_amount: carTotal ?? 0,
+                final_amount: carTotal ?? 0,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  vehicle_type: carType,
+                  pickup_area: carPickupArea,
+                  pickup_address: carPickupAddress,
+                  dropoff_area: carDropoffArea,
+                  dropoff_address: carDropoffAddress,
+                  ride_date: carDate ? dayjs(carDate).format('YYYY-MM-DD') : null,
+                  ride_time: carTime,
+                  note: carNote || null,
+                },
+              }}
               onBack={() => setStep('car-review')}
               onPay={() => setStep('car-confirm')}
             />
@@ -546,10 +565,10 @@ export default function RidesPage() {
               </Text>
               <Text fz="sm" c="var(--color-muted)" mb="xl">Your driver&apos;s details will be sent via WhatsApp before pickup.</Text>
               <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
                 <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Chat on WhatsApp</Button>
-              </Group>
+              </div>
             </Box>
           )}
 
@@ -712,6 +731,25 @@ export default function RidesPage() {
                 { label: 'From', value: dispPickupArea ?? '' },
                 { label: 'To', value: dispDropoffArea ?? '' },
               ]}
+              orderPayload={{
+                service_title: 'Dispatch Rider',
+                service_description: `${PACKAGE_TYPES.find(p => p.value === dispPackage)?.label ?? ''} — ${dispPickupArea} → ${dispDropoffArea}`,
+                category: 'Rides and Logistics',
+                total_amount: dispFare ?? 0,
+                final_amount: dispFare ?? 0,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  package_type: dispPackage,
+                  pickup_area: dispPickupArea,
+                  pickup_address: dispPickupAddress,
+                  dropoff_area: dispDropoffArea,
+                  dropoff_address: dispDropoffAddress,
+                  recipient_name: dispRecipient,
+                  recipient_phone: dispRecipientPhone,
+                  note: dispNote || null,
+                },
+              }}
               onBack={() => setStep('dispatch-review')}
               onPay={() => setStep('dispatch-confirm')}
             />
@@ -725,10 +763,10 @@ export default function RidesPage() {
                 A rider will collect from <strong>{dispPickupAddress}</strong> and deliver to <strong>{dispRecipient}</strong> at <strong>{dispDropoffAddress}</strong>. Rider details will be sent via WhatsApp.
               </Text>
               <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
                 <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Track on WhatsApp</Button>
-              </Group>
+              </div>
             </Box>
           )}
 
@@ -880,6 +918,26 @@ export default function RidesPage() {
                 { label: 'Vehicle', value: AIRPORT_CAR_TYPES.find(c => c.value === airportCarType)?.label ?? '' },
                 { label: 'Date', value: formatDate(airportDate) },
               ]}
+              orderPayload={{
+                service_title: 'Airport Transfer',
+                service_description: `${AIRPORTS.find(a => a.value === airportTerminal)?.label ?? ''} — ${FLIGHT_DIRECTIONS.find(d => d.value === airportDirection)?.label ?? ''}`,
+                category: 'Rides and Logistics',
+                total_amount: airportFare ?? 0,
+                final_amount: airportFare ?? 0,
+                delivery_state: 'Lagos',
+                delivery_country: 'NG',
+                meta: {
+                  terminal: airportTerminal,
+                  direction: airportDirection,
+                  vehicle_type: airportCarType,
+                  area: airportArea,
+                  address: airportAddress,
+                  flight_number: airportFlight || null,
+                  transfer_date: airportDate ? dayjs(airportDate).format('YYYY-MM-DD') : null,
+                  transfer_time: airportTime,
+                  note: airportNote || null,
+                },
+              }}
               onBack={() => setStep('airport-review')}
               onPay={() => setStep('airport-confirm')}
             />
@@ -893,10 +951,10 @@ export default function RidesPage() {
                 Your airport transfer on <strong>{formatDate(airportDate)}</strong> at <strong>{TIME_OPTIONS.find(t => t.value === airportTime)?.label}</strong> is confirmed. Your driver&apos;s details will be sent via WhatsApp 2 hours before the transfer.
               </Text>
               <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
                 <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Chat on WhatsApp</Button>
-              </Group>
+              </div>
             </Box>
           )}
 

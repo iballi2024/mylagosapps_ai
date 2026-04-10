@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { Box, Title, Text, Card, Group, Stack, Badge, Button, ActionIcon } from '@mantine/core'
+import { Box, Title, Text, Card, Group, Stack, Badge, Button, ActionIcon, Skeleton, Alert } from '@mantine/core'
 import { useNotifications, NotifType } from '@/context/NotificationsContext'
 
 const TYPE_META: Record<NotifType, { label: string; color: string; bg: string; icon: string }> = {
@@ -10,19 +10,34 @@ const TYPE_META: Record<NotifType, { label: string; color: string; bg: string; i
   account: { label: 'Account', color: '#6A1B9A', bg: '#F3E5F5', icon: '👤' },
 }
 
+const FILTERS: { value: NotifType | 'all'; label: string }[] = [
+  { value: 'all',     label: 'All' },
+  { value: 'order',   label: 'Orders' },
+  { value: 'account', label: 'Account' },
+  { value: 'promo',   label: 'Promos' },
+  { value: 'system',  label: 'System' },
+]
+
+function NotifSkeleton() {
+  return (
+    <Card radius="xl" withBorder p="md" style={{ borderColor: 'var(--color-border)' }}>
+      <Group align="flex-start" gap="sm" wrap="nowrap">
+        <Skeleton height={40} width={40} radius={12} />
+        <Box style={{ flex: 1 }}>
+          <Skeleton height={14} width="55%" mb={8} />
+          <Skeleton height={11} width="90%" mb={4} />
+          <Skeleton height={11} width="70%" />
+        </Box>
+      </Group>
+    </Card>
+  )
+}
+
 export default function NotificationsPage() {
-  const { items, unreadCount, markRead, markAllRead, dismiss } = useNotifications()
+  const { items, unreadCount, loading, error, hasMore, loadMore, refresh, markRead, markAllRead, dismiss } = useNotifications()
   const [filter, setFilter] = useState<NotifType | 'all'>('all')
 
   const filtered = filter === 'all' ? items : items.filter(n => n.type === filter)
-
-  const FILTERS: { value: NotifType | 'all'; label: string }[] = [
-    { value: 'all',     label: 'All' },
-    { value: 'order',   label: 'Orders' },
-    { value: 'account', label: 'Account' },
-    { value: 'promo',   label: 'Promos' },
-    { value: 'system',  label: 'System' },
-  ]
 
   return (
     <Box p={{ base: 'md', sm: 'xl' }} maw={720}>
@@ -37,13 +52,21 @@ export default function NotificationsPage() {
           </Group>
           <Text fz="sm" c="var(--color-muted)">Updates on your orders, account, and services</Text>
         </Box>
-        {unreadCount > 0 && (
-          <Button size="xs" radius="xl" variant="outline"
-            style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
-            onClick={markAllRead}>
-            Mark all as read
+        <Group gap="xs">
+          {unreadCount > 0 && (
+            <Button size="xs" radius="xl" variant="outline"
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
+              onClick={markAllRead}>
+              Mark all as read
+            </Button>
+          )}
+          <Button size="xs" radius="xl" variant="subtle"
+            style={{ color: 'var(--color-muted)' }}
+            loading={loading && items.length > 0}
+            onClick={refresh}>
+            Refresh
           </Button>
-        )}
+        </Group>
       </Group>
 
       {/* Filters */}
@@ -60,14 +83,35 @@ export default function NotificationsPage() {
         ))}
       </Group>
 
+      {/* Error */}
+      {error && (
+        <Alert mb="md" radius="xl" color="red" variant="light"
+          title="Failed to load notifications"
+          styles={{ title: { fontWeight: 700 } }}>
+          {error}
+          <Button size="xs" mt="xs" variant="light" color="red" radius="xl" onClick={refresh}>
+            Try again
+          </Button>
+        </Alert>
+      )}
+
+      {/* Initial loading skeletons */}
+      {loading && items.length === 0 && (
+        <Stack gap="xs">
+          {Array.from({ length: 5 }).map((_, i) => <NotifSkeleton key={i} />)}
+        </Stack>
+      )}
+
       {/* List */}
-      {filtered.length === 0 ? (
+      {!loading && !error && filtered.length === 0 && (
         <Card radius="xl" withBorder p="xl" style={{ borderColor: 'var(--color-border)', textAlign: 'center' }}>
           <Text fz={32} mb="xs">🔔</Text>
           <Text fw={600} c="var(--color-ink)" mb={4}>No notifications</Text>
           <Text fz="sm" c="var(--color-muted)">You&apos;re all caught up.</Text>
         </Card>
-      ) : (
+      )}
+
+      {filtered.length > 0 && (
         <Stack gap="xs">
           {filtered.map(n => {
             const meta = TYPE_META[n.type]
@@ -121,6 +165,25 @@ export default function NotificationsPage() {
               </Card>
             )
           })}
+
+          {/* Load more */}
+          {hasMore && (
+            <Button
+              mt="xs" radius="xl" variant="outline" fullWidth
+              style={{ borderColor: 'var(--color-border)', color: 'var(--color-muted)' }}
+              loading={loading}
+              onClick={loadMore}>
+              Load more
+            </Button>
+          )}
+
+          {/* Load more skeletons */}
+          {loading && items.length > 0 && (
+            <Stack gap="xs" mt="xs">
+              <NotifSkeleton />
+              <NotifSkeleton />
+            </Stack>
+          )}
         </Stack>
       )}
     </Box>

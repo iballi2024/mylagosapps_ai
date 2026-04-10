@@ -587,6 +587,28 @@ export default function FoodPage() {
                   amount={total}
                   formatPrice={formatPrice}
                   color={sub.color}
+                  orderPayload={{
+                    service_title: active.name,
+                    service_description: restaurant ? `Delivery from ${restaurant.name}` : `${active.name} delivery`,
+                    category: 'Food and Groceries',
+                    total_amount: total,
+                    final_amount: total,
+                    delivery_address: deliveryAddress,
+                    delivery_area: deliveryArea ?? undefined,
+                    delivery_state: 'Lagos',
+                    delivery_country: 'NG',
+                    meta: {
+                      service_type: selectedService,
+                      restaurant_name: restaurant?.name ?? null,
+                      restaurant_area: restaurant?.area ?? null,
+                      pickup_zone: resolvedPickupZone,
+                      delivery_zone: deliveryZone,
+                      subtotal: active.startingPrice,
+                      delivery_fee: deliveryFee,
+                      time_slot: timeSlot,
+                      note: note || null,
+                    },
+                  }}
                   onBack={() => setStep('details')}
                   onPay={() => {
                     if (total === null || !deliveryZone || !resolvedPickupZone) return
@@ -895,7 +917,7 @@ export default function FoodPage() {
                 ))}
               </Stack>
 
-              <Group grow>
+              <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default"
                   styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>
                   Back to home
@@ -904,7 +926,7 @@ export default function FoodPage() {
                   radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>
                   💬 Chat on WhatsApp
                 </Button>
-              </Group>
+              </div>
             </Box>
           )}
 
