@@ -187,6 +187,7 @@ export default function Header() {
                   title={`${user.firstName} ${user.lastName}`}
                 >
                   {user.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={user.avatar}
                       alt={`${user.firstName} ${user.lastName}`}
@@ -347,6 +348,7 @@ export default function Header() {
                   className="w-full flex items-center gap-3 p-3 rounded-xl bg-surface-container-low cursor-pointer hover:bg-surface-container transition-colors"
                 >
                   {user.avatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={user.avatar}
                       alt={`${user.firstName} ${user.lastName}`}

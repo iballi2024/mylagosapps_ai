@@ -83,11 +83,83 @@ export async function apiGetBilling(): Promise<BillingData> {
   return res.data
 }
 
+export interface CurrentSubscription {
+  id: number
+  planName: string
+  status: string
+  startDate: string
+  expiryDate: string
+}
+
+interface ApiCurrentSubscriptionResponse {
+  success: number
+  message: boolean
+  data: string
+  error: {
+    hasActive: boolean
+    subscription: CurrentSubscription
+  } | null
+}
+
+export async function apiGetCurrentSubscription(): Promise<CurrentSubscription | null> {
+  if (!isDev) return null
+  const res = await apiFetch<ApiCurrentSubscriptionResponse>('/subscriptions/current')
+  if (!res.error?.hasActive) return null
+  return res.error.subscription
+}
+
 export async function apiCancelPlan(): Promise<void> {
   if (isDev) return
   await apiFetch<{ success: boolean; message: string }>('/app/billing/cancel', {
     method: 'POST',
   })
+}
+
+export interface SubscriptionHistoryItem {
+  id: number
+  startDate: string
+  expiryDate: string
+  status: string
+  billingCycle: string
+  planName: string
+  amount: string
+  paymentStatus: string
+  reference: string
+  createdAt: string
+}
+
+export interface SubscriptionHistoryResult {
+  history: SubscriptionHistoryItem[]
+  total: number
+  page: number
+  limit: number
+  pages: number
+}
+
+// NOTE: The API returns the payload inside `error` and the message inside `data`.
+// This matches the observed production response shape.
+interface ApiSubscriptionHistoryResponse {
+  success: number
+  message: boolean
+  data: string
+  error: {
+    history: SubscriptionHistoryItem[]
+    pagination: { total: number; page: number; limit: number; pages: number }
+  }
+}
+
+export async function apiGetSubscriptionHistory(
+  page = 1,
+  limit = 10
+): Promise<SubscriptionHistoryResult> {
+  if (!isDev) return { history: [], total: 0, page: 1, limit, pages: 0 }
+  const res = await apiFetch<ApiSubscriptionHistoryResponse>(
+    `/subscriptions/history?page=${page}&limit=${limit}`
+  )
+  return {
+    history: res.error.history,
+    ...res.error.pagination,
+  }
 }
 
 export async function apiRemovePaymentMethod(id: string): Promise<void> {

@@ -2,168 +2,168 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Box, Title, Text, Card, Group, Stack, Badge, Button, Divider, Anchor } from '@mantine/core'
-import { getOrder, updateOrderStatus, DeliveryOrder, STATUS_STEPS, statusIndex, OrderStatus } from '@/lib/orders'
+import { Box, Title, Text, Card, Group, Stack, Badge, Button, Divider, Anchor, Skeleton } from '@mantine/core'
+import { apiGetOrder, ApiOrder, API_STATUS_STEPS, apiStatusIndex } from '@/lib/orders'
 
-// In production this would be driven by real-time backend events.
-// Here we simulate automatic progression for demo purposes.
-const PROGRESSION_DELAYS: Partial<Record<OrderStatus, number>> = {
-  placed:   8000,   // → assigned after 8s
-  assigned: 12000,  // → pickup after 12s
-  pickup:   15000,  // → on_way after 15s
-  on_way:   20000,  // → delivered after 20s
+const ORDER_STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
+  pending:    { label: 'Pending',    bg: '#E7F5FF', color: '#1971C2' },
+  confirmed:  { label: 'Confirmed',  bg: '#FFF3BF', color: '#E67700' },
+  processing: { label: 'Processing', bg: '#FFF0F6', color: '#C2255C' },
+  completed:  { label: 'Completed',  bg: '#EBFBEE', color: '#2F9E44' },
+  cancelled:  { label: 'Cancelled',  bg: '#FFF5F5', color: '#C92A2A' },
 }
 
-const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus>> = {
-  placed:   'assigned',
-  assigned: 'pickup',
-  pickup:   'on_way',
-  on_way:   'delivered',
+const PAYMENT_STATUS_MAP: Record<string, { label: string; color: string }> = {
+  paid:     { label: 'Paid ✓',   color: '#2F9E44' },
+  pending:  { label: 'Pending',  color: '#E67700' },
+  failed:   { label: 'Failed',   color: '#C2255C' },
+  refunded: { label: 'Refunded', color: '#1971C2' },
 }
 
-const STATUS_BADGE: Record<string, { bg: string; color: string }> = {
-  placed:    { bg: '#E7F5FF', color: '#1971C2' },
-  assigned:  { bg: '#FFF3BF', color: '#E67700' },
-  pickup:    { bg: '#FFF0F6', color: '#C2255C' },
-  on_way:    { bg: '#FFF3BF', color: '#E67700' },
-  delivered: { bg: '#EBFBEE', color: '#2F9E44' },
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+function formatAmount(amount: number, currency = 'NGN') {
+  if (currency === 'NGN') return `₦${amount.toLocaleString()}`
+  return `${currency} ${amount.toLocaleString()}`
 }
 
-function getZoneLabel(zone: string) {
-  const map: Record<string, string> = {
-    A: 'Lagos Island', B: 'Lekki', C: 'Ajah / Sangotedo',
-    D: 'Surulere / Yaba', E: 'Ikeja / GRA', F: 'Mushin / Oshodi', G: 'Ikorodu / Outer',
+function MetaTable({ meta }: { meta: Record<string, string | number | null> }) {
+  const LABELS: Record<string, string> = {
+    vehicle_type:    'Vehicle type',
+    pickup_area:     'Pickup area',
+    pickup_address:  'Pickup address',
+    dropoff_area:    'Drop-off area',
+    dropoff_address: 'Drop-off address',
+    ride_date:       'Date',
+    ride_time:       'Time',
+    note:            'Note',
+    restaurant:      'Restaurant',
+    delivery_area:   'Delivery area',
+    package_type:    'Package type',
+    recipient:       'Recipient',
+    recipient_phone: 'Recipient phone',
+    flight_number:   'Flight number',
+    airport:         'Airport',
+    direction:       'Transfer direction',
   }
-  return map[zone] ?? zone
+
+  const entries = Object.entries(meta).filter(([, v]) => v !== null && v !== '')
+  if (entries.length === 0) return null
+
+  return (
+    <Stack gap="xs">
+      {entries.map(([key, val]) => (
+        <Group key={key} justify="space-between" align="flex-start" wrap="nowrap">
+          <Text fz="sm" c="var(--color-muted)" style={{ flexShrink: 0 }}>{LABELS[key] ?? key.replace(/_/g, ' ')}</Text>
+          <Text fz="sm" fw={500} ta="right" style={{ maxWidth: 220 }}>{String(val)}</Text>
+        </Group>
+      ))}
+    </Stack>
+  )
 }
 
-export default function OrderTrackingPage() {
-  const { id } = useParams<{ id: string }>()
-  const [order, setOrder] = useState<DeliveryOrder | null>(null)
-  const [notFound, setNotFound] = useState(false)
+function OrderDetailSkeleton() {
+  return (
+    <Box p={{ base: 'md', md: 'xl' }} maw={560}>
+      <Skeleton height={14} width={100} mb="lg" />
+      <Skeleton height={28} width="60%" mb={6} />
+      <Skeleton height={12} width="40%" mb="xl" />
+      <Skeleton height={160} radius="xl" mb="md" />
+      <Skeleton height={120} radius="xl" mb="md" />
+      <Skeleton height={140} radius="xl" mb="xl" />
+      <Group grow><Skeleton height={40} radius="xl" /><Skeleton height={40} radius="xl" /></Group>
+    </Box>
+  )
+}
 
-  // Load order
+export default function OrderDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const [order, setOrder] = useState<ApiOrder | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
-    const o = getOrder(id)
-    if (!o) { setNotFound(true); return }
-    setOrder(o)
+    apiGetOrder(id)
+      .then(setOrder)
+      .catch(err => setError(err instanceof Error ? err.message : 'Failed to load order'))
+      .finally(() => setLoading(false))
   }, [id])
 
-  // Auto-progress status (demo simulation)
-  useEffect(() => {
-    if (!order || order.status === 'delivered') return
-    const delay = PROGRESSION_DELAYS[order.status]
-    if (!delay) return
-    const timer = setTimeout(() => {
-      const next = NEXT_STATUS[order.status]
-      if (!next) return
-      updateOrderStatus(id, next)
-      setOrder(prev => prev ? { ...prev, status: next } : prev)
-    }, delay)
-    return () => clearTimeout(timer)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order?.status, id])
+  if (loading) return <OrderDetailSkeleton />
 
-  if (notFound) {
+  if (error || !order) {
     return (
       <Box p={{ base: 'md', md: 'xl' }} maw={560}>
         <Anchor component={Link} href="/dashboard/orders" fz="sm" c="var(--color-muted)" mb="lg" display="block">← All orders</Anchor>
         <Card radius="xl" withBorder p="xl" style={{ textAlign: 'center', borderColor: 'var(--color-border)' }}>
           <Text fz="3xl" mb="md">🔍</Text>
           <Text fw={700} fz="md" c="var(--color-ink)" mb={4}>Order not found</Text>
-          <Text fz="sm" c="var(--color-muted)" mb="lg">This order may not exist or has been removed.</Text>
+          <Text fz="sm" c="var(--color-muted)" mb="lg">{error ?? 'This order may not exist or has been removed.'}</Text>
           <Button component={Link} href="/dashboard/orders" radius="xl" variant="default">Back to orders</Button>
         </Card>
       </Box>
     )
   }
 
-  if (!order) return null
+  const orderStatus = ORDER_STATUS_MAP[order.order_status] ?? ORDER_STATUS_MAP.pending
+  const paymentStatus = PAYMENT_STATUS_MAP[order.payment_status] ?? PAYMENT_STATUS_MAP.pending
 
-  const currentIdx = statusIndex(order.status)
-  const sc = STATUS_BADGE[order.status] ?? STATUS_BADGE.placed
-
-  const etaLabel = (() => {
-    if (order.status === 'delivered') return 'Delivered'
-    const stepsRemaining = STATUS_STEPS.length - 1 - currentIdx
-    const minsLeft = stepsRemaining * (order.estimatedMinutes / (STATUS_STEPS.length - 1))
-    return `~${Math.max(5, Math.round(minsLeft))} min remaining`
-  })()
+  const currentIdx = apiStatusIndex(order.order_status)
+  const isCancelled = order.order_status === 'cancelled'
 
   return (
     <Box p={{ base: 'md', md: 'xl' }} pb={{ base: 80, lg: 'xl' }} maw={560}>
       <Anchor component={Link} href="/dashboard/orders" fz="sm" c="var(--color-muted)" mb="lg" display="block">← All orders</Anchor>
 
+      {/* Header */}
       <Group justify="space-between" align="flex-start" mb="xl" wrap="wrap" gap="sm">
         <Box>
           <Title order={1} ff="var(--font-montserrat)" fw={800} fz={{ base: 20, md: 24 }} c="var(--color-ink)">
-            {order.restaurant ?? order.serviceName}
+            {order.service_title}
           </Title>
-          <Text fz="sm" c="var(--color-muted)">Order #{order.id} · {formatTime(order.createdAt)}</Text>
+          <Text fz="sm" c="var(--color-muted)">{order.order_reference} · {formatDate(order.created_at)}</Text>
+          {order.service_description && (
+            <Text fz="xs" c="var(--color-muted)" mt={2}>{order.service_description}</Text>
+          )}
         </Box>
-        <Badge size="lg" radius="xl" style={{ background: sc.bg, color: sc.color }}>
-          {STATUS_STEPS.find(s => s.status === order.status)?.label}
+        <Badge size="lg" radius="xl" style={{ background: orderStatus.bg, color: orderStatus.color }}>
+          {orderStatus.label}
         </Badge>
       </Group>
 
-      {/* ── Live status timeline ── */}
+      {/* Status timeline */}
       <Card radius="xl" withBorder p="lg" mb="md" style={{ borderColor: 'var(--color-border)' }}>
-        <Group justify="space-between" mb="md">
-          <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)">Live tracking</Text>
-          <Text fz="xs" fw={600} c={order.status === 'delivered' ? '#2F9E44' : '#E67700'}>{etaLabel}</Text>
-        </Group>
-
+        <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)" mb="md">Order status</Text>
+        {isCancelled && (
+          <Text fz="sm" c="#C92A2A" mb="md">This order was cancelled.</Text>
+        )}
         <Stack gap={0}>
-          {STATUS_STEPS.map((step, i) => {
-            const done = i <= currentIdx
-            const active = i === currentIdx
-            const isLast = i === STATUS_STEPS.length - 1
-
+          {API_STATUS_STEPS.map((step, i) => {
+            const done = !isCancelled && i <= currentIdx
+            const active = !isCancelled && i === currentIdx
+            const isLast = i === API_STATUS_STEPS.length - 1
             return (
               <Group key={step.status} gap={0} align="stretch" wrap="nowrap">
-                {/* Left: icon + connector */}
                 <Box style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 36, flexShrink: 0 }}>
                   <Box style={{
                     width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                    background: done ? (active && order.status !== 'delivered' ? '#1A6B3C' : '#2F9E44') : 'var(--color-border)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 15,
-                    boxShadow: active ? '0 0 0 4px #1A6B3C20' : 'none',
-                    transition: 'background 0.4s',
+                    background: done ? '#2F9E44' : 'var(--color-border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
                   }}>
-                    {done ? (
-                      <Text fz="xs" style={{ filter: 'grayscale(0)' }}>{step.icon}</Text>
-                    ) : (
-                      <Box style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--mantine-color-gray-4)' }} />
-                    )}
+                    {done
+                      ? <Text fz="xs">{step.icon}</Text>
+                      : <Box style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--mantine-color-gray-4)' }} />
+                    }
                   </Box>
                   {!isLast && (
-                    <Box style={{
-                      width: 2, flex: 1, minHeight: 24,
-                      background: i < currentIdx ? '#2F9E44' : 'var(--color-border)',
-                      transition: 'background 0.4s',
-                    }} />
+                    <Box style={{ width: 2, flex: 1, minHeight: 24, background: i < currentIdx ? '#2F9E44' : 'var(--color-border)' }} />
                   )}
                 </Box>
-
-                {/* Right: text */}
                 <Box pb={isLast ? 0 : 'md'} pl="sm" style={{ flex: 1, paddingTop: 4 }}>
-                  <Text fz="sm" fw={done ? 700 : 500} c={done ? 'var(--color-ink)' : 'var(--color-muted)'}>
-                    {step.label}
-                  </Text>
-                  {active && (
-                    <Text fz="xs" c="var(--color-muted)" mt={2}>{step.desc}</Text>
-                  )}
-                  {active && order.status !== 'delivered' && (
-                    <Group gap={4} mt={4}>
-                      <Box style={{ width: 6, height: 6, borderRadius: '50%', background: '#1A6B3C', animation: 'pulse 1.4s ease-in-out infinite' }} />
-                      <Text fz={10} c="#1A6B3C" fw={600}>In progress</Text>
-                    </Group>
-                  )}
+                  <Text fz="sm" fw={done ? 700 : 500} c={done ? 'var(--color-ink)' : 'var(--color-muted)'}>{step.label}</Text>
+                  {active && <Text fz="xs" c="var(--color-muted)" mt={2}>{step.desc}</Text>}
                 </Box>
               </Group>
             )
@@ -171,66 +171,72 @@ export default function OrderTrackingPage() {
         </Stack>
       </Card>
 
-      {/* ── Delivery route ── */}
-      <Card radius="xl" withBorder p="md" mb="md" style={{ borderColor: 'var(--color-border)' }}>
-        <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Delivery route</Text>
-        <Stack gap="xs">
-          <Group gap="sm" align="flex-start">
-            <Box style={{ width: 28, height: 28, borderRadius: '50%', background: '#E8F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Text fz="xs">📍</Text>
-            </Box>
-            <Box>
-              <Text fz="xs" c="var(--color-muted)">Pickup from</Text>
-              <Text fz="sm" fw={600} c="var(--color-ink)">{order.restaurant ?? 'Central Kitchen'}</Text>
-              <Text fz="xs" c="var(--color-muted)">{order.restaurantArea ?? 'Surulere'} · {getZoneLabel(order.pickupZone)}</Text>
-            </Box>
-          </Group>
-          <Box style={{ width: 1, height: 16, background: 'var(--color-border)', marginLeft: 13 }} />
+      {/* Order details / meta */}
+      {Object.keys(order.meta ?? {}).length > 0 && (
+        <Card radius="xl" withBorder p="md" mb="md" style={{ borderColor: 'var(--color-border)' }}>
+          <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Order details</Text>
+          <MetaTable meta={order.meta} />
+        </Card>
+      )}
+
+      {/* Delivery info */}
+      {order.delivery_address && (
+        <Card radius="xl" withBorder p="md" mb="md" style={{ borderColor: 'var(--color-border)' }}>
+          <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Delivery address</Text>
           <Group gap="sm" align="flex-start">
             <Box style={{ width: 28, height: 28, borderRadius: '50%', background: '#E8F5EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Text fz="xs">🏠</Text>
             </Box>
             <Box>
-              <Text fz="xs" c="var(--color-muted)">Deliver to</Text>
-              <Text fz="sm" fw={600} c="var(--color-ink)">{order.deliveryAddress}</Text>
-              <Text fz="xs" c="var(--color-muted)">{order.deliveryArea} · {getZoneLabel(order.deliveryZone)}</Text>
+              <Text fz="sm" fw={600} c="var(--color-ink)">{order.delivery_address}</Text>
+              {(order.delivery_area || order.delivery_state) && (
+                <Text fz="xs" c="var(--color-muted)">{[order.delivery_area, order.delivery_state].filter(Boolean).join(', ')}</Text>
+              )}
             </Box>
           </Group>
-        </Stack>
-      </Card>
+        </Card>
+      )}
 
-      {/* ── Receipt ── */}
+      {/* Receipt */}
       <Card radius="xl" withBorder p="md" mb="xl" style={{ borderColor: 'var(--color-border)' }}>
         <Text fz={10} tt="uppercase" fw={600} style={{ letterSpacing: 2, color: 'var(--color-muted)' }} mb="md">Receipt</Text>
         <Stack gap="xs">
           <Group justify="space-between">
-            <Text fz="sm" c="var(--color-muted)">Service</Text>
-            <Text fz="sm" fw={500}>{order.serviceName}</Text>
+            <Text fz="sm" c="var(--color-muted)">Category</Text>
+            <Text fz="sm" fw={500}>{order.category}</Text>
           </Group>
-          <Group justify="space-between">
-            <Text fz="sm" c="var(--color-muted)">Delivery fee</Text>
-            <Text fz="sm" fw={500}>₦{order.deliveryFee.toLocaleString()}</Text>
-          </Group>
-          {order.note && (
-            <Group justify="space-between" align="flex-start">
-              <Text fz="sm" c="var(--color-muted)">Note</Text>
-              <Text fz="sm" fw={500} ta="right" style={{ maxWidth: 220 }}>{order.note}</Text>
+          {order.discount_amount > 0 && (
+            <Group justify="space-between">
+              <Text fz="sm" c="var(--color-muted)">Discount</Text>
+              <Text fz="sm" fw={500} c="#2F9E44">−{formatAmount(order.discount_amount, order.currency)}</Text>
             </Group>
           )}
           <Divider />
           <Group justify="space-between">
-            <Text ff="var(--font-montserrat)" fw={700}>Total paid</Text>
-            <Text ff="var(--font-montserrat)" fw={700} c="#1A6B3C">₦{order.total.toLocaleString()}</Text>
+            <Text ff="var(--font-montserrat)" fw={700}>Total</Text>
+            <Text ff="var(--font-montserrat)" fw={700} c="#1A6B3C">{formatAmount(order.final_amount, order.currency)}</Text>
           </Group>
           <Group justify="space-between">
             <Text fz="sm" c="var(--color-muted)">Payment</Text>
-            <Text fz="sm" fw={500} c="#2F9E44">Wallet ✓</Text>
+            <Text fz="sm" fw={500} c={paymentStatus.color}>{paymentStatus.label}</Text>
           </Group>
+          {order.payment_method && (
+            <Group justify="space-between">
+              <Text fz="sm" c="var(--color-muted)">Method</Text>
+              <Text fz="sm" fw={500} style={{ textTransform: 'capitalize' }}>{order.payment_method}</Text>
+            </Group>
+          )}
+          {order.paid_at && (
+            <Group justify="space-between">
+              <Text fz="sm" c="var(--color-muted)">Paid at</Text>
+              <Text fz="sm" fw={500}>{formatDate(order.paid_at)}</Text>
+            </Group>
+          )}
         </Stack>
       </Card>
 
       <Group grow>
-        <Button component={Link} href="/services/food" radius="xl" size="md" variant="default">
+        <Button component={Link} href="/services" radius="xl" size="md" variant="default">
           New order
         </Button>
         <Button component={Link} href="/dashboard/orders" radius="xl" size="md"

@@ -705,9 +705,9 @@ export default function FoodPage() {
                   styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>
                   Back to home
                 </Button>
-                <Button component={Link} href={`/dashboard/orders/${orderId}`} radius="xl" size="md"
+                <Button component={Link} href="/dashboard/orders" radius="xl" size="md"
                   style={{ background: sub.color, color: 'white', fontWeight: 700 }}>
-                  Track order →
+                  View orders →
                 </Button>
               </Group>
             </Box>

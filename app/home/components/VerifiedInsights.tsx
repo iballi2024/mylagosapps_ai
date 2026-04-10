@@ -61,6 +61,7 @@ export default function VerifiedInsights() {
                 className="bg-white p-4 md:p-6 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between group hover:shadow-md transition-shadow gap-4"
               >
                 <div className="flex items-center gap-4 md:gap-6">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     className="size-12 md:size-16 rounded-full object-cover grayscale flex-shrink-0"
                     alt=""

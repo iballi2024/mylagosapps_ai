@@ -6,7 +6,7 @@ import { Box, Stack, Text, Group, ScrollArea, Burger, Drawer, NavLink, Skeleton 
 
 import Logo from '@/components/Logo'
 import { useAuthContext } from '@/context/AuthContext'
-import { MOCK_PLAN, TIER_META } from './plan'
+import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
 
 const NAV = [
   { href: '/dashboard',                  icon: '⊞',  label: 'Overview' },
@@ -29,6 +29,7 @@ const SERVICES = [
 function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: () => void }) {
   const pathname = usePathname()
   const { user } = useAuthContext()
+  const { subscription, loading: subLoading } = useCurrentSubscription()
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
     : '?'
@@ -43,16 +44,20 @@ function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: ()
       </Group>
 
       {/* Plan status chip */}
-      {MOCK_PLAN ? (
+      {subLoading ? (
+        <Box mx="xs" mt="xs" px="sm" py="xs">
+          <Skeleton height={60} radius="md" />
+        </Box>
+      ) : subscription ? (
         <Box mx="xs" mt="xs" px="sm" py="xs"
           style={{ borderRadius: 12, background: 'linear-gradient(135deg, #2E9E5B, #1A6B3C)', flexShrink: 0, textDecoration: 'none', display: 'block' }}
           component={Link} href="/dashboard/billing" onClick={onNav}>
           <Text size="xs" c="rgba(255,255,255,0.6)" tt="uppercase" fw={600} style={{ letterSpacing: 1 }}>Current Plan</Text>
           <Text ff="var(--font-montserrat)" fw={700} c="white" fz={15} mb={2}>
-            {TIER_META[MOCK_PLAN.tier].icon} {TIER_META[MOCK_PLAN.tier].label}
+            {subscription.planName}
           </Text>
-          <Text fz={10} c="rgba(255,255,255,0.55)">
-            {MOCK_PLAN.billing === 'annual' ? 'Annual' : 'Quarterly'} · Renews {MOCK_PLAN.renewsAt}
+          <Text fz={10} c="rgba(255,255,255,0.55)" style={{ textTransform: 'capitalize' }}>
+            Expires {new Date(subscription.expiryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
           </Text>
         </Box>
       ) : (
@@ -108,6 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname()
   const router = useRouter()
   const { isAuthenticated, loading, logout } = useAuthContext()
+  const { subscription } = useCurrentSubscription()
 
   const handleLogout = async () => {
     await logout()
@@ -190,10 +196,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Box component={Link} href="/" style={{ textDecoration: 'none' }}>
             <Logo size="1.15rem" />
           </Box>
-          {MOCK_PLAN ? (
+          {subscription ? (
             <Box component={Link} href="/dashboard/billing"
               style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, padding: '5px 10px', borderRadius: 10, background: 'linear-gradient(135deg, #2E9E5B, #1A6B3C)', color: 'white', textDecoration: 'none' }}>
-              {TIER_META[MOCK_PLAN.tier].icon} {TIER_META[MOCK_PLAN.tier].label}
+              {subscription.planName}
             </Box>
           ) : (
             <Box component={Link} href="/subscribe/plan"

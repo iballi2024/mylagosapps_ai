@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { apiGetNotifications, apiGetUnreadCount } from '@/lib/notifications'
+import { apiGetNotifications, apiGetUnreadCount, apiMarkAllRead } from '@/lib/notifications'
 import { useAuthContext } from '@/context/AuthContext'
 
 export type NotifType = 'order' | 'system' | 'promo' | 'account'
@@ -87,6 +87,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   function markAllRead() {
     setItems(prev => prev.map(n => ({ ...n, read: true })))
     setUnreadCount(0)
+    apiMarkAllRead().catch(() => {/* optimistic — ignore errors */})
   }
 
   function dismiss(id: string) {

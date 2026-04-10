@@ -1,3 +1,5 @@
+import Image from 'next/image'
+
 export default function Hero() {
   return (
     <section className="relative bg-surface border-b border-outline-variant/15 overflow-hidden">
@@ -64,11 +66,12 @@ export default function Hero() {
         </div>
         <div className="md:col-span-5 relative">
           <div className="aspect-[4/5] rounded-xl overflow-hidden bg-surface-container-low relative">
-            <img
-              className="w-full h-full object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700"
+            <Image
+              fill
+              className="object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700"
               alt="Lagos professional in a modern office"
               src="/images/executive.jpg"
-              loading="eager"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent" />
             <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4 md:right-6 p-3 md:p-4 bg-surface-container-lowest/90 backdrop-blur-md rounded-lg">

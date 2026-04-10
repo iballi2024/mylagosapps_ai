@@ -82,6 +82,7 @@ export default function ServiceCategories() {
               className="group relative aspect-[3/4] rounded-xl overflow-hidden bg-surface-container focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] cursor-pointer text-left no-underline"
               aria-label={`${cat.name} — ${cat.cta}`}
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 alt=""

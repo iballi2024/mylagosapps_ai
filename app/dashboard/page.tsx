@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor, Modal } from '@mantine/core'
 import { usePlatform, SUBSIDIARIES } from '@/context/PlatformContext'
 import { useAuthContext } from '@/context/AuthContext'
-import { MOCK_PLAN, TIER_META } from './plan'
+import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -17,6 +17,7 @@ function getGreeting() {
 export default function DashboardPage() {
   const { loyaltyPoints, transactions, formatPrice } = usePlatform()
   const { user } = useAuthContext()
+  const { subscription } = useCurrentSubscription()
   const displayName = user ? `${user.firstName} ${user.lastName}` : ''
   const [modalOpen, setModalOpen] = useState(false)
   const router = useRouter()
@@ -45,17 +46,17 @@ export default function DashboardPage() {
       {/* Stat cards */}
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" mb="xl">
         {/* Subscription Plan Status */}
-        {MOCK_PLAN ? (
+        {subscription ? (
           <Card radius="xl" p="lg" style={{ background: 'linear-gradient(135deg, #2E9E5B, #1A6B3C)', border: 'none' }}>
             <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="rgba(255,255,255,0.6)" fw={600} mb={4}>Current Plan</Text>
             <Group gap="xs" align="center" mb={4}>
-              <Text ff="var(--font-montserrat)" fw={800} fz={26} c="white">
-                {TIER_META[MOCK_PLAN.tier].icon} {TIER_META[MOCK_PLAN.tier].label}
-              </Text>
-              <Badge size="xs" radius="xl" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none' }}>Active</Badge>
+              <Text ff="var(--font-montserrat)" fw={800} fz={26} c="white">{subscription.planName}</Text>
+              <Badge size="xs" radius="xl" style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', textTransform: 'capitalize' }}>
+                {subscription.status}
+              </Badge>
             </Group>
-            <Text fz={11} c="rgba(255,255,255,0.6)" mb="md">
-              {MOCK_PLAN.billing === 'annual' ? 'Annual' : 'Quarterly'} · Renews {MOCK_PLAN.renewsAt}
+            <Text fz={11} c="rgba(255,255,255,0.6)" mb="md" style={{ textTransform: 'capitalize' }}>
+              Expires {new Date(subscription.expiryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
             </Text>
             <Group gap="xs">
               <Button component={Link} href="/dashboard/billing" size="xs" radius="xl"

@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import {
   Box, Title, Text, Card, Button, Group, Stack, Badge,
@@ -8,6 +9,7 @@ import {
 } from '@mantine/core'
 import { IconMapPin, IconCheck, IconClock } from '@tabler/icons-react'
 import { usePlatform } from '@/context/PlatformContext'
+import { useAuthContext } from '@/context/AuthContext'
 import BookingCalendar from '@/components/BookingCalendar'
 import PaymentStep from '@/components/PaymentStep'
 import { validatePhone, reqText, reqSelect } from '@/lib/validation'
@@ -116,7 +118,18 @@ function formatDate(d: Date | null) {
 
 export default function RidesPage() {
   const { getSubsidiary, formatPrice } = usePlatform()
+  const { isAuthenticated } = useAuthContext()
+  const router = useRouter()
+  const pathname = usePathname()
   const sub = getSubsidiary('rides')!
+
+  function requireAuth(nextStep: Step) {
+    if (!isAuthenticated) {
+      router.push(`/auth/login?next=${encodeURIComponent(pathname)}`)
+      return
+    }
+    setStep(nextStep)
+  }
 
   const [step, setStep] = useState<Step>('browse')
   const [selectedService, setSelectedService] = useState(sub.services[0].id)
@@ -526,7 +539,7 @@ export default function RidesPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('car-pay')}>
+                onClick={() => requireAuth('car-pay')}>
                 Choose payment →
               </Button>
             </Box>
@@ -726,7 +739,7 @@ export default function RidesPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('dispatch-pay')}>
+                onClick={() => requireAuth('dispatch-pay')}>
                 Choose payment →
               </Button>
             </Box>
@@ -777,7 +790,7 @@ export default function RidesPage() {
               <Badge size="lg" radius="xl" variant="outline" mb="xl" style={{ borderColor: sub.color, color: sub.color }}>Ref: {orderId}</Badge>
               <div className="confirm-actions">
                 <Button component={Link} href="/home" radius="xl" size="md" variant="default" styles={{ root: { borderColor: 'var(--color-border)', color: 'var(--color-muted)' } }}>Back to home</Button>
-                <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Track on WhatsApp</Button>
+                <Button component="a" href={`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`} target="_blank" radius="xl" size="md" style={{ background: '#25D366', color: 'white', fontWeight: 700 }}>💬 Chat on WhatsApp</Button>
               </div>
             </Box>
           )}
@@ -912,7 +925,7 @@ export default function RidesPage() {
               </Stack>
               <Button fullWidth radius="xl" size="md" mt="xl"
                 style={{ background: sub.color, color: 'white', fontWeight: 700 }}
-                onClick={() => setStep('airport-pay')}>
+                onClick={() => requireAuth('airport-pay')}>
                 Choose payment →
               </Button>
             </Box>

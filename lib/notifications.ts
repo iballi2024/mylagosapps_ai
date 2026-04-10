@@ -155,8 +155,13 @@ export async function apiGetNotifications(
   }
 }
 
+export async function apiMarkAllRead(): Promise<void> {
+  if (!isDev) return
+  await apiFetch('/notifications/read-all', { method: 'PATCH' })
+}
+
 export async function apiGetUnreadCount(): Promise<number> {
-  if (isDev) {
+  if (!isDev) {
     return MOCK_NOTIFICATIONS.filter(n => !n.is_read).length
   }
   const res = await apiFetch<ApiUnreadCountResponse>('/notifications/unread-count')
