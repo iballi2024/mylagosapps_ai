@@ -213,7 +213,19 @@ export default function RidesPage() {
   const isConfirm = CONFIRM_STEPS.includes(step)
 
   function startFlow() {
-    const first: Record<string, Step> = { 'car': 'car-route', 'dispatch': 'dispatch-route', 'airport': 'airport-details' }
+    // van and bus use the same multi-step car hire flow
+    const first: Record<string, Step> = {
+      'car':      'car-route',
+      'van':      'car-route',
+      'bus':      'car-route',
+      'dispatch': 'dispatch-route',
+      'airport':  'airport-details',
+    }
+    // purchase / enquiry services have no booking flow — open WhatsApp instead
+    if (selectedService === 'car-purchase' || selectedService === 'ev-purchase') {
+      window.open(`https://wa.me/${sub.whatsapp.replace(/\D/g, '')}`, '_blank')
+      return
+    }
     setStep(first[selectedService] ?? 'browse')
   }
 
@@ -329,7 +341,7 @@ export default function RidesPage() {
           {step === 'car-route' && (
             <Box maw={480}>
               <Anchor fz="sm" c="var(--color-muted)" mb="lg" display="block" style={{ cursor: 'pointer' }} onClick={() => setStep('browse')}>← Back</Anchor>
-              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>Car Hire — Route</Title>
+              <Title order={2} ff="var(--font-montserrat)" fw={700} fz={20} c="var(--color-ink)" mb={4}>{active.name} — Route</Title>
               <Text fz="sm" c="var(--color-muted)" mb="xl">Where are you travelling from and to?</Text>
               <Stack gap="md">
                 <Select label="Pickup area" placeholder="Select area" data={ALL_AREA_OPTIONS}
