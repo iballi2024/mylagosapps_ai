@@ -137,36 +137,39 @@ export default function PaymentStep({ amount, formatPrice, color, email, descrip
       setCreatedOrderId(order.id)
       setCreatedOrderRef(order.order_reference)
 
-      // ── Step 2 (transfer): get virtual account details ────────────────────
+      // ── Step 2 (transfer): get virtual account details ───────────────────
       if (isTransfer) {
-        const result = await apiInitiateServicePayment({
+        const initiated = await apiInitiateServicePayment({
           amount,
-          email: userEmail,
-          description: serviceTitle,
-          paymentMethod: 'transfer',
+          email:          userEmail,
+          description:    serviceTitle,
+          paymentMethod:  'transfer',
           billingAddress: billing.address,
           billingCity:    billing.city,
           billingState:   billing.state,
           billingCountry: billing.country,
         })
-        setVirtualAccount(result.virtualAccount ?? null)
+        setVirtualAccount(initiated.virtualAccount ?? null)
         setLoading(false)
         return
       }
 
-      // ── Step 2 (card): open Paystack with publicKey from order ────────────
+      // ── Step 3 (card): open Paystack popup with params from order ─────────
+      if (!order.gatewayParams) throw new Error('Payment configuration missing. Please try again.')
       if (!window.PaystackPop) {
         throw new Error('Payment provider not ready. Please wait a moment and try again.')
       }
 
+      const { publicKey, email: gwEmail, amount: gwAmount, reference: gwRef } = order.gatewayParams
+
       const handler = window.PaystackPop.setup({
-        key:      order.gatewayParams.publicKey,
-        email:    userEmail,
-        amount:   amount * 100,
-        ref:      order.order_reference,
+        key:      publicKey,
+        email:    gwEmail || userEmail,
+        amount:   gwAmount || amount * 100,
+        ref:      gwRef || order.order_reference,
         currency: 'NGN',
 
-        // ── Step 3: PATCH /orders/:reference/payment ─────────────────────
+        // ── Step 4: PATCH /orders/:reference/payment ──────────────────────
         callback: function (response) {
           ;(async () => {
             try {

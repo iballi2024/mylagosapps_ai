@@ -112,6 +112,7 @@ export async function apiCancelPlan(reason = 'No longer needed'): Promise<void> 
   if (!isDev) return
   await apiFetch<{ success: boolean; message: string }>('/subscriptions/cancel', {
     method: 'POST',
+    body: JSON.stringify({ reason }),
   })
 }
 
@@ -486,6 +487,9 @@ export interface CreateOrderResponse {
   meta: Record<string, unknown>
   gatewayParams: {
     publicKey: string
+    email: string
+    amount: number       // kobo
+    reference: string
   }
 }
 
@@ -509,7 +513,12 @@ export async function apiCreateOrder(payload: CreateOrderPayload): Promise<Creat
       id: Math.floor(Math.random() * 90000) + 10000,
       order_reference: `ES-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
       meta: cleanMeta ?? {},
-      gatewayParams: { publicKey: 'pk_test_000000000000000000000000000000000000000' },
+      gatewayParams: {
+        publicKey: 'pk_test_000000000000000000000000000000000000000',
+        email:     'dev@lagosapps.com',
+        amount:    (payload.final_amount ?? payload.total_amount) * 100,
+        reference: `lagosapps_dev_${Date.now()}`,
+      },
     }
   }
   const res = await apiFetch<CreateOrderApiResponse>('/orders/create', {
