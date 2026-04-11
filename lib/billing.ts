@@ -108,9 +108,9 @@ export async function apiGetCurrentSubscription(): Promise<CurrentSubscription |
   return res.error.subscription
 }
 
-export async function apiCancelPlan(): Promise<void> {
-  if (isDev) return
-  await apiFetch<{ success: boolean; message: string }>('/app/billing/cancel', {
+export async function apiCancelPlan(reason = 'No longer needed'): Promise<void> {
+  if (!isDev) return
+  await apiFetch<{ success: boolean; message: string }>('/subscriptions/cancel', {
     method: 'POST',
   })
 }

@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Box, Title, Text, Card, Group, Badge, Stack, Button, Skeleton } from '@mantine/core'
-import { apiGetSubscriptionHistory, SubscriptionHistoryItem } from '@/lib/billing'
+import { Box, Title, Text, Card, Group, Badge, Stack, Button, Skeleton, Textarea } from '@mantine/core'
+import { apiGetSubscriptionHistory, apiCancelPlan, SubscriptionHistoryItem } from '@/lib/billing'
 import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
 
 function formatDate(iso: string) {
@@ -10,7 +10,18 @@ function formatDate(iso: string) {
 }
 
 export default function BillingPage() {
-  const { subscription, loading: planLoading } = useCurrentSubscription()
+  const { subscription, loading: planLoading, refetch } = useCurrentSubscription()
+  const [cancelConfirm, setCancelConfirm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+
+  function handleCancelPlan() {
+    setCancelling(true)
+    apiCancelPlan(cancelReason.trim() || 'No longer needed')
+      .then(() => { setCancelConfirm(false); setCancelReason(''); refetch() })
+      .catch(() => {})
+      .finally(() => setCancelling(false))
+  }
 
   const [history, setHistory] = useState<SubscriptionHistoryItem[]>([])
   const [historyLoading, setHistoryLoading] = useState(true)
@@ -52,26 +63,64 @@ export default function BillingPage() {
             <Skeleton height={32} width={100} radius="xl" />
           </Group>
         ) : subscription ? (
-          <Group justify="space-between" wrap="wrap" gap="md">
-            <Box>
-              <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={6}>Current Plan</Text>
-              <Group gap="sm" align="center" wrap="wrap">
-                <Text ff="var(--font-montserrat)" fw={800} fz={22} c="var(--color-ink)">{subscription.planName}</Text>
-                <Badge size="sm" radius="xl" variant="light"
-                  color={subscription.status === 'active' ? 'green' : subscription.status === 'cancelled' ? 'red' : 'yellow'}
-                  style={{ textTransform: 'capitalize' }}>
-                  {subscription.status}
-                </Badge>
+          <Stack gap="md">
+            <Group justify="space-between" wrap="wrap" gap="md">
+              <Box>
+                <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={6}>Current Plan</Text>
+                <Group gap="sm" align="center" wrap="wrap">
+                  <Text ff="var(--font-montserrat)" fw={800} fz={22} c="var(--color-ink)">{subscription.planName}</Text>
+                  <Badge size="sm" radius="xl" variant="light"
+                    color={subscription.status === 'active' ? 'green' : subscription.status === 'cancelled' ? 'red' : 'yellow'}
+                    style={{ textTransform: 'capitalize' }}>
+                    {subscription.status}
+                  </Badge>
+                </Group>
+                <Text fz="sm" c="var(--color-muted)" mt={4}>
+                  Expires {formatDate(subscription.expiryDate)}
+                </Text>
+              </Box>
+              <Group gap="xs">
+                <Button component={Link} href="/subscribe/plan" size="xs" radius="xl"
+                  style={{ background: 'var(--color-ink)', color: 'white' }}>
+                  Change Plan
+                </Button>
+                {subscription.status === 'active' && (
+                  <Button size="xs" radius="xl" variant="subtle" color="red"
+                    onClick={() => setCancelConfirm(v => !v)}>
+                    Cancel plan
+                  </Button>
+                )}
               </Group>
-              <Text fz="sm" c="var(--color-muted)" mt={4} style={{ textTransform: 'capitalize' }}>
-                Expires {formatDate(subscription.expiryDate)}
-              </Text>
-            </Box>
-            <Button component={Link} href="/subscribe/plan" size="xs" radius="xl"
-              style={{ background: 'var(--color-ink)', color: 'white' }}>
-              Change Plan
-            </Button>
-          </Group>
+            </Group>
+
+            {cancelConfirm && (
+              <Box p="md" style={{ background: '#fff5f5', borderRadius: 14, border: '1px solid #ffc9c9' }}>
+                <Text fz="sm" fw={600} c="red.7" mb={4}>Cancel your plan?</Text>
+                <Text fz="xs" c="var(--color-muted)" mb="md">
+                  Your plan will remain active until {formatDate(subscription.expiryDate)}. You won&apos;t be charged again after cancellation.
+                </Text>
+                <Textarea
+                  placeholder="Tell us why you're cancelling (optional)"
+                  value={cancelReason}
+                  onChange={e => setCancelReason(e.currentTarget.value)}
+                  radius="lg"
+                  minRows={2}
+                  autosize
+                  mb="md"
+                  styles={{ input: { fontSize: 13 } }}
+                />
+                <Group gap="xs">
+                  <Button size="xs" radius="xl" color="red" loading={cancelling} onClick={handleCancelPlan}>
+                    Yes, cancel plan
+                  </Button>
+                  <Button size="xs" radius="xl" variant="subtle" color="gray"
+                    onClick={() => { setCancelConfirm(false); setCancelReason('') }}>
+                    Keep plan
+                  </Button>
+                </Group>
+              </Box>
+            )}
+          </Stack>
         ) : (
           <Group justify="space-between" wrap="wrap" gap="md">
             <Box>

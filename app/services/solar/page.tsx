@@ -18,10 +18,8 @@ const PROPERTY_TYPES = [
 
 // Price per service per property type (Naira)
 const SERVICE_PRICES: Record<string, Record<string, number>> = {
-  installation: { residential: 450000,  commercial: 750000,  industrial: 1200000 },
-  inverter:     { residential: 280000,  commercial: 420000,  industrial: 680000  },
-  maintenance:  { residential: 15000,   commercial: 25000,   industrial: 40000   },
-  'ev-charger': { residential: 180000,  commercial: 320000,  industrial: 550000  },
+  'solar-package': { residential: 350000, commercial: 650000, industrial: 1100000 },
+  'ev-charger':    { residential: 180000, commercial: 320000, industrial: 550000  },
 }
 
 const EV_MODELS = [
@@ -48,6 +46,7 @@ export default function SolarPage() {
   const sub = getSubsidiary('solar')!
   const [selectedService, setSelectedService] = useState(sub.services[0].id)
   const [step, setStep] = useState<'browse' | 'booking' | 'pay' | 'confirm'>('browse')
+  const [browsePropertyType, setBrowsePropertyType] = useState('')
   const [form, setForm] = useState({ name: '', address: '', propertyType: '', phone: '', vehicleInterest: '', timeSlot: '' })
   const [bookingDate, setBookingDate] = useState<Date | null>(null)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
@@ -57,12 +56,16 @@ export default function SolarPage() {
   const isEV    = active.id === 'ev'
   const isEnquiry = isAudit || isEV   // no payment step
 
-  // Resolve price: free for enquiries, property-type-specific for paid services
+  // Resolve price for a given service + property type
+  function servicePrice(serviceId: string, propertyType: string, fallback: number): number {
+
+    return SERVICE_PRICES[serviceId]?.[propertyType] ?? fallback
+  }
+
+  // Price shown in booking/pay steps
   const activePrice: number = isEnquiry
     ? 0
-    : (form.propertyType && SERVICE_PRICES[active.id]?.[form.propertyType])
-      ? SERVICE_PRICES[active.id][form.propertyType]
-      : active.startingPrice
+    : servicePrice(active.id, form.propertyType, active.startingPrice)
 
   const errors = {
     // EV enquiry fields
