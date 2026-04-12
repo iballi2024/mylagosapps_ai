@@ -2,17 +2,18 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Box, Group, Text, Anchor, Button, SimpleGrid, Burger } from '@mantine/core'
+import { Box, Group, Text, Anchor, Button, SimpleGrid, Burger, Avatar } from '@mantine/core'
 import Logo from '@/components/Logo'
 import { useNotifications } from '@/context/NotificationsContext'
+import { useAuthContext } from '@/context/AuthContext'
 
 const SERVICE_LINKS = [
-  { label: 'Food',       href: '/services/food',       icon: '🍽️' },
-  { label: 'Rides',      href: '/services/rides',       icon: '🚗' },
-  { label: 'Groceries',  href: '/services/groceries',   icon: '🛒' },
-
-  { label: 'Healthcare', href: '/services/healthcare',  icon: '🏥' },
-  { label: 'Events',     href: '/services/events',      icon: '🎉' },
+  { label: 'Food & Groceries', href: '/services/food',       icon: '🍽️' },
+  { label: 'Rides',            href: '/services/rides',       icon: '🚗' },
+  { label: 'Healthcare',       href: '/services/healthcare',  icon: '🏥' },
+  { label: 'Events',           href: '/services/events',      icon: '🎉' },
+  { label: 'Solar',            href: '/services/solar',       icon: '☀️' },
+  { label: 'Office & School',  href: '/services/office',      icon: '🏢' },
 ]
 
 export default function Navbar() {
@@ -20,8 +21,13 @@ export default function Navbar() {
   const [opened, setOpened] = useState(false)
 
   const { unreadCount } = useNotifications()
+  const { user, isAuthenticated } = useAuthContext()
   const isAuth      = pathname.startsWith('/auth')
   const isDashboard = pathname.startsWith('/dashboard')
+
+  const userInitials = user
+    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
+    : ''
 
   return (
     <>
@@ -70,15 +76,19 @@ export default function Navbar() {
                     </Box>
                   )}
                 </Box>
-                <Box component={Link} href="/dashboard"
-                  style={{
-                    width: 34, height: 34, borderRadius: '50%',
-                    background: 'var(--color-gold-pale)', border: '2px solid rgba(201,146,10,0.3)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 12, fontWeight: 700, color: 'var(--color-gold)', textDecoration: 'none',
-                  }}>
-                  CO
-                </Box>
+                {isAuthenticated && (
+                  <Box component={Link} href="/dashboard" style={{ textDecoration: 'none' }}>
+                    <Avatar
+                      src={user?.avatar || undefined}
+                      alt={userInitials}
+                      size={34}
+                      radius="xl"
+                      color="green"
+                    >
+                      {userInitials}
+                    </Avatar>
+                  </Box>
+                )}
                 <Burger opened={opened} onClick={() => setOpened(v => !v)} hiddenFrom="lg" size="sm" />
               </>
             )}
@@ -103,9 +113,15 @@ export default function Navbar() {
                     </Box>
                   )}
                 </Box>
-                <Box style={{ width: 34, height: 34, borderRadius: '50%', background: 'var(--color-gold-pale)', border: '2px solid rgba(201,146,10,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'var(--color-gold)' }}>
-                  CO
-                </Box>
+                <Avatar
+                  src={user?.avatar || undefined}
+                  alt={userInitials}
+                  size={34}
+                  radius="xl"
+                  color="green"
+                >
+                  {userInitials}
+                </Avatar>
               </>
             )}
           </Group>

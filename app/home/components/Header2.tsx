@@ -15,6 +15,7 @@ import {
   ScrollArea,
   UnstyledButton,
   Stack,
+  Divider,
 } from "@mantine/core";
 import {
   IconChevronDown,
@@ -24,134 +25,121 @@ import {
   IconX,
   IconBrandWhatsapp,
   IconUser,
+  IconLayoutDashboard,
+  IconLogout,
 } from "@tabler/icons-react";
-// import Logo from "./Logo";
 import { useAuth } from "../hooks/useAuth";
 import Logo from "@/components/Logo";
 import { useNotifications } from "@/context/NotificationsContext";
 
 const serviceCategories = [
-  { name: "Food, Groceries and Household", icon: "restaurant",      href: "/services/food"       },
-  { name: "Cars, Vans and Rides",          icon: "directions_car",  href: "/services/rides"      },
-  { name: "Health and Wellness",           icon: "health_and_safety",href: "/services/healthcare" },
-  { name: "Events and Studios",            icon: "celebration",     href: "/services/events"     },
-  { name: "Solar, Renewables and More",    icon: "solar_power",     href: "/services/solar"      },
+  { name: "Food, Groceries and Household", icon: "restaurant",       href: "/services/food"       },
+  { name: "Cars, Vans and Rides",          icon: "directions_car",   href: "/services/rides"      },
+  { name: "Health and Wellness",           icon: "health_and_safety", href: "/services/healthcare" },
+  { name: "Events and Studios",            icon: "celebration",      href: "/services/events"     },
+  { name: "Solar, Renewables and More",    icon: "solar_power",      href: "/services/solar"      },
+  { name: "Office and School",             icon: "business_center",  href: "/services/office"     },
 ];
 
-const demoLinks = [
-  { label: "About", href: "/about" },
-  { label: "FAQ", href: "#faq" },
+const navLinks = [
+  { label: "About",    href: "/about" },
+  { label: "FAQ",      href: "/#faq"  },
 ];
 
-export default function Header() {
-  const [scrolled, setScrolled] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const { user, isAuthenticated, loading } = useAuth();
+export default function Header2() {
+  const [scrolled,    setScrolled]    = useState(false);
+  const [drawerOpen,  setDrawerOpen]  = useState(false);
+  const { user, isAuthenticated, loading, logout } = useAuth();
   const { unreadCount } = useNotifications();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 0);
+    const onScroll = () => setScrolled(window.scrollY > 8);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const userInitials = user
-    ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
-    : '';
+    ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
+    : "";
 
   return (
     <>
-      {/* ── Sticky header ── */}
+      {/* ── Sticky header ─────────────────────────────────────────────── */}
       <Box
         component="header"
-        className="glass-nav"
         pos="sticky"
         top={0}
         style={{
           zIndex: 50,
-          height: 72,
-          borderBottom: scrolled
-            ? "1px solid var(--mantine-color-gray-2)"
-            : "1px solid transparent",
-          boxShadow: scrolled ? "var(--mantine-shadow-xs)" : "none",
-          transition: "border-color 200ms, box-shadow 200ms",
+          height: 64,
+          background: scrolled ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.75)",
+          backdropFilter: "blur(16px)",
+          WebkitBackdropFilter: "blur(16px)",
+          borderBottom: `1px solid ${scrolled ? "var(--color-border)" : "transparent"}`,
+          boxShadow: scrolled ? "0 1px 12px rgba(0,0,0,0.06)" : "none",
+          transition: "background 200ms, border-color 200ms, box-shadow 200ms",
         }}
         px={{ base: "md", md: "xl" }}
       >
-        <Group
-          h="100%"
-          justify="space-between"
-          maw={1280}
-          mx="auto"
-          pos="relative"
-        >
+        <Group h="100%" justify="space-between" maw={1200} mx="auto">
+
           {/* Logo */}
-          <Anchor href="/" underline="never">
-            <Group gap="sm">
-              <Logo />
-              {/* <Text
-                fw={800}
-                size="xl"
-                c="primary"
-                style={{ letterSpacing: "-0.5px", fontFamily: "Syne, sans-serif" }}
-              >
-                LagosApps
-              </Text> */}
-            </Group>
+          <Anchor href="/" underline="never" style={{ flexShrink: 0 }}>
+            <Logo size="1.2rem" />
           </Anchor>
 
           {/* Desktop centre nav */}
-          <Group
-            gap="xl"
-            pos="absolute"
-            style={{ left: "50%", transform: "translateX(-50%)" }}
-            visibleFrom="md"
-          >
+          <Group gap="xs" visibleFrom="md" style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+
             {/* Services dropdown */}
-            <Menu shadow="md" radius="md" width={268} trigger="click">
+            <Menu shadow="lg" radius="lg" width={280} trigger="hover" openDelay={80} closeDelay={120}>
               <Menu.Target>
-                <UnstyledButton>
-                  <Group gap={4}>
-                    <Text size="sm" fw={600}>
-                      Services
-                    </Text>
-                    <IconChevronDown size={16} stroke={2} />
-                  </Group>
+                <UnstyledButton style={{
+                  display: "flex", alignItems: "center", gap: 4,
+                  padding: "6px 12px", borderRadius: 8,
+                  fontSize: 14, fontWeight: 600, color: "var(--color-ink)",
+                  transition: "background 150ms",
+                }}>
+                  Services
+                  <IconChevronDown size={14} stroke={2.5} />
                 </UnstyledButton>
               </Menu.Target>
-              <Menu.Dropdown>
+              <Menu.Dropdown py={6}>
                 {serviceCategories.map((cat) => (
                   <Menu.Item
                     key={cat.name}
                     component="a"
                     href={cat.href}
                     leftSection={
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: 20,
-                          color: "var(--mantine-color-primary-6)",
-                        }}
-                      >
-                        {cat.icon}
-                      </span>
+                      <Box style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        background: "#E8F5EE",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        flexShrink: 0,
+                      }}>
+                        <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#2E9E5B" }}>
+                          {cat.icon}
+                        </span>
+                      </Box>
                     }
+                    style={{ borderRadius: 8, padding: "8px 10px" }}
                   >
-                    <Text size="sm">{cat.name}</Text>
+                    <Text size="sm" fw={500}>{cat.name}</Text>
                   </Menu.Item>
                 ))}
               </Menu.Dropdown>
             </Menu>
 
-            {/* About / FAQ */}
-            {demoLinks.map((link) => (
+            {navLinks.map((link) => (
               <Anchor
                 key={link.label}
                 href={link.href}
                 underline="never"
-                c="inherit"
-                fw={600}
-                size="sm"
+                style={{
+                  padding: "6px 12px", borderRadius: 8,
+                  fontSize: 14, fontWeight: 600, color: "var(--color-ink)",
+                  transition: "background 150ms",
+                }}
               >
                 {link.label}
               </Anchor>
@@ -159,198 +147,188 @@ export default function Header() {
           </Group>
 
           {/* Right actions */}
-          <Group gap="sm">
-            {/* Join CTA — hidden when already signed in */}
-            {!loading && !isAuthenticated && (
-              <Button
-                component="a"
-                href="#membership"
-                className="bg-primary-gradient"
-                fw={700}
-                visibleFrom="md"
-              >
-                Join LagosApps
-              </Button>
-            )}
-            {/* Authenticated: bell + avatar */}
+          <Group gap="xs" style={{ flexShrink: 0 }}>
+
             {!loading && isAuthenticated && user ? (
-              <Group gap="sm" visibleFrom="md">
-                <Indicator label={String(unreadCount)} size={16} color="red" offset={4} disabled={unreadCount === 0}>
+              <>
+                {/* Bell */}
+                <Indicator
+                  label={unreadCount > 99 ? "99+" : String(unreadCount)}
+                  size={16}
+                  color="red"
+                  offset={4}
+                  disabled={unreadCount === 0}
+                  visibleFrom="md"
+                >
                   <ActionIcon
                     component="a"
                     href="/dashboard/notifications"
                     variant="subtle"
-                    size="lg"
+                    size={38}
+                    radius="xl"
+                    color="gray"
                     aria-label="Notifications"
                   >
-                    <IconBell size={22} />
+                    <IconBell size={20} />
                   </ActionIcon>
                 </Indicator>
 
-                <UnstyledButton
-                  component="a"
-                  href="/dashboard"
-                  aria-label="Open dashboard"
-                  title={`${user.firstName} ${user.lastName}`}
-                >
-                  <Avatar
-                    src={user.avatar || undefined}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    size={40}
-                    radius="xl"
-                    color="primary"
-                  >
-                    {userInitials}
-                  </Avatar>
-                </UnstyledButton>
-              </Group>
+                {/* Avatar menu */}
+                <Menu shadow="lg" radius="lg" width={200} position="bottom-end" offset={8} visibleFrom="md">
+                  <Menu.Target>
+                    <UnstyledButton aria-label="Account menu" title={`${user.firstName} ${user.lastName}`}>
+                      <Avatar
+                        src={user.avatar || undefined}
+                        alt={userInitials}
+                        size={36}
+                        radius="xl"
+                        color="green"
+                        style={{ cursor: "pointer", outline: "2px solid transparent", transition: "outline 150ms" }}
+                      >
+                        {userInitials}
+                      </Avatar>
+                    </UnstyledButton>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Box px="sm" py="xs" mb={4}>
+                      <Text size="sm" fw={700} c="var(--color-ink)" lineClamp={1}>
+                        {user.firstName} {user.lastName}
+                      </Text>
+                      <Text size="xs" c="dimmed" lineClamp={1}>{user.email}</Text>
+                    </Box>
+                    <Divider mb={4} />
+                    <Menu.Item component="a" href="/dashboard" leftSection={<IconLayoutDashboard size={16} />}>
+                      Dashboard
+                    </Menu.Item>
+                    <Menu.Item
+                      color="red"
+                      leftSection={<IconLogout size={16} />}
+                      onClick={() => logout().catch(() => {})}
+                    >
+                      Log out
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </>
             ) : !loading ? (
-              <Group gap="sm" visibleFrom="md">
-
-                <Button component="a"
-              display={'flex'}
-              p={2}
-              h={50}
-              bg={'transparent'}
-              bd={'none'}
-              href="/auth/login">
+              <>
                 <ActionIcon
+                  component="a"
+                  href="/auth/login"
                   variant="default"
+                  size={38}
                   radius="xl"
-                  size={40}
                   aria-label="Sign in"
                   visibleFrom="md"
                 >
-                  <IconUser size={20} />
+                  <IconUser size={18} />
                 </ActionIcon>
-              </Button>
-                {/* <Button
-                  component="a"
-                  href="/auth/login"
-                  variant="subtle"
-                  c="primary"
-                  fw={600}
-                >
-                  Log In
-                </Button>
                 <Button
                   component="a"
-                  href="/auth/signup"
-                  className="bg-primary-gradient"
+                  href="/subscribe/plan"
+                  size="sm"
+                  radius="xl"
                   fw={700}
+                  visibleFrom="md"
+                  style={{ background: "linear-gradient(135deg, #2E9E5B, #1A6B3C)", color: "white" }}
                 >
-                  Sign Up
-                </Button> */}
-                
-              </Group>
+                  Subscribe
+                </Button>
+              </>
             ) : null}
 
             {/* Mobile hamburger */}
             <ActionIcon
               variant="subtle"
-              size={44}
+              size={40}
+              radius="xl"
               hiddenFrom="md"
+              color="gray"
               onClick={() => setDrawerOpen(true)}
               aria-label="Open menu"
             >
-              <IconMenu2 size={28} />
+              <IconMenu2 size={22} />
             </ActionIcon>
           </Group>
+
         </Group>
       </Box>
 
-      {/* ── Mobile Drawer ── */}
+      {/* ── Mobile Drawer ──────────────────────────────────────────────── */}
       <Drawer
         opened={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         position="right"
-        size="100%"
+        size="85%"
         padding={0}
         withCloseButton={false}
         zIndex={9999}
+        styles={{ body: { padding: 0 } }}
       >
-        {/* Drawer top bar */}
+        {/* Drawer header */}
         <Group
           justify="space-between"
           px="md"
           h={64}
-          style={{ borderBottom: "1px solid var(--mantine-color-gray-2)" }}
+          style={{ borderBottom: "1px solid var(--color-border)", flexShrink: 0 }}
         >
-          <Anchor
-            href="/"
-            underline="never"
-            onClick={() => setDrawerOpen(false)}
-          >
-            <Group gap="sm">
-              <Logo />
-              <Text
-                fw={800}
-                size="xl"
-                c="primary"
-                style={{ letterSpacing: "-0.5px", fontFamily: "Syne, sans-serif" }}
-              >
-                LagosApps
-              </Text>
-            </Group>
+          <Anchor href="/" underline="never" onClick={() => setDrawerOpen(false)}>
+            <Logo size="1.2rem" />
           </Anchor>
           <ActionIcon
             variant="subtle"
-            size={44}
+            size={40}
+            radius="xl"
+            color="gray"
             onClick={() => setDrawerOpen(false)}
             aria-label="Close menu"
           >
-            <IconX size={28} />
+            <IconX size={20} />
           </ActionIcon>
         </Group>
 
         {/* Drawer body */}
         <ScrollArea h="calc(100dvh - 64px)" px="md" py="md">
           <Stack gap={0}>
+
             {/* Services accordion */}
             <Accordion
               variant="default"
-              chevron={<IconChevronDown size={18} />}
+              chevron={<IconChevronDown size={16} />}
               styles={{
                 control: { paddingLeft: 0, paddingRight: 0 },
-                label: {
-                  fontWeight: 700,
-                  fontSize: "var(--mantine-font-size-lg)",
-                  color: "var(--mantine-color-primary-6)",
-                },
-                item: {
-                  borderBottom: "1px solid var(--mantine-color-gray-2)",
-                },
+                label:   { fontWeight: 600, fontSize: 15, color: "var(--color-ink)" },
+                item:    { borderBottom: "1px solid var(--color-border)" },
                 content: { paddingLeft: 0, paddingRight: 0 },
               }}
             >
               <Accordion.Item value="services">
                 <Accordion.Control>Services</Accordion.Control>
                 <Accordion.Panel>
-                  <Stack gap={4} pb="sm">
+                  <Stack gap={2} pb="sm">
                     {serviceCategories.map((cat) => (
                       <Anchor
                         key={cat.name}
                         href={cat.href}
                         underline="never"
-                        c="inherit"
                         onClick={() => setDrawerOpen(false)}
                       >
                         <Group
                           gap="sm"
                           p="sm"
-                          style={{ borderRadius: "var(--mantine-radius-md)" }}
+                          style={{ borderRadius: 10 }}
                           className="hover:bg-primary-fixed/20 transition-colors"
                         >
-                          <span
-                            className="material-symbols-outlined"
-                            style={{
-                              fontSize: 20,
-                              color: "var(--mantine-color-primary-6)",
-                            }}
-                          >
-                            {cat.icon}
-                          </span>
-                          <Text size="md">{cat.name}</Text>
+                          <Box style={{
+                            width: 32, height: 32, borderRadius: 8,
+                            background: "#E8F5EE",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                          }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#2E9E5B" }}>
+                              {cat.icon}
+                            </span>
+                          </Box>
+                          <Text size="sm" fw={500} c="var(--color-ink)">{cat.name}</Text>
                         </Group>
                       </Anchor>
                     ))}
@@ -359,14 +337,9 @@ export default function Header() {
               </Accordion.Item>
             </Accordion>
 
-            {/* About / FAQ rows */}
-            {demoLinks.map((link) => (
-              <Box
-                key={link.label}
-                style={{
-                  borderBottom: "1px solid var(--mantine-color-gray-2)",
-                }}
-              >
+            {/* Other nav links */}
+            {navLinks.map((link) => (
+              <Box key={link.label} style={{ borderBottom: "1px solid var(--color-border)" }}>
                 <Anchor
                   href={link.href}
                   underline="never"
@@ -374,13 +347,8 @@ export default function Header() {
                   display="block"
                 >
                   <Group justify="space-between" py="md">
-                    <Text fw={700} size="lg" c="primary">
-                      {link.label}
-                    </Text>
-                    <IconChevronRight
-                      size={20}
-                      color="var(--mantine-color-gray-5)"
-                    />
+                    <Text fw={600} size="sm" c="var(--color-ink)">{link.label}</Text>
+                    <IconChevronRight size={16} color="var(--color-muted)" />
                   </Group>
                 </Anchor>
               </Box>
@@ -392,80 +360,88 @@ export default function Header() {
               href="https://wa.me/2348001234567?text=Hi%20LagosApps%2C%20I%27d%20like%20to%20know%20more%20about%20your%20services."
               target="_blank"
               rel="noopener noreferrer"
-              leftSection={<IconBrandWhatsapp size={22} />}
+              leftSection={<IconBrandWhatsapp size={18} />}
               fullWidth
-              mt="md"
-              size="lg"
+              mt="lg"
+              radius="xl"
               fw={700}
-              style={{ backgroundColor: "#25D366", color: "#fff" }}
+              style={{ background: "#25D366", color: "#fff" }}
             >
-              Chat with us on WhatsApp
+              Chat on WhatsApp
             </Button>
 
             {/* Account section */}
             <Box mt="md">
               {isAuthenticated && user ? (
-                <UnstyledButton
-                  w="100%"
-                  p="sm"
-                  style={{
-                    borderRadius: "var(--mantine-radius-xl)",
-                    background: "var(--mantine-color-gray-0)",
-                  }}
-                  component="a"
-                  href="/dashboard"
-                  onClick={() => setDrawerOpen(false)}
-                >
-                  <Group>
-                    <Avatar
-                      src={user.avatar || undefined}
-                      alt={`${user.firstName} ${user.lastName}`}
-                      size={40}
-                      radius="xl"
-                      color="primary"
-                    >
-                      {userInitials}
-                    </Avatar>
-                    <Box flex={1}>
-                      <Text fw={700} size="sm" c="primary">
-                        {user.firstName} {user.lastName}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        View Dashboard
-                      </Text>
-                    </Box>
-                    <IconChevronRight
-                      size={20}
-                      color="var(--mantine-color-gray-5)"
-                    />
-                  </Group>
-                </UnstyledButton>
+                <Stack gap="xs">
+                  <UnstyledButton
+                    w="100%"
+                    p="sm"
+                    style={{
+                      borderRadius: 14,
+                      background: "var(--color-surface2)",
+                      border: "1px solid var(--color-border)",
+                    }}
+                    component="a"
+                    href="/dashboard"
+                    onClick={() => setDrawerOpen(false)}
+                  >
+                    <Group>
+                      <Avatar
+                        src={user.avatar || undefined}
+                        alt={userInitials}
+                        size={40}
+                        radius="xl"
+                        color="green"
+                      >
+                        {userInitials}
+                      </Avatar>
+                      <Box flex={1} style={{ minWidth: 0 }}>
+                        <Text fw={700} size="sm" c="var(--color-ink)" lineClamp={1}>
+                          {user.firstName} {user.lastName}
+                        </Text>
+                        <Text size="xs" c="dimmed" lineClamp={1}>{user.email}</Text>
+                      </Box>
+                      <IconChevronRight size={16} color="var(--color-muted)" />
+                    </Group>
+                  </UnstyledButton>
+                  <Button
+                    variant="subtle"
+                    color="red"
+                    fullWidth
+                    radius="xl"
+                    leftSection={<IconLogout size={16} />}
+                    onClick={() => { logout().catch(() => {}); setDrawerOpen(false) }}
+                  >
+                    Log out
+                  </Button>
+                </Stack>
               ) : (
                 <Group grow gap="sm">
                   <Button
                     component="a"
                     href="/auth/login"
-                    size="lg"
+                    radius="xl"
                     fw={700}
-                    variant="outline"
-                    color="primary"
+                    variant="default"
                     onClick={() => setDrawerOpen(false)}
                   >
-                    Log In
+                    Log in
                   </Button>
                   <Button
                     component="a"
-                    href="/auth/signup"
-                    size="lg"
+                    href="/subscribe/plan"
+                    radius="xl"
                     fw={700}
-                    className="bg-primary-gradient"
+                    style={{ background: "linear-gradient(135deg, #2E9E5B, #1A6B3C)", color: "white" }}
                     onClick={() => setDrawerOpen(false)}
                   >
-                    Sign Up
+                    Subscribe
                   </Button>
                 </Group>
               )}
             </Box>
+
           </Stack>
         </ScrollArea>
       </Drawer>
