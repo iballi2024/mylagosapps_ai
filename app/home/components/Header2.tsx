@@ -174,7 +174,9 @@ export default function Header2() {
                 </Indicator>
 
                 {/* Avatar menu */}
-                <Menu shadow="lg" radius="lg" width={200} position="bottom-end" offset={8} visibleFrom="md">
+                <Menu shadow="lg" radius="lg" width={200} position="bottom-end" offset={8} 
+                // visibleFrom="md"
+                >
                   <Menu.Target>
                     <UnstyledButton aria-label="Account menu" title={`${user.firstName} ${user.lastName}`}>
                       <Avatar
