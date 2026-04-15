@@ -236,8 +236,8 @@ export default function OrderDetailPage() {
       </Card>
 
       <Group grow>
-        <Button component={Link} href="/services" radius="xl" size="md" variant="default">
-          New order
+        <Button component={Link} href="/dashboard/contact-admin" radius="xl" size="md" variant="default">
+          Contact Admin
         </Button>
         <Button component={Link} href="/dashboard/orders" radius="xl" size="md"
           style={{ background: '#1A6B3C', color: 'white', fontWeight: 700 }}>

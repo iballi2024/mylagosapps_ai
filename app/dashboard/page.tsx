@@ -1,8 +1,6 @@
 'use client'
-import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor, Modal } from '@mantine/core'
+import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor } from '@mantine/core'
 import { usePlatform, SUBSIDIARIES } from '@/context/PlatformContext'
 import { useAuthContext } from '@/context/AuthContext'
 import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
@@ -19,8 +17,6 @@ export default function DashboardPage() {
   const { user } = useAuthContext()
   const { subscription } = useCurrentSubscription()
   const displayName = user ? `${user.firstName} ${user.lastName}` : ''
-  const [modalOpen, setModalOpen] = useState(false)
-  const router = useRouter()
   const thisMonth = transactions
     .filter(t => t.type === 'debit' && (t.date.startsWith('Today') || t.date.startsWith('Yesterday')))
     .reduce((s, t) => s + t.amount, 0)
@@ -36,10 +32,9 @@ export default function DashboardPage() {
             {displayName}
           </Title>
         </Box>
-        <Button radius="xl" size="sm"
-          style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 600 }}
-          onClick={() => setModalOpen(true)}>
-          + New order
+        <Button component={Link} href="/dashboard/contact-admin" radius="xl" size="sm"
+          style={{ background: 'var(--color-ink)', color: 'white', fontWeight: 600 }}>
+          Contact Admin
         </Button>
       </Group>
 
@@ -161,43 +156,6 @@ export default function DashboardPage() {
         </Card>
       </SimpleGrid>
 
-      {/* New Order modal */}
-      <Modal
-        opened={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title={
-          <Text ff="var(--font-montserrat)" fw={800} fz={18} c="var(--color-ink)">
-            What would you like to order?
-          </Text>
-        }
-        radius="xl"
-        size="md"
-        centered
-      >
-        <Stack gap="xs" mb="md">
-          {SUBSIDIARIES.map(sub => (
-            <Box key={sub.id}
-              onClick={() => { setModalOpen(false); router.push(`/services/${sub.slug}`) }}
-              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 14px', borderRadius: 16, cursor: 'pointer', border: '1px solid var(--color-border)', background: 'white', transition: 'all 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = sub.colorPale; e.currentTarget.style.borderColor = sub.color + '60' }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = 'var(--color-border)' }}>
-              <Box style={{ width: 44, height: 44, borderRadius: 12, background: sub.colorPale, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
-                {sub.icon}
-              </Box>
-              <Box style={{ flex: 1, minWidth: 0 }}>
-                <Text fw={700} fz="sm" c="var(--color-ink)">{sub.name}</Text>
-                <Text fz="xs" c="var(--color-muted)" truncate>{sub.tagline}</Text>
-              </Box>
-              <Text fz="sm" fw={700} style={{ color: sub.color, flexShrink: 0 }}>→</Text>
-            </Box>
-          ))}
-        </Stack>
-        <Button component="a" href="https://wa.me/2348001000000" target="_blank"
-          fullWidth radius="xl" size="sm"
-          styles={{ root: { background: 'rgba(37,211,102,0.1)', color: '#25D366', border: '1px solid rgba(37,211,102,0.3)' } }}>
-          💬 Order via WhatsApp instead
-        </Button>
-      </Modal>
     </Box>
   )
 }

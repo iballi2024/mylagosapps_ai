@@ -16,6 +16,7 @@ const NAV = [
   { href: '/dashboard/billing',          icon: '🧾', label: 'Billing' },
   // { href: '/dashboard/team',           icon: '👥', label: 'Team' }, // hidden from nav — module retained
   { href: '/dashboard/settings',         icon: '⚙️', label: 'Settings' },
+  { href: '/dashboard/contact-admin',    icon: '📩', label: 'Contact Admin' },
 ]
 
 const SERVICES = [

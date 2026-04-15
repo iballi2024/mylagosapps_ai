@@ -13,9 +13,9 @@ export default function ServicesPage() {
           <Title order={2} ff="var(--font-montserrat)" fw={800}>Services</Title>
           <Text size="sm" c="dimmed">All {SUBSIDIARIES.length} LagosApps services on your account</Text>
         </Box>
-        <Button component={Link} href="/" radius="xl" size="sm"
+        <Button component={Link} href="/dashboard/contact-admin" radius="xl" size="sm"
           style={{ background: 'var(--color-ink)', color: 'white' }}>
-          + New order
+          Contact Admin
         </Button>
       </Group>
 

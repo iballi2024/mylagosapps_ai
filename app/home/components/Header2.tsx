@@ -42,8 +42,9 @@ const serviceCategories = [
 ];
 
 const navLinks = [
-  { label: "About",    href: "/about" },
-  { label: "FAQ",      href: "/#faq"  },
+  { label: "About",      href: "/about"    },
+  { label: "FAQ",        href: "/#faq"     },
+  { label: "Contact Us", href: "/#contact" },
 ];
 
 export default function Header2() {
@@ -61,6 +62,14 @@ export default function Header2() {
   const userInitials = user
     ? `${user.firstName?.[0] ?? ""}${user.lastName?.[0] ?? ""}`.toUpperCase()
     : "";
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string, closeDrawer = false) => {
+    if (href.startsWith("/#") && window.location.pathname === "/") {
+      e.preventDefault();
+      document.getElementById(href.slice(2))?.scrollIntoView({ behavior: "smooth" });
+    }
+    if (closeDrawer) setDrawerOpen(false);
+  };
 
   return (
     <>
@@ -135,6 +144,7 @@ export default function Header2() {
                 key={link.label}
                 href={link.href}
                 underline="never"
+                onClick={(e) => handleNavClick(e, link.href)}
                 style={{
                   padding: "6px 12px", borderRadius: 8,
                   fontSize: 14, fontWeight: 600, color: "var(--color-ink)",
@@ -345,7 +355,7 @@ export default function Header2() {
                 <Anchor
                   href={link.href}
                   underline="never"
-                  onClick={() => setDrawerOpen(false)}
+                  onClick={(e) => handleNavClick(e, link.href, true)}
                   display="block"
                 >
                   <Group justify="space-between" py="md">
