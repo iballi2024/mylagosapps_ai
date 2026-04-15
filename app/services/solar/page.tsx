@@ -6,9 +6,9 @@ import { DateInput } from '@mantine/dates'
 import '@mantine/dates/styles.css'
 import { usePlatform } from '@/context/PlatformContext'
 import PaymentStep from '@/components/PaymentStep'
-import Header2 from '@/app/home/components/Header2'
 import { validatePhone, reqText, reqSelect } from '@/lib/validation'
 import dayjs from 'dayjs'
+import Navbar from '@/components/Navbar'
 
 const PROPERTY_TYPES = [
   { value: 'residential', label: 'Residential' },
@@ -94,7 +94,7 @@ export default function SolarPage() {
 
   return (
     <>
-      <Header2 />
+      <Navbar />
       <Box pt={64} style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
 
         {/* Hero */}

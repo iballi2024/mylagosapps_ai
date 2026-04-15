@@ -34,9 +34,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { setUser(JSON.parse(stored)) } catch { localStorage.removeItem(USER_KEY) }
     }
 
-    // Verify token via GET /app/profile — keep loading until confirmed
+    // Verify token + refresh user with normalised profile data from the server
     apiGetProfile()
-      .then(() => setLoading(false))
+      .then(profile => {
+        const fresh: AuthUser = {
+          id:         (JSON.parse(localStorage.getItem(USER_KEY) ?? '{}') as AuthUser).id,
+          firstName:  profile.firstName,
+          lastName:   profile.lastName,
+          middleName: profile.middleName,
+          email:      profile.email,
+          phone:      profile.phone,
+          avatar:     profile.avatar,
+        }
+        setUser(fresh)
+        localStorage.setItem(USER_KEY, JSON.stringify(fresh))
+        setLoading(false)
+      })
       .catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 401) {
           localStorage.removeItem(TOKEN_KEY)
