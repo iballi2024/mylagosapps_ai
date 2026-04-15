@@ -7,7 +7,7 @@ const categories = [
     image: "https://images.unsplash.com/photo-1759344114577-b6c32e4d68c8?w=800&q=80",
     cta: "Order now",
     description: "Rice and beans, plantain flour, snails, cakes, and everyday household supplies delivered to your door.",
-    href: "/services/food",
+    href: "#",
   },
   {
     name: "Cars, Vans and Rides",
@@ -15,7 +15,7 @@ const categories = [
     image: "https://images.unsplash.com/photo-1649502913092-fb7f0e8fc632?w=800&q=80",
     cta: "Book now",
     description: "Car rental, cargo van hire, passenger buses, car purchase, and electric vehicles — all in one place.",
-    href: "/services/rides",
+    href: "#",
   },
   {
     name: "Health and Wellness",
@@ -23,7 +23,7 @@ const categories = [
     image: "https://plus.unsplash.com/premium_photo-1682130171029-49261a5ba80a?w=800&q=80",
     cta: "Book now",
     description: "Free health checks, wellness retreats, live-in nurses, doctor consultations, home tests, and ambulance.",
-    href: "/services/healthcare",
+    href: "#",
   },
   {
     name: "Events and Studios",
@@ -31,7 +31,7 @@ const categories = [
     image: "https://plus.unsplash.com/premium_photo-1732464750678-973ff68fbf9d?w=800&q=80",
     cta: "Book a venue",
     description: "Hire event spaces, TV studios, or audio studios. Find and book tickets to upcoming LagosApps events.",
-    href: "/services/events",
+    href: "#",
   },
   {
     name: "Office and School",
@@ -39,7 +39,7 @@ const categories = [
     image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80",
     cta: "Place an order",
     description: "Amazon and Alibaba orders shipped to Lagos, plus academic and leisure books — sourced and delivered for you.",
-    href: "/services/office",
+    href: "#",
   },
   {
     name: "Solar, Renewables and More",
@@ -47,7 +47,7 @@ const categories = [
     image: "https://plus.unsplash.com/premium_photo-1678766819822-d936a3d6a3ea?w=800&q=80",
     cta: "Get a free audit",
     description: "Solar packages, free audits, EV chargers, electric vehicles, and Mainland Solar community projects.",
-    href: "/services/solar",
+    href: "#",
   },
   {
     name: "A Better You",
@@ -55,7 +55,7 @@ const categories = [
     image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80",
     cta: "Get involved",
     description: "Free health checks, community events, education and youth impact through TEPLEARN and Mainland Foundation.",
-    href: "/services/better-you",
+    href: "#",
   },
 ];
 

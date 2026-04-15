@@ -4,6 +4,7 @@ import "../index.css";
 import ServiceCategories from "./components/ServiceCategories";
 import MembershipLedger from "./components/MembershipLedger";
 import VerifiedInsights from "./components/VerifiedInsights";
+import FAQSection from "./components/FAQSection";
 import ContactSection from "./components/ContactSection";
 import Footer from "./components/Footer";
 import WhatsAppFAB from "./components/ui/WhatsAppFAB";
@@ -63,6 +64,7 @@ export default function Home() {
         </div>
         <MembershipLedger />
         <VerifiedInsights />
+        <FAQSection />
         <ContactSection />
       </main>
       <Footer />

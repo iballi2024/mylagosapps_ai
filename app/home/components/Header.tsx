@@ -22,6 +22,14 @@ export default function Header() {
 
   const servicesRef = useRef<HTMLDivElement>(null);
 
+  const handleContactClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (window.location.pathname === '/') {
+      e.preventDefault();
+      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+    }
+    setMobileOpen(false);
+  };
+
   // Scroll detection
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
@@ -146,6 +154,11 @@ export default function Header() {
             {/* About */}
             <a href="/about" className="text-sm font-semibold hover:text-primary transition-colors">
               About
+            </a>
+
+            {/* Contact Us */}
+            <a href="/#contact" onClick={handleContactClick} className="text-sm font-semibold hover:text-primary transition-colors">
+              Contact Us
             </a>
           </nav>
 
@@ -319,6 +332,18 @@ export default function Header() {
                 onClick={() => setMobileOpen(false)}
               >
                 About
+                <span className="material-symbols-outlined text-[20px] text-outline">chevron_right</span>
+              </a>
+            </div>
+
+            {/* Contact Us */}
+            <div className="border-b border-outline-variant/10">
+              <a
+                href="/#contact"
+                className="flex items-center justify-between py-4 text-lg font-bold text-primary"
+                onClick={handleContactClick}
+              >
+                Contact Us
                 <span className="material-symbols-outlined text-[20px] text-outline">chevron_right</span>
               </a>
             </div>
