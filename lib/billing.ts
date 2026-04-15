@@ -622,3 +622,39 @@ export async function apiUpdatePayment(reference: string, payload: UpdatePayment
     body: JSON.stringify(payload),
   })
 }
+
+// ── Single subscription detail ────────────────────────────────────────────────
+
+export interface SubscriptionDetail extends SubscriptionHistoryItem {
+  planSlug?: string
+  couponCode?: string | null
+  userId?: number
+}
+
+interface ApiSubscriptionDetailResponse {
+  success: number
+  message: boolean
+  data: string
+  error: { subscription: SubscriptionDetail } | null
+}
+
+const MOCK_SUBSCRIPTION_DETAIL: SubscriptionDetail = {
+  id: 7,
+  planName: 'Gold Plan',
+  planSlug: 'gold',
+  status: 'active',
+  billingCycle: 'monthly',
+  amount: '16750.00',
+  paymentStatus: 'paid',
+  reference: 'lagosapps_42019b63-dab',
+  startDate: '2026-04-08T00:00:00.000Z',
+  expiryDate: '2026-05-08T00:00:00.000Z',
+  createdAt: '2026-04-08T10:23:44.000Z',
+  couponCode: null,
+}
+
+export async function apiGetSubscriptionById(id: string | number): Promise<SubscriptionDetail | null> {
+  if (!isDev) return MOCK_SUBSCRIPTION_DETAIL
+  const res = await apiFetch<ApiSubscriptionDetailResponse>(`/subscriptions/${id}`)
+  return res.error?.subscription ?? null
+}
