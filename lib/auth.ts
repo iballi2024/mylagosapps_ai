@@ -146,6 +146,14 @@ export async function apiLogout(): Promise<void> {
   await apiFetch<void>('/auth/logout', { method: 'POST' }).catch(() => {})
 }
 
+export async function apiGoogleAuth(idToken: string): Promise<LoginResponse> {
+  const res = await apiFetch<LoginApiResponse>('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify({ idToken }),
+  })
+  return res.data
+}
+
 export interface ForgotPasswordResponse {
   success: boolean
   message: string

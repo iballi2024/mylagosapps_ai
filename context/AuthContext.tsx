@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetProfile } from '@/lib/auth'
+import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetProfile, apiGoogleAuth } from '@/lib/auth'
 import { ApiError } from '@/lib/api'
 
 interface AuthContextValue {
@@ -8,6 +8,7 @@ interface AuthContextValue {
   isAuthenticated: boolean
   loading: boolean
   login: (identifier: string, password: string) => Promise<void>
+  googleLogin: (idToken: string) => Promise<void>
   signup: (data: { firstName: string; lastName: string; email: string; phone: string; password: string }) => Promise<void>
   logout: () => Promise<void>
   // kept for Header2 compatibility
@@ -67,6 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user)
   }, [])
 
+  const googleLogin = useCallback(async (idToken: string) => {
+    const { token, user } = await apiGoogleAuth(idToken)
+    console.log({ token, user })
+    localStorage.setItem(TOKEN_KEY, token)
+    localStorage.setItem(USER_KEY, JSON.stringify(user))
+    setUser(user)
+  }, [])
+
   const signup = useCallback(async (data: Parameters<typeof apiSignup>[0]) => {
     await apiSignup(data)
     // No token returned — user must verify email before logging in
@@ -105,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, isAuthenticated: !!user, loading,
-      login, signup, logout,
+      login, googleLogin, signup, logout,
       setShowAuth, setShowDashboard,
     }}>
       {children}
