@@ -291,7 +291,7 @@ export default function HomePage() {
               {QUICK_LINKS.map((q) => (
                 <Box
                   key={q.href}
-                  component={q.external ? 'a' : Link}
+                  component="a"
                   href={q.href}
                   target={q.external ? '_blank' : undefined}
                   rel={q.external ? 'noopener noreferrer' : undefined}

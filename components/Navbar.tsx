@@ -45,7 +45,7 @@ export default function Navbar() {
             <Group gap={2} visibleFrom="lg">
               {SERVICE_LINKS.map(item => (
                 <Box key={item.href}
-                  component={item.external ? 'a' : Link}
+                  component="a"
                   href={item.href}
                   target={item.external ? '_blank' : undefined}
                   rel={item.external ? 'noopener noreferrer' : undefined}
@@ -137,7 +137,7 @@ export default function Navbar() {
             <SimpleGrid cols={3} spacing="xs" pt="sm">
               {SERVICE_LINKS.map(item => (
                 <Box key={item.href}
-                  component={item.external ? 'a' : Link}
+                  component="a"
                   href={item.href}
                   target={item.external ? '_blank' : undefined}
                   rel={item.external ? 'noopener noreferrer' : undefined}

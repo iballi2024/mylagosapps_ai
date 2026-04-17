@@ -136,7 +136,7 @@ export default function DashboardPage() {
               const isExternal = !!firstHref
               return (
                 <Box key={cat.id}
-                  component={isExternal ? 'a' : Link}
+                  component="a"
                   href={firstHref ?? '/dashboard/apps'}
                   target={isExternal ? '_blank' : undefined}
                   rel={isExternal ? 'noopener noreferrer' : undefined}

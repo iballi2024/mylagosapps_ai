@@ -85,7 +85,7 @@ function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: ()
         <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="xs" mt="sm" mb={4} style={{ letterSpacing: 1.5 }}>Services</Text>
         {SERVICES.map(item => (
           <NavLink key={item.href}
-            component={item.external ? 'a' : Link}
+            component="a"
             href={item.href}
             target={item.external ? '_blank' : undefined}
             rel={item.external ? 'noopener noreferrer' : undefined}
