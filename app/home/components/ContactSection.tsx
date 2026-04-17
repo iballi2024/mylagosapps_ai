@@ -102,17 +102,39 @@ export default function ContactSection() {
         return;
       }
 
-      // Simulate submission
       setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setSuccess(true);
-        toast.success("Message sent successfully! We'll get back to you shortly.");
-        setForm({ name: "", email: "", phone: "", message: "", honeypot: "" });
-        setTouched({});
-        setErrors({});
-        setTimeout(() => setSuccess(false), 1500);
-      }, 1200);
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/contact/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          full_name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone.trim(),
+          message: form.message.trim(),
+        }),
+      })
+        .then(async (res) => {
+          const json = await res.json().catch(() => ({}));
+          console.log({ json });
+          if (!res.ok) {
+            const msg =
+              (typeof json?.message === "string" && json.message) ||
+              (typeof json?.data === "string" && json.data) ||
+              json?.error ||
+              "Failed to send message. Please try again.";
+            throw new Error(msg);
+          }
+          setSuccess(true);
+          toast.success(json?.message ?? "Message sent! We'll get back to you shortly.");
+          setForm({ name: "", email: "", phone: "", message: "", honeypot: "" });
+          setTouched({});
+          setErrors({});
+          setTimeout(() => setSuccess(false), 1500);
+        })
+        .catch((err: unknown) => {
+          toast.error(err instanceof Error ? err.message : "Failed to send message. Please try again.");
+        })
+        .finally(() => setLoading(false));
     },
     [form, toast]
   );

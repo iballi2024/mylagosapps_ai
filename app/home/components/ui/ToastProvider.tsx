@@ -1,3 +1,4 @@
+"use client";
 import { useState, useCallback, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ToastContext, type Toast, type ToastType } from "../../hooks/useToast";

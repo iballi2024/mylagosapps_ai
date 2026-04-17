@@ -6,6 +6,7 @@ import MembershipLedger from "./components/MembershipLedger";
 import VerifiedInsights from "./components/VerifiedInsights";
 import FAQSection from "./components/FAQSection";
 import ContactSection from "./components/ContactSection";
+import ToastProvider from "./components/ui/ToastProvider";
 import Footer from "./components/Footer";
 import WhatsAppFAB from "./components/ui/WhatsAppFAB";
 // ── Header variants — uncomment one to test ──────────────────────────────
@@ -65,7 +66,7 @@ export default function Home() {
         <MembershipLedger />
         <VerifiedInsights />
         <FAQSection />
-        <ContactSection />
+        <ToastProvider><ContactSection /></ToastProvider>
       </main>
       <Footer />
       <WhatsAppFAB />

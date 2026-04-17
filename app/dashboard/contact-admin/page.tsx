@@ -61,24 +61,45 @@ export default function ContactAdminPage() {
 
     setLoading(true)
     try {
-      // Payload includes the authenticated user's identity automatically
-      // Replace the simulate block below with your real API call, e.g.:
-      // await apiSubmitComplaint({
-      //   userId:   user.id,
-      //   name:     `${user.firstName} ${user.lastName}`,
-      //   email:    user.email,
-      //   phone:    user.phone,
-      //   category: form.category,
-      //   subject:  form.subject,
-      //   orderId:  form.orderId || null,
-      //   message:  form.message,
-      // })
-      await new Promise(res => setTimeout(res, 1200))
-      const ref = `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}`
+      const body: Record<string, string> = {
+        category: form.category,
+        subject:  form.subject.trim(),
+        message:  form.message.trim(),
+      }
+      if (form.orderId.trim()) body.reference_id = form.orderId.trim()
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/contact`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(typeof window !== 'undefined' && localStorage.getItem('lagos_token')
+              ? { Authorization: `Bearer ${localStorage.getItem('lagos_token')}` }
+              : {}),
+          },
+          body: JSON.stringify(body),
+        }
+      )
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const msg =
+          (typeof json?.message === 'string' && json.message) ||
+          (typeof json?.data === 'string' && json.data) ||
+          json?.error ||
+          'Failed to send your message. Please try again.'
+        throw new Error(msg)
+      }
+      const ref =
+        json?.data?.ticketRef ||
+        json?.data?.reference ||
+        json?.data?.submissionId
+          ? `TKT-${json.data.submissionId ?? json.data.ticketRef ?? json.data.reference}`
+          : `TKT-${Date.now().toString(36).toUpperCase().slice(-6)}`
       setTicketRef(ref)
       setSubmitted(true)
-    } catch {
-      setError('Failed to send your message. Please try again.')
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to send your message. Please try again.')
     } finally {
       setLoading(false)
     }
