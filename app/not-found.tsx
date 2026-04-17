@@ -114,18 +114,27 @@ export default function NotFound() {
           { label: 'Food & Groceries', href: '/services/food' },
           { label: 'Cars & Rides', href: '/services/rides' },
           { label: 'Healthcare', href: '/services/healthcare' },
-          { label: 'Events', href: '/services/events' },
+          { label: 'Events', href: 'https://mainlandevents.lagosapps.com/upcoming-events/', external: true },
         ].map(link => (
-          <Link key={link.href} href={link.href} style={{
-            fontSize: 13,
-            color: 'var(--color-muted)',
-            textDecoration: 'none',
-            fontWeight: 500,
-          }}
-            onMouseEnter={undefined}
-          >
-            {link.label}
-          </Link>
+          link.external ? (
+            <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer" style={{
+              fontSize: 13,
+              color: 'var(--color-muted)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}>
+              {link.label}
+            </a>
+          ) : (
+            <Link key={link.href} href={link.href} style={{
+              fontSize: 13,
+              color: 'var(--color-muted)',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}>
+              {link.label}
+            </Link>
+          )
         ))}
       </div>
 

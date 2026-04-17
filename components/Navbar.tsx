@@ -11,7 +11,7 @@ const SERVICE_LINKS = [
   { label: 'Food & Groceries', href: '/services/food',       icon: '🍽️' },
   { label: 'Rides',            href: '/services/rides',       icon: '🚗' },
   { label: 'Healthcare',       href: '/services/healthcare',  icon: '🏥' },
-  { label: 'Events',           href: '/services/events',      icon: '🎉' },
+  { label: 'Events',           href: 'https://mainlandevents.lagosapps.com/upcoming-events/', icon: '🎉', external: true },
   { label: 'Solar',            href: '/services/solar',       icon: '☀️' },
   { label: 'Office & School',  href: '/services/office',      icon: '🏢' },
 ]
@@ -44,7 +44,11 @@ export default function Navbar() {
           {!isAuth && !isDashboard && (
             <Group gap={2} visibleFrom="lg">
               {SERVICE_LINKS.map(item => (
-                <Box key={item.href} component={Link} href={item.href}
+                <Box key={item.href}
+                  component={item.external ? 'a' : Link}
+                  href={item.href}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noopener noreferrer' : undefined}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '6px 12px', borderRadius: 12, textDecoration: 'none',
@@ -132,7 +136,12 @@ export default function Navbar() {
           <Box hiddenFrom="lg" px="md" pb="md" style={{ borderTop: '1px solid var(--color-border)', background: 'white' }}>
             <SimpleGrid cols={3} spacing="xs" pt="sm">
               {SERVICE_LINKS.map(item => (
-                <Box key={item.href} component={Link} href={item.href} onClick={() => setOpened(false)}
+                <Box key={item.href}
+                  component={item.external ? 'a' : Link}
+                  href={item.href}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noopener noreferrer' : undefined}
+                  onClick={() => setOpened(false)}
                   style={{
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
                     padding: '12px 8px', borderRadius: 12, textDecoration: 'none',

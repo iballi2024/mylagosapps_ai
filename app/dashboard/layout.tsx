@@ -23,7 +23,7 @@ const SERVICES = [
   { href: '/services/food',       icon: '🍽️', label: 'Food, Groceries and Household' },
   { href: '/services/rides',      icon: '🚗', label: 'Cars, Vans and Rides' },
   { href: '/services/healthcare', icon: '🏥', label: 'Health and Wellness' },
-  { href: '/services/events',     icon: '🎉', label: 'Events and Studios' },
+  { href: 'https://mainlandevents.lagosapps.com/upcoming-events/', icon: '🎉', label: 'Events and Studios', external: true },
   { href: '/services/solar',      icon: '☀️', label: 'Solar, Renewables and More' },
 ]
 
@@ -84,7 +84,12 @@ function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: ()
 
         <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="xs" mt="sm" mb={4} style={{ letterSpacing: 1.5 }}>Services</Text>
         {SERVICES.map(item => (
-          <NavLink key={item.href} component={Link} href={item.href} onClick={onNav}
+          <NavLink key={item.href}
+            component={item.external ? 'a' : Link}
+            href={item.href}
+            target={item.external ? '_blank' : undefined}
+            rel={item.external ? 'noopener noreferrer' : undefined}
+            onClick={onNav}
             label={item.label} leftSection={<Text fz={13}>{item.icon}</Text>}
             active={pathname === item.href}
             style={{ borderRadius: 12, marginBottom: 2 }}

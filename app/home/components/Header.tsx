@@ -8,7 +8,7 @@ const serviceCategories = [
   { name: "Food, Groceries and Household", icon: "restaurant",       href: "/services/food"       },
   { name: "Cars, Vans and Rides",          icon: "directions_car",   href: "/services/rides"      },
   { name: "Health and Wellness",           icon: "health_and_safety", href: "/services/healthcare" },
-  { name: "Events and Studios",            icon: "celebration",      href: "/services/events"     },
+  { name: "Events and Studios",            icon: "celebration",      href: "https://mainlandevents.lagosapps.com/upcoming-events/"  },
   { name: "Solar, Renewables and More",    icon: "solar_power",      href: "/services/solar"      },
 ];
 
@@ -137,6 +137,8 @@ export default function Header() {
                     <a
                       key={cat.name}
                       href={cat.href}
+                      target={cat.href.startsWith('http') ? '_blank' : undefined}
+                      rel={cat.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       role="menuitem"
                       className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-primary-fixed/30 transition-colors"
                       onClick={() => setActiveDropdown(null)}
@@ -311,6 +313,8 @@ export default function Header() {
                     <a
                       key={cat.name}
                       href={cat.href}
+                      target={cat.href.startsWith('http') ? '_blank' : undefined}
+                      rel={cat.href.startsWith('http') ? 'noopener noreferrer' : undefined}
                       className="flex items-center gap-3 py-3 pl-4 text-base text-on-surface hover:bg-primary-fixed/20 rounded-md transition-colors"
                       onClick={() => setMobileOpen(false)}
                     >

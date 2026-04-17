@@ -34,7 +34,7 @@ const QUICK_LINKS = [
   { label: "Order food", icon: "🍽️", href: "/services/food" },
   { label: "Book a ride", icon: "🚗", href: "/services/rides" },
   { label: "Buy groceries", icon: "🛒", href: "/services/groceries" },
-  { label: "Book a venue",  icon: "🏛️", href: "/services/events" },
+  { label: "Book a venue",  icon: "🏛️", href: "https://mainlandevents.lagosapps.com/upcoming-events/", external: true },
   { label: "Get medicine", icon: "💊", href: "/services/healthcare" },
 ];
 
@@ -291,8 +291,10 @@ export default function HomePage() {
               {QUICK_LINKS.map((q) => (
                 <Box
                   key={q.href}
-                  component={Link}
+                  component={q.external ? 'a' : Link}
                   href={q.href}
+                  target={q.external ? '_blank' : undefined}
+                  rel={q.external ? 'noopener noreferrer' : undefined}
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -940,7 +942,7 @@ function SubsidiaryCard({
   const lowestPrice = Math.min(...sub.services.map((s) => s.startingPrice));
   return (
     <Card
-      onClick={() => router.push(`/services/${sub.slug}`)}
+      onClick={() => sub.externalUrl ? window.open(sub.externalUrl, '_blank', 'noopener,noreferrer') : router.push(`/services/${sub.slug}`)}
       withBorder
       radius="xl"
       p={0}

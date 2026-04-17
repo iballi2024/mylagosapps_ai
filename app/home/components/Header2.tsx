@@ -36,7 +36,7 @@ const serviceCategories = [
   { name: "Food, Groceries and Household", icon: "restaurant",       href: "/services/food"       },
   { name: "Cars, Vans and Rides",          icon: "directions_car",   href: "/services/rides"      },
   { name: "Health and Wellness",           icon: "health_and_safety", href: "/services/healthcare" },
-  { name: "Events and Studios",            icon: "celebration",      href: "/services/events"     },
+  { name: "Events and Studios",            icon: "celebration",      href: "https://mainlandevents.lagosapps.com/upcoming-events/", external: true },
   { name: "Solar, Renewables and More",    icon: "solar_power",      href: "/services/solar"      },
   { name: "Office and School",             icon: "business_center",  href: "/services/office"     },
 ];
@@ -119,6 +119,8 @@ export default function Header2() {
                     key={cat.name}
                     component="a"
                     href={cat.href}
+                    target={cat.external ? '_blank' : undefined}
+                    rel={cat.external ? 'noopener noreferrer' : undefined}
                     leftSection={
                       <Box style={{
                         width: 32, height: 32, borderRadius: 8,
@@ -322,6 +324,8 @@ export default function Header2() {
                       <Anchor
                         key={cat.name}
                         href={cat.href}
+                        target={cat.external ? '_blank' : undefined}
+                        rel={cat.external ? 'noopener noreferrer' : undefined}
                         underline="never"
                         onClick={() => setDrawerOpen(false)}
                       >
