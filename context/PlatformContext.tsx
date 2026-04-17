@@ -14,6 +14,7 @@ export interface Subsidiary {
   services: Service[]
   whatsapp: string      // WhatsApp number for orders
   available: boolean
+  externalUrl?: string  // Overrides /services/:slug when set — opens in new tab
 }
 
 export interface Service {
@@ -103,6 +104,7 @@ export const SUBSIDIARIES: Subsidiary[] = [
     id: 'mainland-events',
     name: 'Events and Studios',
     slug: 'events',
+    externalUrl: 'https://mainlandevents.lagosapps.com/upcoming-events/',
     tagline: 'Book event spaces, TV & audio studios, and event tickets',
     category: 'Events & Studios',
     icon: '🎉',
@@ -178,12 +180,141 @@ export const SUBSIDIARIES: Subsidiary[] = [
   },
 ]
 
+// ── Sub-service / category structures ───────────────────────────────────────
+
+export interface SubServiceItem {
+  id: string
+  name: string
+  description?: string
+  icon: string
+  href?: string        // external URL — opens in new tab
+  comingSoon?: boolean // no link yet; show "Coming Soon" badge
+  // no href and no comingSoon → informational only
+}
+
+export interface ServiceCategoryDef {
+  id: string
+  name: string
+  tagline: string
+  icon: string
+  color: string
+  colorPale: string
+  colorLight: string
+  image: string        // hero image for ServiceCategories on home page
+  items: SubServiceItem[]
+}
+
+export const SERVICE_CATEGORIES: ServiceCategoryDef[] = [
+  {
+    id: 'solar',
+    name: 'Solar, Renewables and More',
+    tagline: 'Solar packages, audits, EV chargers, electric vehicles, and Mainland Solar',
+    icon: '☀️',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    image: 'https://plus.unsplash.com/premium_photo-1678766819822-d936a3d6a3ea?w=800&q=80',
+    items: [
+      { id: 'solar-packages', name: 'Solar Packages', description: 'Pre-configured solar bundles for homes and small businesses — panels, inverter, and battery included', icon: '📦', href: 'https://mainlandsolar.lagosapps.com/' },
+      { id: 'solar-audits', name: 'Solar Audits', description: 'Free on-site energy assessment — our expert visits your property and recommends the right system', icon: '🔍', href: 'https://mainlandsolar.lagosapps.com/solar-audit-official/' },
+      { id: 'ev', name: 'Electric Vehicles', description: 'Browse and enquire about electric motorcycles, sedans, and SUVs — including test-drive booking', icon: '⚡' },
+      { id: 'mainland-solar', name: 'Mainland Solar', description: 'Community and commercial solar projects under the Mainland Solar initiative', icon: '🌍', href: 'https://www.mainlandsolar.com' },
+    ],
+  },
+  {
+    id: 'events',
+    name: 'Events, Trainings and More',
+    tagline: 'Book event spaces, studios, trainings, and community programmes',
+    icon: '🎉',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    image: 'https://plus.unsplash.com/premium_photo-1732464750678-973ff68fbf9d?w=800&q=80',
+    items: [
+      { id: 'attend-event', name: 'Attend an Event', description: 'Find and book tickets to upcoming LagosApps events', icon: '🎟️', href: 'https://mainlandevents.lagosapps.com/upcoming-events/' },
+      { id: 'host-event', name: 'Host Your Event (Mainland Hub)', description: 'Hire halls, gardens, and rooftops for private and corporate events', icon: '🏛️', href: 'https://mainlandevents.lagosapps.com/rental-category/event-rooms/' },
+      { id: 'event-coverage', name: 'Event Coverage (Mainland Studios)', description: 'Fully equipped TV studio and professional audio studio for broadcasts and recordings', icon: '📺', href: 'https://www.studiomainland.com' },
+      { id: 'trainings', name: 'Trainings', description: 'Solar and technical training programmes', icon: '📚', href: 'https://mainlandsolar.lagosapps.com/solar-training/' },
+      { id: 'recent-events', name: 'View Recent Events', description: 'Browse photos, recaps, and highlights from past LagosApps events', icon: '📸', href: 'https://www.mainlandevents.com' },
+      { id: 'make-impact', name: 'Make an Impact', description: 'Support education, health, and youth interventions — Mainland Foundation & TEPLEARN', icon: '🎓', href: 'https://tepcentre.com/learnigeria/#' },
+      { id: 'be-difference', name: 'Be the Difference (Single Sponsorships)', description: 'Fund a student, sponsor a health camp, or back a youth programme', icon: '🤝', href: 'https://tepcentre.com/learnigeriaremedialprogramme/' },
+    ],
+  },
+  {
+    id: 'food',
+    name: 'Food, Groceries and Household',
+    tagline: 'Fresh groceries, staples, and household supplies delivered to your door',
+    icon: '🛒',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    image: 'https://images.unsplash.com/photo-1759344114577-b6c32e4d68c8?w=800&q=80',
+    items: [
+      { id: 'rice-beans', name: 'Rice and Beans', description: 'Premium parboiled rice and assorted beans — sold by the bag or in smaller quantities', icon: '🌾', href: 'https://lagoscart.lagosapps.com/product-category/groceries/' },
+      { id: 'plantain-flour', name: 'Plantain Flour', description: 'Sun-dried and milled plantain flour — pure, unblended, and ready to cook', icon: '🍌', href: 'https://lagoscart.lagosapps.com/product-category/groceries/' },
+      { id: 'snails', name: 'Snails', description: 'Fresh and pre-cleaned giant African land snails sourced locally', icon: '🐌', href: 'https://lagoscart.lagosapps.com/product-category/groceries/' },
+      { id: 'cakes', name: 'Cake and Pastries', description: 'Custom celebration cakes, chin-chin, puff-puff, and baked goods made to order', icon: '🎂' },
+      { id: 'staples', name: 'Other Staples and Household Supplies', description: 'Cooking oil, seasoning, cleaning products, and everyday essentials', icon: '🏠' },
+      { id: 'office-supplies', name: 'Office and School Supplies', description: 'Stationery, office accessories, and school items sourced locally', icon: '🖊️', href: 'https://lagoscart.lagosapps.com/product-category/office/' },
+      { id: 'amazon', name: 'Amazon Orders and Requests', description: 'We source and ship Amazon products to Lagos — electronics, books, clothing, and more', icon: '📫' },
+      { id: 'alibaba', name: 'Alibaba Orders and Requests', description: 'Bulk and retail sourcing from Alibaba — we handle the order, shipping, and customs clearance', icon: '🏭' },
+    ],
+  },
+  {
+    id: 'books',
+    name: 'Books',
+    tagline: 'Academic and leisure books sourced internationally and delivered locally',
+    icon: '📚',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=800&q=80',
+    items: [
+      { id: 'books-main', name: 'Books', description: 'Academic and leisure books sourced internationally and delivered to Lagos', icon: '📖', comingSoon: true },
+    ],
+  },
+  {
+    id: 'health',
+    name: 'Health and Wellness',
+    tagline: 'Free health checks, wellness retreats, nurses, doctors, and medical supplies',
+    icon: '🏥',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    image: 'https://plus.unsplash.com/premium_photo-1682130171029-49261a5ba80a?w=800&q=80',
+    items: [
+      { id: 'health-checks', name: 'Free Health Checks (1st and 3rd Fridays)', description: 'Walk-in health screening — BP, blood sugar, BMI, and more. No appointment needed', icon: '🩺' },
+      { id: 'wellness-centre', name: 'Mainland Wellness Centre', description: 'Short stays at our wellness centre — rest, recovery, and guided wellness programmes', icon: '🌿' },
+      { id: 'home-medical', name: 'Home Medical Tests and Checks', description: 'Blood work, malaria, typhoid, HBA1c, and more — sample collected at your home', icon: '🧪', href: 'https://hacmedical.org/clinic-appointments/' },
+      { id: 'ambulance', name: 'Ambulance Service (Non-emergency)', description: 'Non-emergency patient transport — hospital transfers, discharge, and scheduled medical trips', icon: '🚑', comingSoon: true },
+      { id: 'medical-supplies', name: 'Medical and Health Supplies', description: 'OTC medicines, wound care, mobility aids, and prescribed items delivered to your door', icon: '💊', href: 'https://hacmedical.org/shop/' },
+    ],
+  },
+  {
+    id: 'rides',
+    name: 'Cars, Vans and Rides',
+    tagline: 'Car and van rental, car purchase, and electric vehicles across Lagos',
+    icon: '🚗',
+    color: '#1A6B3C',
+    colorLight: '#2E9E5B',
+    colorPale: '#E8F5EE',
+    image: 'https://images.unsplash.com/photo-1649502913092-fb7f0e8fc632?w=800&q=80',
+    items: [
+      { id: 'van-rental', name: 'Van Rental (Cargo)', description: 'Cargo vans for moving goods, equipment, and supplies around Lagos', icon: '🚐', href: 'https://www.vanlagos.com' },
+      { id: 'bus-rental', name: 'Bus Rental (Passenger)', description: 'Mini-buses and coaches for group travel, staff shuttles, and events', icon: '🚌', href: 'https://www.vanlagos.com' },
+      { id: 'car-rental', name: 'Car Rental', description: 'Saloons and SUVs with professional drivers — 3-day minimum for non-LagosApps members', icon: '🚙' },
+      { id: 'car-purchase', name: 'Car Purchase', description: 'Browse and buy quality used and new cars — inspection, finance, and delivery included', icon: '🏷️' },
+      { id: 'ev-purchase', name: 'EV Purchase', description: 'Electric motorcycles, sedans, and SUVs — enquire, test-drive, and buy', icon: '⚡' },
+    ],
+  },
+]
+
 export const MOCK_WALLET_TRANSACTIONS: WalletTransaction[] = [
   { id: 'txn-1', type: 'debit', amount: 4200, description: 'Food, Groceries and Household — Buka Spot order', subsidiary: 'Food, Groceries and Household', date: 'Today, 12:43 PM', status: 'completed' },
   { id: 'txn-2', type: 'debit', amount: 3500, description: 'Cars, Vans and Rides — VI to Lekki', subsidiary: 'Cars, Vans and Rides', date: 'Today, 09:15 AM', status: 'completed' },
   { id: 'txn-3', type: 'credit', amount: 50000, description: 'Wallet top-up via bank transfer', subsidiary: 'Platform', date: 'Yesterday', status: 'completed' },
   { id: 'txn-4', type: 'debit', amount: 8500, description: 'Food, Groceries and Household — weekly groceries', subsidiary: 'Food, Groceries and Household', date: 'Yesterday', status: 'completed' },
-  { id: 'txn-5', type: 'debit', amount: 5000, description: 'Events and Studios — concert ticket', subsidiary: 'Events and Studios', date: 'Sat, 15 Mar', status: 'completed' },
+  { id: 'txn-5', type: 'debit', amount: 5000, description: 'Events, Trainings and More — concert ticket', subsidiary: 'Events, Trainings and More', date: 'Sat, 15 Mar', status: 'completed' },
 ]
 
 interface PlatformState {

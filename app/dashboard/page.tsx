@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor } from '@mantine/core'
-import { usePlatform, SUBSIDIARIES } from '@/context/PlatformContext'
+import { usePlatform, SERVICE_CATEGORIES } from '@/context/PlatformContext'
 import { useAuthContext } from '@/context/AuthContext'
 import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
 
@@ -100,12 +100,12 @@ export default function DashboardPage() {
           </Group>
           <Stack gap={0}>
             {transactions.map(txn => {
-              const sub = SUBSIDIARIES.find(s => s.name === txn.subsidiary)
+              const cat = SERVICE_CATEGORIES.find(c => c.name === txn.subsidiary)
               return (
                 <Group key={txn.id} px="lg" py="sm" gap="sm" wrap="nowrap"
                   style={{ borderBottom: '1px solid var(--color-border)', ':last-child': { borderBottom: 'none' } }}>
-                  <Box style={{ width: 36, height: 36, borderRadius: 10, background: sub?.colorPale || '#F2F0EC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                    {sub?.icon || '💳'}
+                  <Box style={{ width: 36, height: 36, borderRadius: 10, background: cat?.colorPale || '#F2F0EC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                    {cat?.icon || '💳'}
                   </Box>
                   <Box style={{ flex: 1, minWidth: 0 }}>
                     <Text fz="sm" fw={500} c="var(--color-ink)" truncate>{txn.description}</Text>
@@ -131,21 +131,31 @@ export default function DashboardPage() {
             Quick Order
           </Text>
           <SimpleGrid cols={{ base: 2, xl: 1 }} spacing={2} p="xs">
-            {SUBSIDIARIES.map(sub => (
-              <Box key={sub.id} component={Link} href={`/services/${sub.slug}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, textDecoration: 'none', transition: 'background 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface2)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <Box style={{ width: 34, height: 34, borderRadius: 10, background: sub.colorPale, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-                  {sub.icon}
+            {SERVICE_CATEGORIES.map(cat => {
+              const firstHref = cat.items.find(i => i.href)?.href
+              const isExternal = !!firstHref
+              return (
+                <Box key={cat.id}
+                  component={isExternal ? 'a' : Link}
+                  href={firstHref ?? '/dashboard/apps'}
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noopener noreferrer' : undefined}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 12, textDecoration: 'none', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--color-surface2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <Box style={{ width: 34, height: 34, borderRadius: 10, background: cat.colorPale, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                    {cat.icon}
+                  </Box>
+                  <Box style={{ flex: 1, minWidth: 0 }}>
+                    <Text fz="xs" fw={600} c="var(--color-ink)">{cat.name}</Text>
+                    <Text fz={10} c="var(--color-muted)" truncate>
+                      {cat.items.filter(i => i.href).length} bookable services
+                    </Text>
+                  </Box>
+                  <Text fz="xs" fw={700} style={{ color: cat.color, flexShrink: 0 }} visibleFrom="xl">→</Text>
                 </Box>
-                <Box style={{ flex: 1, minWidth: 0 }}>
-                  <Text fz="xs" fw={600} c="var(--color-ink)">{sub.name}</Text>
-                  <Text fz={10} c="var(--color-muted)" truncate>{sub.category}</Text>
-                </Box>
-                <Text fz="xs" fw={700} style={{ color: sub.color, flexShrink: 0 }} visibleFrom="xl">→</Text>
-              </Box>
-            ))}
+              )
+            })}
           </SimpleGrid>
           <Box p="xs" pt={0}>
             <Button component="a" href="https://wa.me/2348001000000" target="_blank" fullWidth radius="xl" size="sm" variant="light"
