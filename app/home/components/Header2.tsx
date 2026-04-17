@@ -31,15 +31,19 @@ import {
 import { useAuth } from "../hooks/useAuth";
 import Logo from "@/components/Logo";
 import { useNotifications } from "@/context/NotificationsContext";
+import { SERVICE_CATEGORIES } from "@/context/PlatformContext";
 
-const serviceCategories = [
-  { name: "Food, Groceries and Household", icon: "restaurant",       href: "/services/food"       },
-  { name: "Cars, Vans and Rides",          icon: "directions_car",   href: "/services/rides"      },
-  { name: "Health and Wellness",           icon: "health_and_safety", href: "/services/healthcare" },
-  { name: "Events and Studios",            icon: "celebration",      href: "https://mainlandevents.lagosapps.com/upcoming-events/", external: true },
-  { name: "Solar, Renewables and More",    icon: "solar_power",      href: "/services/solar"      },
-  { name: "Office and School",             icon: "business_center",  href: "/services/office"     },
-];
+// Derive nav items from SERVICE_CATEGORIES — each links to its first bookable
+// external URL, or falls back to the /dashboard/apps overview page.
+const serviceCategories = SERVICE_CATEGORIES.map((cat) => {
+  const firstHref = cat.items.find((i) => i.href)?.href;
+  return {
+    name: cat.name,
+    icon: cat.icon,
+    href: firstHref ?? "/dashboard/apps",
+    external: !!firstHref,
+  };
+});
 
 const navLinks = [
   { label: "About",      href: "/about"    },
@@ -127,10 +131,9 @@ export default function Header2() {
                         background: "#E8F5EE",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         flexShrink: 0,
+                        fontSize: 17,
                       }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 17, color: "#2E9E5B" }}>
-                          {cat.icon}
-                        </span>
+                        {cat.icon}
                       </Box>
                     }
                     style={{ borderRadius: 8, padding: "8px 10px" }}
@@ -339,10 +342,9 @@ export default function Header2() {
                             width: 32, height: 32, borderRadius: 8,
                             background: "#E8F5EE",
                             display: "flex", alignItems: "center", justifyContent: "center",
+                            fontSize: 17,
                           }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: 16, color: "#2E9E5B" }}>
-                              {cat.icon}
-                            </span>
+                            {cat.icon}
                           </Box>
                           <Text size="sm" fw={500} c="var(--color-ink)">{cat.name}</Text>
                         </Group>
