@@ -1,4 +1,9 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://backend.lagosapps.com/api/v1'
+import { IS_PRODUCTION } from './env'
+
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (IS_PRODUCTION
+    ? 'https://backend.lagosapps.com/api/v1'
+    : 'http://localhost:5000/api/v1')
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {

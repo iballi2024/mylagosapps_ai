@@ -1,7 +1,7 @@
 import { apiFetch } from './api'
 import type { Notif, NotifType } from '@/context/NotificationsContext'
+import { IS_DEVELOPMENT } from './env'
 
-const isDev = process.env.NODE_ENV === 'development'
 
 export interface GetNotificationsParams {
   page?: number
@@ -124,7 +124,8 @@ export async function apiGetNotifications(
 ): Promise<NotificationsResult> {
   const { page = 1, limit = 20 } = params
 
-  if (isDev) {
+  console.log("IS_DEVELOPMENT: ", IS_DEVELOPMENT)
+  if (IS_DEVELOPMENT) {
     let mock = MOCK_NOTIFICATIONS
     if (params.category) {
       mock = mock.filter(n => toNotifType(n.category) === toNotifType(params.category!))
@@ -156,12 +157,12 @@ export async function apiGetNotifications(
 }
 
 export async function apiMarkAllRead(): Promise<void> {
-  if (isDev) return
+  if (IS_DEVELOPMENT) return
   await apiFetch('/notifications/read-all', { method: 'PATCH' })
 }
 
 export async function apiGetUnreadCount(): Promise<number> {
-  if (isDev) {
+  if (IS_DEVELOPMENT) {
     return MOCK_NOTIFICATIONS.filter(n => !n.is_read).length
   }
   const res = await apiFetch<ApiUnreadCountResponse>('/notifications/unread-count')
