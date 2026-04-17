@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
+import Header2 from '@/app/home/components/Header2'
 import {
   Box, Title, Text, Card, Group, Stack, SimpleGrid,
   Button, Badge, Anchor,
@@ -31,7 +31,7 @@ const TEAM = [
 export default function AboutPage() {
   return (
     <>
-      <Navbar />
+      <Header2 />
       <Box pt={64} style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
 
         {/* Hero */}
