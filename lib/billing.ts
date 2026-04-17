@@ -102,14 +102,14 @@ interface ApiCurrentSubscriptionResponse {
 }
 
 export async function apiGetCurrentSubscription(): Promise<CurrentSubscription | null> {
-  if (!isDev) return null
+  if (isDev) return null
   const res = await apiFetch<ApiCurrentSubscriptionResponse>('/subscriptions/current')
   if (!res.error?.hasActive) return null
   return res.error.subscription
 }
 
 export async function apiCancelPlan(reason = 'No longer needed'): Promise<void> {
-  if (!isDev) return
+  if (isDev) return
   await apiFetch<{ success: boolean; message: string }>('/subscriptions/cancel', {
     method: 'POST',
     body: JSON.stringify({ reason }),
@@ -153,7 +153,7 @@ export async function apiGetSubscriptionHistory(
   page = 1,
   limit = 10
 ): Promise<SubscriptionHistoryResult> {
-  if (!isDev) return { history: [], total: 0, page: 1, limit, pages: 0 }
+  if (isDev) return { history: [], total: 0, page: 1, limit, pages: 0 }
   const res = await apiFetch<ApiSubscriptionHistoryResponse>(
     `/subscriptions/history?page=${page}&limit=${limit}`
   )
@@ -267,7 +267,7 @@ const MOCK_PLANS: SubscriptionPlan[] = [
 ]
 
 export async function apiGetPlans(): Promise<SubscriptionPlan[]> {
-  if (!isDev) return MOCK_PLANS
+  if (isDev) return MOCK_PLANS
   const res = await apiFetch<PlansApiResponse>('/subscriptions/plans')
   return res.data.plans
 }
@@ -379,7 +379,7 @@ export interface CouponPayload {
 }
 
 export async function apiValidateCoupon(payload: CouponPayload): Promise<CouponResult> {
-  if (!isDev) {
+  if (isDev) {
     const originalPrice = payload.billingCycle === 'yearly' ? 31000 : 2583
     return {
       valid: true,
@@ -440,7 +440,7 @@ interface CheckoutApiResponse {
 }
 
 export async function apiInitiateCheckout(payload: CheckoutPayload): Promise<CheckoutResponse> {
-  if (!isDev) {
+  if (isDev) {
     return {
       orderId: 0,
       finalAmount: 0,
@@ -508,7 +508,7 @@ function stripNullish(obj: Record<string, unknown>): Record<string, unknown> {
 
 export async function apiCreateOrder(payload: CreateOrderPayload): Promise<CreateOrderResponse> {
   const cleanMeta = payload.meta ? stripNullish(payload.meta) : undefined
-  if (!isDev) {
+  if (isDev) {
     return {
       id: Math.floor(Math.random() * 90000) + 10000,
       order_reference: `ES-${Math.random().toString(36).slice(2, 8).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
@@ -564,7 +564,7 @@ interface ServicePaymentApiResponse {
 }
 
 export async function apiInitiateServicePayment(payload: ServicePaymentPayload): Promise<ServicePaymentResponse> {
-  if (!isDev) {
+  if (isDev) {
     const ref = `LAGOS-SVC-${Date.now().toString().slice(-8)}`
     const base = {
       reference: ref,
@@ -603,7 +603,7 @@ export interface VerifyPaymentPayload {
 }
 
 export async function apiVerifyPayment(payload: VerifyPaymentPayload): Promise<void> {
-  if (!isDev) return
+  if (isDev) return
   await apiFetch<{ success: boolean; message: string }>('/subscriptions/verify-payment', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -625,7 +625,7 @@ export interface UpdatePaymentPayload {
 }
 
 export async function apiUpdatePayment(reference: string, payload: UpdatePaymentPayload): Promise<void> {
-  if (!isDev) return
+  if (isDev) return
   await apiFetch<{ success: boolean; message: string }>(`/orders/${reference}/payment`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
@@ -663,7 +663,7 @@ const MOCK_SUBSCRIPTION_DETAIL: SubscriptionDetail = {
 }
 
 export async function apiGetSubscriptionById(id: string | number): Promise<SubscriptionDetail | null> {
-  if (!isDev) return MOCK_SUBSCRIPTION_DETAIL
+  if (isDev) return MOCK_SUBSCRIPTION_DETAIL
   const res = await apiFetch<ApiSubscriptionDetailResponse>(`/subscriptions/${id}`)
   return res.error?.subscription ?? null
 }
