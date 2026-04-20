@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback, useRef, type ReactNode } from "react";
+import { useState, useCallback, useRef, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ToastContext, type Toast, type ToastType } from "../../hooks/useToast";
 
@@ -28,7 +28,10 @@ const MAX_TOASTS = 3;
 
 export default function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [mounted, setMounted] = useState(false);
   const timersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+
+  useEffect(() => { setMounted(true); }, []);
 
   const removeToast = useCallback((id: string) => {
     const timer = timersRef.current.get(id);
@@ -61,7 +64,7 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
       {children}
-      {createPortal(
+      {mounted && createPortal(
         <div
           className="fixed z-[9999] flex flex-col gap-2 pointer-events-none"
           style={{
@@ -86,7 +89,7 @@ export default function ToastProvider({ children }: { children: ReactNode }) {
         </div>,
         document.body
       )}
-      {createPortal(
+      {mounted && createPortal(
         <div
           className="fixed z-[9999] hidden md:flex flex-col gap-2 pointer-events-none"
           style={{ top: "20px", right: "20px" }}
