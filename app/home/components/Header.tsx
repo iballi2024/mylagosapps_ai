@@ -119,6 +119,7 @@ export default function Header() {
                 className="text-sm font-semibold hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
                 aria-expanded={activeDropdown === "services"}
                 aria-haspopup="menu"
+                aria-controls="services-dropdown-menu"
               >
                 Services
                 <span className="material-symbols-outlined text-[18px]">
@@ -127,30 +128,29 @@ export default function Header() {
                     : "expand_more"}
                 </span>
               </button>
-              {activeDropdown === "services" && (
-                <div
-                  role="menu"
-                  className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-lg shadow-lg py-2 min-w-[260px] max-w-[90vw] z-50"
-                  style={{ animation: "modal-scale-in 150ms ease-out" }}
-                >
-                  {serviceCategories.map((cat) => (
-                    <a
-                      key={cat.name}
-                      href={cat.href}
-                      target={cat.href.startsWith('http') ? '_blank' : undefined}
-                      rel={cat.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      role="menuitem"
-                      className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-primary-fixed/30 transition-colors"
-                      onClick={() => setActiveDropdown(null)}
-                    >
-                      <span className="material-symbols-outlined text-primary text-[20px]">
-                        {cat.icon}
-                      </span>
-                      {cat.name}
-                    </a>
-                  ))}
-                </div>
-              )}
+              <div
+                id="services-dropdown-menu"
+                role="menu"
+                hidden={activeDropdown !== "services"}
+                className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-lg shadow-lg py-2 min-w-[260px] max-w-[90vw] z-50${activeDropdown === "services" ? " dropdown-open" : ""}`}
+              >
+                {serviceCategories.map((cat) => (
+                  <a
+                    key={cat.name}
+                    href={cat.href}
+                    target={cat.href.startsWith('http') ? '_blank' : undefined}
+                    rel={cat.href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    role="menuitem"
+                    className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-primary-fixed/30 transition-colors"
+                    onClick={() => setActiveDropdown(null)}
+                  >
+                    <span className="material-symbols-outlined text-primary text-[20px]">
+                      {cat.icon}
+                    </span>
+                    {cat.name}
+                  </a>
+                ))}
+              </div>
             </div>
 
             {/* About */}

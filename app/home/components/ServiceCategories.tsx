@@ -45,7 +45,7 @@ export default function ServiceCategories() {
                 onClick={() => toggle(cat.id)}
                 className={`group relative aspect-[3/4] rounded-xl overflow-hidden bg-surface-container focus-visible:outline-3 focus-visible:outline-primary focus-visible:outline-offset-2 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg active:scale-[0.98] cursor-pointer text-left w-full${isActive ? " ring-4 ring-primary ring-offset-2" : ""}`}
                 aria-label={cat.name}
-                aria-expanded={isActive ? "true" : "false"}
+                aria-expanded={isActive}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

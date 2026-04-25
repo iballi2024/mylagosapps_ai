@@ -103,11 +103,7 @@ export default function OrdersPage() {
         <Card radius="xl" withBorder p="xl" style={{ borderColor: 'var(--color-border)', textAlign: 'center' }}>
           <Text fz="3xl" mb="md">📦</Text>
           <Text fw={700} fz="md" c="var(--color-ink)" mb={4}>No orders yet</Text>
-          <Text fz="sm" c="var(--color-muted)" mb="lg">Place your first order to see it here</Text>
-          <Button component={Link} href="/services/food" radius="xl" size="md"
-            style={{ background: '#1A6B3C', color: 'white', fontWeight: 700 }}>
-            Order food now →
-          </Button>
+          <Text fz="sm" c="var(--color-muted)">Place your first order to see it here</Text>
         </Card>
       )}
 

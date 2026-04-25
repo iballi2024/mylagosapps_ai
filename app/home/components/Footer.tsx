@@ -1,4 +1,4 @@
-import Logo from "./Logo";
+import Image from "next/image";
 
 const navLinks = [
   { name: "About Us", href: "#" },
@@ -67,11 +67,14 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <Logo className="size-5 !text-inverse-on-surface" />
-              <span className="text-lg font-extrabold tracking-tight">
-                LagosApps
-              </span>
+            <div className="mb-4">
+              <Image
+                src="/images/logo-inverse.png"
+                alt="LagosApps"
+                width={188}
+                height={28}
+                style={{ height: 28, width: "auto" }}
+              />
             </div>
             <p className="text-sm opacity-70 leading-relaxed">
               One Platform. Endless Possibilities. Solar, transport, groceries,

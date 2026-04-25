@@ -177,6 +177,10 @@
   to   { transform: scale(1);    opacity: 1; }
 }
 
+.dropdown-open {
+  animation: modal-scale-in 150ms ease-out;
+}
+
 @keyframes sheet-slide-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }

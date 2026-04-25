@@ -19,13 +19,6 @@ const NAV = [
   { href: '/dashboard/contact-admin',    icon: '📩', label: 'Contact Admin' },
 ]
 
-const SERVICES = [
-  { href: '/services/food',       icon: '🍽️', label: 'Food, Groceries and Household' },
-  { href: '/services/rides',      icon: '🚗', label: 'Cars, Vans and Rides' },
-  { href: '/services/healthcare', icon: '🏥', label: 'Health and Wellness' },
-  { href: 'https://mainlandevents.lagosapps.com/upcoming-events/', icon: '🎉', label: 'Events and Studios', external: true },
-  { href: '/services/solar',      icon: '☀️', label: 'Solar, Renewables and More' },
-]
 
 function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: () => void }) {
   const pathname = usePathname()
@@ -82,20 +75,6 @@ function SidebarContent({ onNav, onLogout }: { onNav?: () => void; onLogout?: ()
           />
         ))}
 
-        <Text size="xs" tt="uppercase" fw={700} c="dimmed" px="xs" mt="sm" mb={4} style={{ letterSpacing: 1.5 }}>Services</Text>
-        {SERVICES.map(item => (
-          <NavLink key={item.href}
-            component="a"
-            href={item.href}
-            target={item.external ? '_blank' : undefined}
-            rel={item.external ? 'noopener noreferrer' : undefined}
-            onClick={onNav}
-            label={item.label} leftSection={<Text fz={13}>{item.icon}</Text>}
-            active={pathname === item.href}
-            style={{ borderRadius: 12, marginBottom: 2 }}
-            styles={{ root: { fontFamily: 'var(--font-poppins)', fontSize: 12 } }}
-          />
-        ))}
       </ScrollArea>
 
       {/* User */}
