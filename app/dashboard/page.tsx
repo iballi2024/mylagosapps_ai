@@ -63,10 +63,6 @@ export default function DashboardPage() {
     }).catch(() => {})
     return () => controller.abort()
   }, [user?.email])
-  const thisMonth = transactions
-    .filter(t => t.type === 'debit' && (t.date.startsWith('Today') || t.date.startsWith('Yesterday')))
-    .reduce((s, t) => s + t.amount, 0)
-
   return (
     <Box p={{ base: 'md', md: 'xl' }} pb={{ base: 80, lg: 'xl' }}>
 
@@ -123,19 +119,19 @@ export default function DashboardPage() {
         )}
 
         <Card radius="xl" p="lg" withBorder style={{ borderColor: 'var(--color-border)' }}>
-          <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>This Month</Text>
-          <Text ff="var(--font-montserrat)" fw={800} fz={24} c="var(--color-ink)">{formatPrice(thisMonth)}</Text>
-          <Text fz={11} c="var(--color-muted)" mt={4}>Across all services</Text>
+          <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>Available Benefits</Text>
+          <Text ff="var(--font-montserrat)" fw={800} fz={24} c="var(--color-ink)">
+            {availableBenefits ? availableBenefits.available_benefits?.length ?? 0 : '—'}
+          </Text>
+          <Text fz={11} c="var(--color-muted)" mt={4}>Ready to use now</Text>
         </Card>
 
         <Card radius="xl" p="lg" withBorder style={{ borderColor: 'var(--color-border)' }}>
-          <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>Orders Placed</Text>
+          <Text fz={10} tt="uppercase" style={{ letterSpacing: 2 }} c="var(--color-muted)" fw={600} mb={4}>Plan Benefits</Text>
           <Text ff="var(--font-montserrat)" fw={800} fz={24} c="var(--color-ink)">
-            {transactions.filter(t => t.type === 'debit').length}
+            {allBenefits ? allBenefits.benefits?.length ?? 0 : '—'}
           </Text>
-          <Anchor component={Link} href="/dashboard/orders" fz={11} c="var(--color-gold)" fw={600} mt={4} style={{ display: 'block' }}>
-            View orders →
-          </Anchor>
+          <Text fz={11} c="var(--color-muted)" mt={4}>Included in your plan</Text>
         </Card>
       </SimpleGrid>
 
