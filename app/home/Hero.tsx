@@ -71,6 +71,7 @@ export default function Hero() {
               className="object-cover grayscale-[0.2] hover:grayscale-0 transition-all duration-700"
               alt="Lagos professional in a modern office"
               src="/images/executive.jpg"
+              sizes="(max-width: 768px) 100vw, 50vw"
               priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent" />

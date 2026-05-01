@@ -8,7 +8,7 @@ import { PlatformProvider } from "@/context/PlatformContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { NotificationsProvider } from "@/context/NotificationsContext"
 import { CurrentSubscriptionProvider } from "@/context/CurrentSubscriptionContext";
-import { manrope, montserrat, poppins } from "@/public/fonts";
+import { manrope, montserrat, poppins, syne } from "@/public/fonts";
 import { theme } from "@/theming";
 import ClientLoader from "@/components/ClientLoader";
 import type { Metadata } from "next";
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${manrope.variable} ${montserrat.variable} ${poppins.variable}`}>
+    <html lang="en" className={`${manrope.variable} ${montserrat.variable} ${poppins.variable} ${syne.variable}`}>
       <head>
         <ColorSchemeScript />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}

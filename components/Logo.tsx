@@ -1,6 +1,4 @@
 'use client'
-import { syne } from '@/public/fonts'
-import { Text } from '@mantine/core'
 import type { CSSProperties } from 'react'
 
 interface LogoProps {
@@ -14,7 +12,7 @@ interface LogoProps {
 
 export default function Logo({ size = '1.25rem', light = false, style, className }: LogoProps) {
   const base: CSSProperties = {
-    fontFamily: `${syne.style.fontFamily}, sans-serif`,
+    fontFamily: 'var(--font-syne), sans-serif',
     fontWeight: 800,
     fontSize: size,
     lineHeight: 1,
