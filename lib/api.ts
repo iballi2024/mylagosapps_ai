@@ -16,18 +16,26 @@ function getToken(): string | null {
   return localStorage.getItem('lagos_token')
 }
 
+interface ApiFetchOptions extends RequestInit {
+  /** When true, a 401 response will NOT dispatch auth:unauthorized or force a logout.
+   *  Use for optional/non-critical endpoints where a 401 means "no data" rather than
+   *  "invalid session" (e.g. plan-benefits for users without a subscription). */
+  skipLogout?: boolean
+}
+
 export async function apiFetch<T>(
   path: string,
-  options: RequestInit = {}
+  options: ApiFetchOptions = {}
 ): Promise<T> {
+  const { skipLogout, ...fetchOptions } = options
   const token = getToken()
 
   const res = await fetch(`${BASE_URL}${path}`, {
-    ...options,
+    ...fetchOptions,
     headers: {
-      'Content-Type': 'application/json',
+      ...(fetchOptions.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
+      ...fetchOptions.headers,
     },
   })
   const json = await res.json().catch(() => ({}))
@@ -37,7 +45,7 @@ export async function apiFetch<T>(
       (typeof json?.data === 'string' && json.data) ||
       json?.error ||
       `Request failed (${res.status})`
-    if (res.status === 401 && typeof window !== 'undefined') {
+    if (res.status === 401 && typeof window !== 'undefined' && !skipLogout) {
       window.dispatchEvent(new Event('auth:unauthorized'))
     }
     throw new ApiError(res.status, message)

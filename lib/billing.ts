@@ -852,6 +852,183 @@ export async function apiUpdatePayment(
   );
 }
 
+// ── User benefits ─────────────────────────────────────────────────────────────
+
+export interface UserBenefit {
+  id: number;
+  benefit_id: number;
+  name: string;
+  description: string;
+  tier: string;
+  reset_frequency: string;
+  partner_slug: string;
+  partner_name: string;
+  industry: string;
+  plan_usage_limit: number;
+  remaining_balance: number;
+  used_this_period: number;
+  usage_count: number;
+  last_used_at: string | null;
+  last_reset_date: string;
+  next_reset_date: string;
+  subscription_expiry: string;
+  status: string;
+}
+
+export interface UserBenefitsSubscription {
+  plan_name: string;
+  billing_cycle: string;
+  start_date: string;
+  expiry_date: string;
+  status: string;
+}
+
+export interface UserBenefitsResult {
+  subscription: UserBenefitsSubscription | null;
+  benefits: UserBenefit[];
+}
+
+interface UserBenefitsApiData {
+  user_id: number;
+  subscription: UserBenefitsSubscription | null;
+  benefits: UserBenefit[];
+}
+
+interface UserBenefitsApiResponse {
+  success: boolean;
+  message: string;
+  data: UserBenefitsApiData;
+  error: null | string;
+}
+
+const MOCK_USER_BENEFITS: UserBenefitsResult = {
+  subscription: {
+    plan_name: "Gold Plan",
+    billing_cycle: "monthly",
+    start_date: new Date().toISOString(),
+    expiry_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "active",
+  },
+  benefits: [
+    {
+      id: 1, benefit_id: 11, name: "20% ride discount", description: "Gold Plan",
+      tier: "gold", reset_frequency: "monthly", partner_slug: "vanlagos",
+      partner_name: "VanLagos", industry: "Transport / Mobility",
+      plan_usage_limit: 0, remaining_balance: 0, used_this_period: 0,
+      usage_count: 0, last_used_at: null,
+      last_reset_date: new Date().toISOString(),
+      next_reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      subscription_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "active",
+    },
+    {
+      id: 2, benefit_id: 12, name: "Unlimited telemedicine", description: "Gold Plan",
+      tier: "gold", reset_frequency: "never", partner_slug: "mainlandclinics",
+      partner_name: "Mainlandclinics", industry: "Healthcare / Wellness",
+      plan_usage_limit: 0, remaining_balance: 0, used_this_period: 0,
+      usage_count: 0, last_used_at: null,
+      last_reset_date: new Date().toISOString(),
+      next_reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      subscription_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "active",
+    },
+    {
+      id: 3, benefit_id: 13, name: "15% meals & groceries", description: "Gold Plan",
+      tier: "gold", reset_frequency: "monthly", partner_slug: "mainlandmeals",
+      partner_name: "Mainlandmeals", industry: "Food & Groceries",
+      plan_usage_limit: 0, remaining_balance: 0, used_this_period: 0,
+      usage_count: 0, last_used_at: null,
+      last_reset_date: new Date().toISOString(),
+      next_reset_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      subscription_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      status: "active",
+    },
+  ],
+};
+
+export async function apiGetUserBenefits(
+  email: string,
+  signal?: AbortSignal,
+): Promise<UserBenefitsResult | null> {
+  if (IS_DEVELOPMENT) return MOCK_USER_BENEFITS;
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_USER_BENEFITS_API_KEY
+    const res = await apiFetch<UserBenefitsApiResponse>(
+      `/orders/user-benefits?email=${encodeURIComponent(email)}`,
+      {
+        signal,
+        skipLogout: true,
+        headers: { ...(apiKey ? { 'X-Api-Key': apiKey } : {}) },
+      },
+    );
+    if (!res.data) return null;
+    return { subscription: res.data.subscription ?? null, benefits: res.data.benefits ?? [] };
+  } catch {
+    return null;
+  }
+}
+
+export interface AvailableBenefit {
+  benefit_id: number;
+  name: string;
+  description: string;
+  tier: string;
+  reset_frequency: string;
+  partner_slug: string;
+  partner_name: string;
+  industry: string;
+  plan_usage_limit: number;
+  remaining_balance: number;
+  used_this_period: number;
+  usage_count: number;
+  last_used_at: string | null;
+  next_reset_date: string;
+}
+
+export interface AvailableBenefitsResult {
+  available_benefits: AvailableBenefit[];
+}
+
+interface AvailableBenefitsApiData {
+  user_id: number;
+  available_benefits: AvailableBenefit[];
+}
+
+interface AvailableBenefitsApiResponse {
+  success: boolean;
+  message: string;
+  data: AvailableBenefitsApiData;
+  error: null | string;
+}
+
+const MOCK_AVAILABLE_USER_BENEFITS: AvailableBenefitsResult = {
+  available_benefits: MOCK_USER_BENEFITS.benefits
+    .filter((b) => b.plan_usage_limit === 0 || b.remaining_balance > 0)
+    .map(({ id: _id, last_reset_date: _lrd, subscription_expiry: _se, status: _st, ...rest }) => rest),
+};
+
+export async function apiGetAvailableUserBenefits(
+  email: string,
+  signal?: AbortSignal,
+): Promise<AvailableBenefitsResult | null> {
+  if (IS_DEVELOPMENT) return MOCK_AVAILABLE_USER_BENEFITS;
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_USER_BENEFITS_API_KEY;
+    const res = await apiFetch<AvailableBenefitsApiResponse>(
+      `/orders/user-benefits/available?email=${encodeURIComponent(email)}`,
+      {
+        signal,
+        skipLogout: true,
+        headers: { ...(apiKey ? { "X-Api-Key": apiKey } : {}) },
+      },
+    );
+    if (!res.data) return null;
+    return { available_benefits: res.data.available_benefits ?? [] };
+  } catch {
+    return null;
+  }
+}
+
 // ── Single subscription detail ────────────────────────────────────────────────
 
 export interface SubscriptionDetail extends SubscriptionHistoryItem {

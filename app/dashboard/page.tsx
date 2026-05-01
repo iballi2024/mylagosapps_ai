@@ -1,9 +1,12 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor } from '@mantine/core'
+import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor, ThemeIcon, Tabs } from '@mantine/core'
+import { IconCircleCheck, IconSparkles, IconListCheck } from '@tabler/icons-react'
 import { usePlatform, SERVICE_CATEGORIES } from '@/context/PlatformContext'
 import { useAuthContext } from '@/context/AuthContext'
 import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
+import { apiGetUserBenefits, apiGetAvailableUserBenefits, UserBenefitsResult, UserBenefit, AvailableBenefitsResult, AvailableBenefit } from '@/lib/billing'
 
 function getGreeting() {
   const hour = new Date().getHours()
@@ -12,11 +15,54 @@ function getGreeting() {
   return 'Good evening'
 }
 
+function BenefitRow({ b }: { b: UserBenefit | AvailableBenefit }) {
+  const exhausted = b.plan_usage_limit > 0 && b.remaining_balance <= 0
+  const unlimited = b.plan_usage_limit === 0
+  return (
+    <Group px="lg" py="sm" gap="sm" wrap="nowrap"
+      style={{ borderBottom: '1px solid var(--color-border)', opacity: exhausted ? 0.4 : 1 }}>
+      <ThemeIcon size={28} radius="xl" color={exhausted ? 'gray' : 'green'} variant="light" style={{ flexShrink: 0 }}>
+        <IconCircleCheck size={15} />
+      </ThemeIcon>
+      <Box style={{ flex: 1, minWidth: 0 }}>
+        <Text fz="sm" fw={500} c="var(--color-ink)" style={{ lineHeight: 1.3 }}>{b.name}</Text>
+        <Text fz={11} c="var(--color-muted)">{b.partner_name} · {b.industry}</Text>
+      </Box>
+      <Box ta="right" style={{ flexShrink: 0 }}>
+        {unlimited ? (
+          <Badge size="xs" radius="xl" color="blue" variant="light">Unlimited</Badge>
+        ) : (
+          <Badge size="xs" radius="xl" color={b.remaining_balance > 0 ? 'green' : 'gray'} variant="light">
+            {b.remaining_balance}/{b.plan_usage_limit} left
+          </Badge>
+        )}
+        <Text fz={10} c="var(--color-muted)" mt={2} tt="capitalize">Resets {b.reset_frequency}</Text>
+      </Box>
+    </Group>
+  )
+}
+
 export default function DashboardPage() {
   const { transactions, formatPrice } = usePlatform()
   const { user } = useAuthContext()
   const { subscription } = useCurrentSubscription()
   const displayName = user ? `${user.firstName} ${user.lastName}` : ''
+  const [allBenefits, setAllBenefits] = useState<UserBenefitsResult | null>(null)
+  const [availableBenefits, setAvailableBenefits] = useState<AvailableBenefitsResult | null>(null)
+
+  useEffect(() => {
+    if (!user?.email) return
+    const controller = new AbortController()
+    const sig = controller.signal
+    Promise.all([
+      apiGetUserBenefits(user.email, sig),
+      apiGetAvailableUserBenefits(user.email, sig),
+    ]).then(([all, available]) => {
+      setAllBenefits(all)
+      setAvailableBenefits(available)
+    }).catch(() => {})
+    return () => controller.abort()
+  }, [user?.email])
   const thisMonth = transactions
     .filter(t => t.type === 'debit' && (t.date.startsWith('Today') || t.date.startsWith('Yesterday')))
     .reduce((s, t) => s + t.amount, 0)
@@ -93,6 +139,92 @@ export default function DashboardPage() {
         </Card>
       </SimpleGrid>
 
+      {/* Plan Benefits */}
+      {allBenefits && (
+        <Card radius="xl" withBorder style={{ borderColor: 'var(--color-border)' }} mb="xl" p={0}>
+
+          {/* Card header — subscription summary */}
+          <Group justify="space-between" px="lg" py="md" style={{ borderBottom: '1px solid var(--color-border)' }}>
+            <Box>
+              <Text ff="var(--font-montserrat)" fw={700} fz={15} c="var(--color-ink)">Plan Benefits</Text>
+              {allBenefits.subscription && (
+                <Text fz={11} c="var(--color-muted)">
+                  {allBenefits.subscription.plan_name} · expires {new Date(allBenefits.subscription.expiry_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </Text>
+              )}
+            </Box>
+            <Group gap="xs">
+              {availableBenefits && (
+                <Badge radius="xl" variant="light" color="green" size="sm">
+                  {availableBenefits.available_benefits?.length ?? 0} available
+                </Badge>
+              )}
+              {allBenefits.subscription && (
+                <Badge radius="xl" variant="light" color="gray" size="sm" tt="capitalize">
+                  {allBenefits.subscription.status}
+                </Badge>
+              )}
+            </Group>
+          </Group>
+
+          {/* Tabs */}
+          <Tabs defaultValue="available" styles={{
+            tab: { fontSize: 13, fontWeight: 600, padding: '10px 16px' },
+            list: { borderBottom: '1px solid var(--color-border)', paddingInline: 8 },
+          }}>
+            <Tabs.List>
+              <Tabs.Tab
+                value="available"
+                leftSection={<IconSparkles size={14} />}
+                rightSection={
+                  availableBenefits
+                    ? <Badge size="xs" radius="xl" color="green" variant="filled" style={{ minWidth: 20 }}>{availableBenefits.available_benefits?.length ?? 0}</Badge>
+                    : null
+                }
+              >
+                Available Now
+              </Tabs.Tab>
+              <Tabs.Tab
+                value="all"
+                leftSection={<IconListCheck size={14} />}
+                rightSection={
+                  <Badge size="xs" radius="xl" color="gray" variant="light" style={{ minWidth: 20 }}>{allBenefits.benefits?.length ?? 0}</Badge>
+                }
+              >
+                All Benefits
+              </Tabs.Tab>
+            </Tabs.List>
+
+            {/* Available tab */}
+            <Tabs.Panel value="available">
+              {availableBenefits && availableBenefits.available_benefits.length > 0 ? (
+                <Stack gap={0}>
+                  {availableBenefits.available_benefits.map(b => <BenefitRow key={b.benefit_id} b={b} />)}
+                </Stack>
+              ) : (
+                <Box px="lg" py="xl" style={{ textAlign: 'center' }}>
+                  <Text fz="sm" c="var(--color-muted)">No available benefits at the moment.</Text>
+                </Box>
+              )}
+            </Tabs.Panel>
+
+            {/* All benefits tab */}
+            <Tabs.Panel value="all">
+              {allBenefits.benefits.length > 0 ? (
+                <Stack gap={0}>
+                  {allBenefits.benefits.map(b => <BenefitRow key={b.benefit_id} b={b} />)}
+                </Stack>
+              ) : (
+                <Box px="lg" py="xl" style={{ textAlign: 'center' }}>
+                  <Text fz="sm" c="var(--color-muted)">No benefits found for this plan.</Text>
+                </Box>
+              )}
+            </Tabs.Panel>
+          </Tabs>
+
+        </Card>
+      )}
+
       {/* Bottom grid */}
       <SimpleGrid cols={{ base: 1, xl: 3 }} spacing="md">
 
@@ -107,7 +239,7 @@ export default function DashboardPage() {
               const cat = SERVICE_CATEGORIES.find(c => c.name === txn.subsidiary)
               return (
                 <Group key={txn.id} px="lg" py="sm" gap="sm" wrap="nowrap"
-                  style={{ borderBottom: '1px solid var(--color-border)', ':last-child': { borderBottom: 'none' } }}>
+                  style={{ borderBottom: '1px solid var(--color-border)', ':lastChild': { borderBottom: 'none' } }}>
                   <Box style={{ width: 36, height: 36, borderRadius: 10, background: cat?.colorPale || '#F2F0EC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                     {cat?.icon || '💳'}
                   </Box>

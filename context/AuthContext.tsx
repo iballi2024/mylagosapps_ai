@@ -1,129 +1,176 @@
-'use client'
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
-import { AuthUser, apiLogin, apiSignup, apiLogout, apiGetProfile, apiGoogleAuth } from '@/lib/auth'
-import { ApiError } from '@/lib/api'
+"use client";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from "react";
+import {
+  AuthUser,
+  apiLogin,
+  apiSignup,
+  apiLogout,
+  apiGetProfile,
+  apiGoogleAuth,
+} from "@/lib/auth";
+import { ApiError } from "@/lib/api";
 
 interface AuthContextValue {
-  user: AuthUser | null
-  isAuthenticated: boolean
-  loading: boolean
-  login: (identifier: string, password: string) => Promise<void>
-  googleLogin: (idToken: string) => Promise<void>
-  signup: (data: { firstName: string; lastName: string; email: string; phone: string; password: string }) => Promise<void>
-  logout: () => Promise<void>
+  user: AuthUser | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  login: (identifier: string, password: string) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
+  signup: (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    password: string;
+  }) => Promise<void>;
+  logout: () => Promise<void>;
   // kept for Header2 compatibility
-  setShowAuth: (v: boolean) => void
-  setShowDashboard: (v: boolean) => void
+  setShowAuth: (v: boolean) => void;
+  setShowDashboard: (v: boolean) => void;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null)
+const AuthContext = createContext<AuthContextValue | null>(null);
 
-const TOKEN_KEY = 'lagos_token'
-const USER_KEY = 'lagos_user'
+const TOKEN_KEY = "lagos_token";
+const USER_KEY = "lagos_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
 
   // Restore session from localStorage, then verify token is still valid
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEY)
-    if (!token) { setLoading(false); return }
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
 
-    const stored = localStorage.getItem(USER_KEY)
+    const stored = localStorage.getItem(USER_KEY);
     if (stored) {
-      try { setUser(JSON.parse(stored)) } catch { localStorage.removeItem(USER_KEY) }
+      try {
+        setUser(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem(USER_KEY);
+      }
     }
 
     // Verify token + refresh user with normalised profile data from the server
     apiGetProfile()
-      .then(profile => {
+      .then((profile) => {
         const fresh: AuthUser = {
-          id:         (JSON.parse(localStorage.getItem(USER_KEY) ?? '{}') as AuthUser).id,
-          firstName:  profile.firstName,
-          lastName:   profile.lastName,
+          id: (JSON.parse(localStorage.getItem(USER_KEY) ?? "{}") as AuthUser)
+            .id,
+          firstName: profile.firstName,
+          lastName: profile.lastName,
           middleName: profile.middleName,
-          email:      profile.email,
-          phone:      profile.phone,
-          avatar:     profile.avatar,
-        }
-        setUser(fresh)
-        localStorage.setItem(USER_KEY, JSON.stringify(fresh))
-        setLoading(false)
+          email: profile.email,
+          phone: profile.phone,
+          avatar: profile.avatar,
+        };
+        setUser(fresh);
+        localStorage.setItem(USER_KEY, JSON.stringify(fresh));
+        setLoading(false);
       })
       .catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 401) {
-          localStorage.removeItem(TOKEN_KEY)
-          localStorage.removeItem(USER_KEY)
-          setUser(null)
+          localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
+          setUser(null);
         }
-        setLoading(false)
-      })
-  }, [])
+        setLoading(false);
+      });
+  }, []);
 
   const login = useCallback(async (identifier: string, password: string) => {
-    const { token, user } = await apiLogin(identifier, password)
-    localStorage.setItem(TOKEN_KEY, token)
-    localStorage.setItem(USER_KEY, JSON.stringify(user))
-    setUser(user)
-  }, [])
+    const { token, user } = await apiLogin(identifier, password);
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setUser(user);
+  }, []);
 
   const googleLogin = useCallback(async (idToken: string) => {
-    const { token, user } = await apiGoogleAuth(idToken)
-    console.log({ token, user })
-    localStorage.setItem(TOKEN_KEY, token)
-    localStorage.setItem(USER_KEY, JSON.stringify(user))
-    setUser(user)
-  }, [])
+    console.log({ idToken });
+    const { token, user } = await apiGoogleAuth(idToken);
+    console.log({ token, user });
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setUser(user);
+  }, []);
 
   const signup = useCallback(async (data: Parameters<typeof apiSignup>[0]) => {
-    await apiSignup(data)
+    await apiSignup(data);
     // No token returned — user must verify email before logging in
-  }, [])
+  }, []);
 
   const logout = useCallback(async () => {
-    await apiLogout()
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(USER_KEY)
-    setUser(null)
-  }, [])
+    await apiLogout();
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
+  }, []);
 
   // Listen for 401s from any API call — clear session and redirect only from protected routes
   useEffect(() => {
-    const PUBLIC_PREFIXES = ['/', '/home', '/about', '/arena', '/auth', '/services']
+    const PUBLIC_PREFIXES = [
+      "/",
+      "/home",
+      "/about",
+      "/arena",
+      "/auth",
+      "/services",
+    ];
     const isPublicPath = (path: string) =>
-      PUBLIC_PREFIXES.some(p => p === '/' ? path === '/' : path.startsWith(p))
+      PUBLIC_PREFIXES.some((p) =>
+        p === "/" ? path === "/" : path.startsWith(p),
+      );
 
     const handle = () => {
-      localStorage.removeItem(TOKEN_KEY)
-      localStorage.removeItem(USER_KEY)
-      setUser(null)
-      const current = window.location.pathname + window.location.search
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+      setUser(null);
+      const current = window.location.pathname + window.location.search;
       if (!isPublicPath(window.location.pathname)) {
-        window.location.href = `/auth/login?next=${encodeURIComponent(current)}`
+        window.location.href = `/auth/login?next=${encodeURIComponent(current)}`;
       }
-    }
-    window.addEventListener('auth:unauthorized', handle)
-    return () => window.removeEventListener('auth:unauthorized', handle)
-  }, [])
+    };
+    window.addEventListener("auth:unauthorized", handle);
+    return () => window.removeEventListener("auth:unauthorized", handle);
+  }, []);
 
   // no-ops kept for Header2 compatibility
-  const setShowAuth = useCallback(() => {}, [])
-  const setShowDashboard = useCallback(() => {}, [])
+  const setShowAuth = useCallback(() => {}, []);
+  const setShowDashboard = useCallback(() => {}, []);
 
   return (
-    <AuthContext.Provider value={{
-      user, isAuthenticated: !!user, loading,
-      login, googleLogin, signup, logout,
-      setShowAuth, setShowDashboard,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        loading,
+        login,
+        googleLogin,
+        signup,
+        logout,
+        setShowAuth,
+        setShowDashboard,
+      }}
+    >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuthContext(): AuthContextValue {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuthContext must be used inside <AuthProvider>')
-  return ctx
+  const ctx = useContext(AuthContext);
+  if (!ctx)
+    throw new Error("useAuthContext must be used inside <AuthProvider>");
+  return ctx;
 }
