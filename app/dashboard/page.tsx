@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, Anchor, ThemeIcon, Tabs } from '@mantine/core'
+import { Box, Title, Text, SimpleGrid, Card, Group, Badge, Stack, Button, ThemeIcon, Tabs } from '@mantine/core'
 import { IconCircleCheck, IconSparkles, IconListCheck } from '@tabler/icons-react'
-import { usePlatform, SERVICE_CATEGORIES } from '@/context/PlatformContext'
+import { SERVICE_CATEGORIES } from '@/context/PlatformContext'
 import { useAuthContext } from '@/context/AuthContext'
 import { useCurrentSubscription } from '@/context/CurrentSubscriptionContext'
 import { apiGetUserBenefits, apiGetAvailableUserBenefits, UserBenefitsResult, UserBenefit, AvailableBenefitsResult, AvailableBenefit } from '@/lib/billing'
@@ -43,7 +43,6 @@ function BenefitRow({ b }: { b: UserBenefit | AvailableBenefit }) {
 }
 
 export default function DashboardPage() {
-  const { transactions, formatPrice } = usePlatform()
   const { user } = useAuthContext()
   const { subscription } = useCurrentSubscription()
   const displayName = user ? `${user.firstName} ${user.lastName}` : ''
@@ -221,43 +220,8 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Bottom grid */}
-      <SimpleGrid cols={{ base: 1, xl: 3 }} spacing="md">
-
-        {/* Transactions */}
-        <Card radius="xl" withBorder style={{ borderColor: 'var(--color-border)', gridColumn: 'span 2' }} p={0}>
-          <Group justify="space-between" px="lg" py="md" style={{ borderBottom: '1px solid var(--color-border)' }}>
-            <Text ff="var(--font-montserrat)" fw={700} fz={15} c="var(--color-ink)">Recent Transactions</Text>
-            <Anchor component={Link} href="/dashboard/billing" fz="xs" c="var(--color-gold)" fw={600}>View all →</Anchor>
-          </Group>
-          <Stack gap={0}>
-            {transactions.map(txn => {
-              const cat = SERVICE_CATEGORIES.find(c => c.name === txn.subsidiary)
-              return (
-                <Group key={txn.id} px="lg" py="sm" gap="sm" wrap="nowrap"
-                  style={{ borderBottom: '1px solid var(--color-border)', ':lastChild': { borderBottom: 'none' } }}>
-                  <Box style={{ width: 36, height: 36, borderRadius: 10, background: cat?.colorPale || '#F2F0EC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                    {cat?.icon || '💳'}
-                  </Box>
-                  <Box style={{ flex: 1, minWidth: 0 }}>
-                    <Text fz="sm" fw={500} c="var(--color-ink)" truncate>{txn.description}</Text>
-                    <Text fz={11} c="var(--color-muted)">{txn.date}</Text>
-                  </Box>
-                  <Text ff="var(--font-montserrat)" fw={700} fz="sm" c={txn.type === 'credit' ? 'green' : 'var(--color-ink)'} style={{ flexShrink: 0 }}>
-                    {txn.type === 'credit' ? '+' : '−'}{formatPrice(txn.amount)}
-                  </Text>
-                  <Badge size="xs" radius="xl" visibleFrom="sm"
-                    color={txn.status === 'completed' ? 'green' : 'yellow'} variant="light">
-                    {txn.status}
-                  </Badge>
-                </Group>
-              )
-            })}
-          </Stack>
-        </Card>
-
-        {/* Quick order */}
-        <Card radius="xl" withBorder style={{ borderColor: 'var(--color-border)' }} p={0}>
+      {/* Quick order */}
+      <Card radius="xl" withBorder style={{ borderColor: 'var(--color-border)' }} p={0}>
           <Text ff="var(--font-montserrat)" fw={700} fz={14} c="var(--color-ink)" px="md" py="md"
             style={{ borderBottom: '1px solid var(--color-border)' }}>
             Quick Order
@@ -295,8 +259,7 @@ export default function DashboardPage() {
               💬 Order via WhatsApp
             </Button>
           </Box>
-        </Card>
-      </SimpleGrid>
+      </Card>
 
     </Box>
   )
