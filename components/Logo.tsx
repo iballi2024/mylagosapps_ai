@@ -1,5 +1,6 @@
 'use client'
 import type { CSSProperties } from 'react'
+import { syne } from '@/public/fonts'
 
 interface LogoProps {
   /** Font size – any valid CSS value. Defaults to '1.25rem'. */
@@ -12,7 +13,7 @@ interface LogoProps {
 
 export default function Logo({ size = '1.25rem', light = false, style, className }: LogoProps) {
   const base: CSSProperties = {
-    fontFamily: 'var(--font-syne), sans-serif',
+    fontFamily: syne.style.fontFamily,
     fontWeight: 800,
     fontSize: size,
     lineHeight: 1,
